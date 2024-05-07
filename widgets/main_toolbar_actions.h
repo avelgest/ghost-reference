@@ -25,6 +25,7 @@ class MainToolbarActions : public QObject
     ACTION_DECL(toggleGhostMode);
     ACTION_DECL(saveSession);
     ACTION_DECL(showHelp);
+    ACTION_DECL(showPreferences);
 
 private:
     QActionGroup m_windowModeGroup;

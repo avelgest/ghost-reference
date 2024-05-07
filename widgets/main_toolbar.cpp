@@ -297,6 +297,7 @@ MainToolbar::MainToolbar(QWidget *parent)
     addAction(&m_windowActions->saveSession());
     addSeparator();
 
+    addAction(&m_windowActions->showPreferences());
     addAction(&m_windowActions->showHelp());
     addSeparator();
 

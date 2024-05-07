@@ -54,6 +54,7 @@ public:
 
     QNetworkAccessManager *networkManager();
     const Preferences *preferences() const;
+    Preferences *preferences();
 
     const RefWindowList &referenceWindows() const;
     const ReferenceCollection &referenceItems() const;
@@ -94,6 +95,8 @@ inline App *App::ghostRefInstance() { return qobject_cast<App *>(App::instance()
 inline WindowMode App::globalMode() const { return m_globalMode; }
 
 inline const Preferences *App::preferences() const { return m_preferences.get(); }
+
+inline Preferences *App::preferences() { return m_preferences.get(); }
 
 inline const App::RefWindowList &App::referenceWindows() const { return m_refWindows; }
 

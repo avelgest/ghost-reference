@@ -6,6 +6,21 @@
 
 struct PreferencesPrivate;
 
+struct PrefEnumItem
+{
+    QString identifier;
+    QString name;
+    QString value;
+};
+
+struct PrefFloatRange
+{
+    qreal min = std::numeric_limits<qreal>::min();
+    qreal max = std::numeric_limits<qreal>::max();
+
+    qreal size() const { return max - min; }
+};
+
 class Preferences : public QObject
 {
     Q_OBJECT
@@ -31,7 +46,12 @@ public:
     QJsonDocument toJsonDocument() const;
     void saveToDisk() const;
 
+    static const QString &getName(Keys key);
+    static const QString &getDisplayName(Keys key);
     static const QString &getDescription(Keys key);
+    static const PrefEnumItem &getEnumItem(Keys key, int idx);
+    static PrefFloatRange getFloatRange(Keys key);
+    static QMetaType::Type getType(Keys key);
 
     template <typename T>
     T get(Keys key) const;

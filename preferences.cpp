@@ -9,12 +9,17 @@
 #include <QtCore/QStandardPaths>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+#include <QtCore/QVector>
+#include <utility>
 
 #include "app.h"
 
 namespace
 {
     using enum Preferences::Keys;
+
+    const QString g_nullString;
+    const PrefEnumItem g_nullEnumPrefItem;
 
     const char *const configName = "ghost_reference_config.json";
 
@@ -34,30 +39,69 @@ namespace
         QString m_name;
         QMetaType::Type m_type = QMetaType::UnknownType;
         QVariant m_defaultValue;
+        QString m_displayName;
         QString m_description;
+
+        PrefFloatRange m_range = {};
+        const QVector<PrefEnumItem> *m_enumValues = nullptr;
 
     public:
         PrefProp() = default;
-        PrefProp(QString name, QMetaType::Type type, QVariant defaultValue, QString description = {})
+        PrefProp(
+            QString name,
+            QMetaType::Type type,
+            QVariant defaultValue,
+            QString displayName,
+            QString description)
             : m_name(std::move(name)),
               m_type(type),
               m_defaultValue(std::move(defaultValue)),
+              m_displayName(std::move(displayName)),
               m_description(std::move(description))
         {
         }
 
-        const QString &name() const
+        // Constructor for float Props
+        PrefProp(QString name, qreal defaultValue,
+                 QString displayName, QString description,
+                 PrefFloatRange range)
+            : PrefProp(std::move(name), FloatType,
+                       std::move(defaultValue), std::move(displayName), std::move(description))
         {
-            return m_name;
+            m_range = range;
         }
+
+        // Constructor for string / enum properties
+        PrefProp(QString name, QString defaultValue,
+                 QString displayName, QString description,
+                 const QVector<PrefEnumItem> *enumValues)
+            : PrefProp(std::move(name), StrType,
+                       std::move(defaultValue), std::move(displayName), std::move(description))
+        {
+            m_enumValues = enumValues;
+        }
+
+        const QString &name() const { return m_name; }
         QMetaType::Type type() const { return m_type; }
         const QVariant &defaultValue() const { return m_defaultValue; }
+        const QString &displayName() const { return m_displayName; }
         const QString &description() const { return m_description; }
+        const PrefFloatRange &range() const { return m_range; }
+
+        const PrefEnumItem &enumItem(int idx) const
+        {
+            if (isEnum() && idx >= 0 && idx < m_enumValues->length())
+            {
+                return m_enumValues->at(idx);
+            }
+            return g_nullEnumPrefItem;
+        }
 
         bool isCompatible(const QVariant &value) const
         {
             return QMetaType::canConvert(QMetaType(m_type), value.metaType());
         }
+        bool isEnum() const { return m_enumValues != nullptr; }
         bool isValid() const
         {
             return m_type != QMetaType::UnknownType;
@@ -68,15 +112,15 @@ namespace
     {
         static const QHash<Preferences::Keys, PrefProp> prefMap = {
             {AllowInternet,
-             {"allowInternet", BoolType, true, "Allow references dragged from a browser or from internet links"}},
+             {"allowInternet", BoolType, true, "Allow Network Access", "Allow references dragged from a browser or from internet URLs"}},
             {AnimateToolbarCollapse,
-             {"animateToolBarCollapse", BoolType, true, "Animate collapsing/expanding the toolbar"}},
+             {"animateToolBarCollapse", BoolType, true, "Animate Toolbar", "Animate collapsing/expanding the toolbar"}},
             {GhostModeOpacity,
-             {"ghostModeOpacity", FloatType, 0.5, ""}},
+             {"ghostModeOpacity", 0.5, "Ghost Mode Opacity", "", {0., 1.}}},
             {LocalFilesStore,
-             {"localFilesLink", BoolType, false, ""}},
+             {"localFilesLink", BoolType, false, "Link Local Files", ""}},
             {LocalFilesStoreMaxMB,
-             {"localFilesStoreMaxMB", IntType, 128, ""}},
+             {"localFilesStoreMaxMB", IntType, 128, "", ""}},
         };
         return prefMap;
     }
@@ -232,11 +276,43 @@ void Preferences::saveToDisk() const
     qInfo() << "Preferences written to" << configFile.fileName();
 }
 
+const QString &Preferences::getName(Keys key)
+{
+    const auto it = prefProperties().find(key);
+    return (it != prefProperties().end()) ? it.value().name() : g_nullString;
+}
+
+const QString &Preferences::getDisplayName(Keys key)
+{
+    const auto it = prefProperties().find(key);
+    return (it != prefProperties().end()) ? it.value().displayName() : g_nullString;
+}
+
 const QString &Preferences::getDescription(Keys key)
 {
-    static const QString nullString;
     const auto it = prefProperties().find(key);
-    return (it != prefProperties().end()) ? it.value().description() : nullString;
+    return (it != prefProperties().end()) ? it.value().description() : g_nullString;
+}
+
+const PrefEnumItem &Preferences::getEnumItem(Keys key, int idx)
+{
+    if (const auto it = prefProperties().find(key); it != prefProperties().end() && it->isEnum())
+    {
+        return it->enumItem(idx);
+    }
+    return g_nullEnumPrefItem;
+}
+
+PrefFloatRange Preferences::getFloatRange(Keys key)
+{
+    const auto it = prefProperties().find(key);
+    return (it != prefProperties().end()) ? it.value().range() : PrefFloatRange();
+}
+
+QMetaType::Type Preferences::getType(Keys key)
+{
+    const auto it = prefProperties().find(key);
+    return (it != prefProperties().end()) ? it.value().type() : QMetaType::Void;
 }
 
 // Explicit template initialization

@@ -24,6 +24,8 @@
 #include "resize_frame.h"
 #include "settings_panel.h"
 
+#include <QtWidgets/QStyle>
+
 namespace
 {
 
@@ -42,9 +44,12 @@ namespace
               m_parent(parent)
         {
             setAutoHide(true);
+            setElideMode(Qt::ElideRight);
             setMovable(true);
             setShape(QTabBar::TriangularSouth);
+            setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
             setTabsClosable(true);
+            setUsesScrollButtons(false);
 
             if (!parent)
             {
@@ -384,8 +389,18 @@ void ReferenceWindow::clampReferenceSize(const ReferenceImageSP &refItem)
         return;
     }
     const QSize refSize = refItem->displaySize();
-    const QSize screenSize = screen()->size();
-    const QSize newSize = refSize.boundedTo(screenSize / 2).expandedTo(screenSize / 4);
+    const ReferenceImageSP &activeRef = activeImage();
+    QSize newSize;
+
+    if (activeRef && activeRef->isLoaded())
+    {
+        newSize = refSize.scaled(activeRef->displaySize(), Qt::KeepAspectRatio);
+    }
+    else
+    {
+        const QSize screenSize = screen()->size();
+        newSize = refSize.boundedTo(screenSize / 2).expandedTo(screenSize / 4);
+    }
 
     if (newSize != refSize)
     {
@@ -580,7 +595,9 @@ void ReferenceWindow::paintEvent([[maybe_unused]] QPaintEvent *event)
 
 void ReferenceWindow::wheelEvent(QWheelEvent *event)
 {
-    if (event->angleDelta().y() != 0)
+    QWidget::wheelEvent(event);
+
+    if (!event->isAccepted() && event->angleDelta().y() != 0)
     {
         const int currentTab = m_tabBar->currentIndex();
         const bool wheelUp = event->angleDelta().y() > 0;

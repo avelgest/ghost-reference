@@ -6,7 +6,9 @@
 #include "../app.h"
 #include "../reference_loading.h"
 #include "../saving.h"
+
 #include "main_toolbar.h"
+#include "preferences_window.h"
 
 namespace
 {
@@ -32,6 +34,12 @@ namespace
 
     void showHelpFnc()
     {
+    }
+
+    void showPreferencesFnc()
+    {
+        auto *prefWindow = new PreferencesWindow(App::ghostRefInstance()->backWindow());
+        prefWindow->show();
     }
 
     void toggleGhostModeFnc()
@@ -90,6 +98,10 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
     showHelp().setIcon(style->standardIcon(QStyle::SP_TitleBarContextHelpButton));
     showHelp().setText("Help");
     QObject::connect(&showHelp(), &QAction::triggered, &showHelpFnc);
+
+    // Show Preferences
+    showPreferences().setText("Preferences");
+    QObject::connect(&showPreferences(), &QAction::triggered, &showPreferencesFnc);
 
     m_windowModeGroup.addAction(&toggleGhostMode());
 }
