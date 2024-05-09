@@ -5,7 +5,6 @@ PRIVATE
     main_toolbar.cpp
     picture_widget.cpp
     preferences_window.cpp
-    reference_titlebar.cpp
     reference_window.cpp
     resize_frame.cpp
     settings_panel.cpp

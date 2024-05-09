@@ -20,7 +20,6 @@
 #include "../reference_loading.h"
 
 #include "picture_widget.h"
-#include "reference_titlebar.h"
 #include "resize_frame.h"
 #include "settings_panel.h"
 
