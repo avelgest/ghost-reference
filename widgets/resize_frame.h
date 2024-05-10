@@ -36,6 +36,8 @@ protected:
 
     Qt::Edges hotspotAtPoint(QPointF pos) const;
     QMarginsF relativeMargins(Qt::Edges edges, QPoint diff) const;
+    void updateCursor(QPointF position, Qt::KeyboardModifiers modifiers);
+    void updateCursor();
 
     void keyReleaseEvent(QKeyEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;

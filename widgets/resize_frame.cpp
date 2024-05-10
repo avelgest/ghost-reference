@@ -5,6 +5,8 @@
 #include <QtGui/QPaintEvent>
 #include <QtGui/QPainter>
 
+#include <QtWidgets/QApplication>
+
 #include <QtCore/QMap>
 
 namespace
@@ -109,6 +111,24 @@ QMarginsF ResizeFrame::relativeMargins(const Qt::Edges edges, const QPoint diff)
     return margins;
 }
 
+void ResizeFrame::updateCursor(QPointF position, Qt::KeyboardModifiers modifiers)
+{
+    static Qt::KeyboardModifiers lastModifiers;
+
+    const Qt::Edges edges = hotspotAtPoint(position);
+    if (edges != m_currentEdges || lastModifiers != modifiers)
+    {
+        setCursor(cursorForEdge(edges, modifiers));
+        m_currentEdges = edges;
+        lastModifiers = modifiers;
+    }
+}
+
+void ResizeFrame::updateCursor()
+{
+    updateCursor(mapFromGlobal(QCursor::pos()), QApplication::queryKeyboardModifiers());
+}
+
 QMargins cropMargins(const Qt::Edges edges, const QPoint diff)
 {
     QMargins margins;
@@ -166,8 +186,6 @@ void ResizeFrame::mousePressEvent(QMouseEvent *event)
 
 void ResizeFrame::mouseMoveEvent(QMouseEvent *event)
 {
-    static Qt::KeyboardModifiers lastModifiers;
-
     if (!event->buttons().testFlag(Qt::LeftButton))
     {
         setCurrentTransform(NoTransform);
@@ -175,13 +193,7 @@ void ResizeFrame::mouseMoveEvent(QMouseEvent *event)
 
     if (currentTransform() == NoTransform)
     {
-        const Qt::Edges edges = hotspotAtPoint(event->position());
-        if (edges != m_currentEdges || lastModifiers != event->modifiers())
-        {
-            setCursor(cursorForEdge(edges, event->modifiers()));
-            m_currentEdges = edges;
-            lastModifiers = event->modifiers();
-        }
+        updateCursor(event->position(), event->modifiers());
     }
     else
     {
