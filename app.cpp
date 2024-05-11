@@ -78,7 +78,7 @@ void App::checkModifierKeyStates()
     {
         if (!inOverrideMode())
         {
-            startGlobalModeOverride(GhostMode);
+            startGlobalModeOverride(WindowMode::TransformMode);
         }
     }
     else if (inOverrideMode())
