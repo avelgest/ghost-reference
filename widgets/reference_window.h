@@ -31,7 +31,7 @@ private:
 public:
     explicit ReferenceWindow(QWidget *parent = nullptr);
     explicit ReferenceWindow(QImage &image, QWidget *parent = nullptr);
-    ~ReferenceWindow() override = default;
+    ~ReferenceWindow() override;
 
     void addReference(const ReferenceImageSP &refItem);
     void removeReference(const ReferenceImageSP &refItem);

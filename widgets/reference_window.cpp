@@ -252,6 +252,11 @@ ReferenceWindow::ReferenceWindow(QWidget *parent)
     setWindowMode(windowMode());
 }
 
+ReferenceWindow::~ReferenceWindow()
+{
+    QObject::disconnect(App::ghostRefInstance(), nullptr, this, nullptr);
+}
+
 void ReferenceWindow::addReference(const ReferenceImageSP &refItem)
 {
     if (m_refImages.contains(refItem))
@@ -511,6 +516,11 @@ void ReferenceWindow::onFrameViewMoved(QPoint diff)
 
 void ReferenceWindow::closeEvent([[maybe_unused]] QCloseEvent *event)
 {
+    auto logger = qDebug() << "Closing reference window for references: ";
+    for (const auto &refItem : m_refImages)
+    {
+        logger << (refItem->name().isEmpty() ? "[no name]" : refItem->name());
+    }
 }
 
 void ReferenceWindow::dragEnterEvent(QDragEnterEvent *event)
