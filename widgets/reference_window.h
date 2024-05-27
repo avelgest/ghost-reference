@@ -34,7 +34,8 @@ public:
     ~ReferenceWindow() override;
 
     void addReference(const ReferenceImageSP &refItem);
-    void removeReference(const ReferenceImageSP &refItem);
+    bool removeReference(const ReferenceImageSP &refItem);
+    ReferenceWindow *detachReference(ReferenceImageSP refItem);
 
     void fromJson(const QJsonObject &json);
     QJsonObject toJson() const;

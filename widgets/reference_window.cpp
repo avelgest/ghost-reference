@@ -25,6 +25,8 @@
 
 #include <QtWidgets/QStyle>
 
+#include <QtWidgets/QPushButton>
+
 namespace
 {
 
@@ -109,8 +111,12 @@ namespace
         {
             if (refItem)
             {
+
                 const int idx = addTab(refItem->name());
                 setTabData(idx, QVariant::fromValue(refItem));
+                setTabToolTip(idx, refItem->name());
+
+                setTabButton(idx, QTabBar::ButtonPosition::RightSide, createButtonWidget(refItem));
             }
         }
 
@@ -142,6 +148,12 @@ namespace
             {
                 m_parent->adjustSize();
             }
+        }
+
+        QSize tabSizeHint(int index) const override
+        {
+            const int height = 24;
+            return {QTabBar::tabSizeHint(index).width(), height};
         }
 
         void removeReference(int index)
@@ -180,10 +192,51 @@ namespace
             QTabBar::showEvent(event);
             adjustParentSize();
         }
+
+        QWidget *createButtonWidget(const ReferenceImageSP &refItem)
+        {
+            auto *widget = new QWidget(this);
+            auto *layout = new QHBoxLayout(widget);
+
+            layout->setContentsMargins(0, 0, 0, 0);
+            layout->setSpacing(0);
+
+            const int buttonSize = style()->pixelMetric(QStyle::PM_TitleBarButtonSize);
+
+            // TODO Refactor buttons into a separate class
+            auto *detachBtn = new QPushButton(widget);
+            detachBtn->setFlat(true);
+            detachBtn->setFocusPolicy(Qt::NoFocus);
+            detachBtn->setObjectName("detach-tab-btn");
+            detachBtn->setToolTip("Detach tab");
+            detachBtn->setMaximumWidth(buttonSize);
+            layout->addWidget(detachBtn);
+
+            auto *closeBtn = new QPushButton(widget);
+            closeBtn->setFlat(true);
+            closeBtn->setFocusPolicy(Qt::NoFocus);
+            closeBtn->setObjectName("close-tab-btn");
+            closeBtn->setMaximumWidth(buttonSize);
+            closeBtn->setToolTip("Close tab");
+            layout->addWidget(closeBtn);
+
+            if (refItem.isNull())
+            {
+                detachBtn->setEnabled(false);
+                return widget;
+            }
+
+            QObject::connect(closeBtn, &QPushButton::clicked, [this, refItem]()
+                             { removeTab(indexOf(refItem)); });
+            QObject::connect(detachBtn, &QPushButton::clicked, [this, refItem]()
+                             { if (m_parent) m_parent->detachReference(refItem); });
+
+            return widget;
+        }
     };
 
     template <typename T>
-    T swapMargins(const T &margins, bool horizontal, bool vertical)
+    T flipMargins(const T &margins, bool horizontal, bool vertical)
     {
         return {horizontal ? margins.right() : margins.left(),
                 vertical ? margins.bottom() : margins.top(),
@@ -274,12 +327,12 @@ void ReferenceWindow::addReference(const ReferenceImageSP &refItem)
     }
 }
 
-void ReferenceWindow::removeReference(const ReferenceImageSP &refItem)
+bool ReferenceWindow::removeReference(const ReferenceImageSP &refItem)
 {
     const qsizetype idx = m_refImages.indexOf(refItem);
     if (idx < 0)
     {
-        return;
+        return false;
     }
     m_refImages.removeAt(idx);
     emit referenceRemoved(refItem);
@@ -289,6 +342,31 @@ void ReferenceWindow::removeReference(const ReferenceImageSP &refItem)
         const qsizetype numItems = m_refImages.count();
         setActiveImage((numItems == 0) ? nullptr : m_refImages.at(std::min(numItems - 1, idx)));
     }
+    return true;
+}
+
+ReferenceWindow *ReferenceWindow::detachReference(const ReferenceImageSP refItem)
+{
+    // Offset for the new window
+    const QPoint windowOffset = QPoint(100, 100);
+
+    if (refItem.isNull())
+    {
+        return nullptr;
+    }
+
+    if (!removeReference(refItem))
+    {
+        qWarning() << "Unable to detach reference item:" << refItem->name() << "not found in window";
+        return nullptr;
+    }
+
+    ReferenceWindow *newWindow = App::ghostRefInstance()->newReferenceWindow();
+    newWindow->addReference(refItem);
+    newWindow->move(pos() + windowOffset);
+    newWindow->show();
+
+    return newWindow;
 }
 
 void ReferenceWindow::fromJson(const QJsonObject &json)
@@ -463,7 +541,7 @@ void ReferenceWindow::onFrameCrop(QMargins cropBy)
     QMarginsF cropByF = cropBy.toMarginsF() / refImage.zoom();
 
     // Switch the crop direction if the image is flipped
-    cropByF = swapMargins(cropByF, refImage.flipHorizontal(), refImage.flipVertical());
+    cropByF = flipMargins(cropByF, refImage.flipHorizontal(), refImage.flipVertical());
 
     const QRectF oldCrop = refImage.cropF();
 

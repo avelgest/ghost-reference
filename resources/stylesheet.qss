@@ -2,10 +2,24 @@ MainToolbar {
     border-radius: 20px;
 }
 
-QTabBar::close-button {
-    image: url(resources/close_tab_btn.png)
+QTabBar #close-tab-btn {
+    image: url(resources/close_tab_btn.png);
 }
 
-QTabBar::close-button:hover {
-    image: url(resources/close_tab_btn-hover.png)
+QTabBar #detach-tab-btn {
+    image: url(resources/detach_tab_btn.png);
+}
+
+QTabBar QPushButton {
+    border: none;
+    border-radius: 4px;
+    padding: 0px;
+}
+
+QTabBar QPushButton:hover {
+    background-color: hsva(0, 0, 50%, 30%);
+}
+
+QTabBar QPushButton:pressed {
+    background-color: hsva(0, 0, 50%, 50%);
 }
