@@ -90,6 +90,7 @@ private:
     void onFrameMove(QPoint diff);
     void onFrameResize(Qt::Edges fromEdges, QSize newSize);
     void onFrameViewMoved(QPoint diff);
+    void onTransformStarted(ResizeFrame::TransformType transform);
     void onTransformFinished(ResizeFrame::TransformType transform);
 
 public slots:

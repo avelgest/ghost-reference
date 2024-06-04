@@ -348,6 +348,7 @@ ReferenceWindow::ReferenceWindow(QWidget *parent)
     QObject::connect(resizeFrame, &ResizeFrame::cropped, this, &ReferenceWindow::onFrameCrop);
     QObject::connect(resizeFrame, &ResizeFrame::resized, this, &ReferenceWindow::onFrameResize);
     QObject::connect(resizeFrame, &ResizeFrame::viewMoved, this, &ReferenceWindow::onFrameViewMoved);
+    QObject::connect(resizeFrame, &ResizeFrame::transformStarted, this, &ReferenceWindow::onTransformStarted);
     QObject::connect(resizeFrame, &ResizeFrame::transformFinished, this, &ReferenceWindow::onTransformFinished);
 
     QObject::connect(App::ghostRefInstance(), &App::focusChanged, this, &ReferenceWindow::onAppFocusChanged);
@@ -679,6 +680,18 @@ void ReferenceWindow::onFrameViewMoved(QPoint diff)
     }
 }
 
+void ReferenceWindow::onTransformStarted(ResizeFrame::TransformType transform)
+{
+    if (transform != ResizeFrame::NoTransform)
+    {
+        raise();
+        if (m_settingsPanel)
+        {
+            m_settingsPanel->raise();
+        }
+    }
+}
+
 void ReferenceWindow::onTransformFinished(ResizeFrame::TransformType transform)
 {
     if (transform == ResizeFrame::Moving && m_mergeDest)
@@ -827,6 +840,7 @@ void ReferenceWindow::showSettingsWindow(const QPoint &atPos)
         m_settingsPanel->setAttribute(Qt::WA_DeleteOnClose);
     }
     m_settingsPanel->move(atPos.isNull() ? QCursor::pos() : atPos);
+    m_settingsPanel->raise();
     m_settingsPanel->show();
     m_settingsPanel->setFocus();
 }
