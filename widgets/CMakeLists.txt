@@ -8,6 +8,7 @@ PRIVATE
     reference_window.cpp
     resize_frame.cpp
     settings_panel.cpp
+    tab_bar.cpp
 )
 
 target_include_directories(GhostReference PUBLIC ${CMAKE_CURRENT_LIST_DIR})
