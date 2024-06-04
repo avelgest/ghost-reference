@@ -6,13 +6,13 @@
 #include <QtCore/QPointer>
 #include <QtWidgets/QWidget>
 
+#include "resize_frame.h"
 #include "../types.h"
 
 class QTabBar;
 
 class ReferenceWindow : public QWidget
 {
-
 private:
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(ReferenceWindow)
@@ -24,9 +24,14 @@ private:
     QList<ReferenceImageSP> m_refImages;
     QPoint m_lastMousePos;
 
+    // For merging with other ReferenceWindows
+    QPointer<ReferenceWindow> m_mergeDest;      // window to merge into
+    QPointer<ReferenceWindow> m_mergeRequester; // a window requesting to merge with this window
+
     PictureWidget *m_pictureWidget = nullptr;
     QPointer<SettingsPanel> m_settingsPanel = nullptr;
     QTabBar *m_tabBar = nullptr;
+    QWidget *m_overlay = nullptr;
 
 public:
     explicit ReferenceWindow(QWidget *parent = nullptr);
@@ -55,6 +60,14 @@ public:
     void setWindowMode(WindowMode mode);
 
 protected:
+    // Check whether this window should request a merge with another ReferenceWindow.
+    // This doesn't perform the merge but only tells the windows to indicate that a merge will
+    // occur.
+    void checkShouldMerge();
+    // Merge into ReferenceWindow other. Doing so adds all this window's reference items to other
+    // and closes this window.
+    void mergeInto(ReferenceWindow *other);
+
     void closeEvent(QCloseEvent *event) override;
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
@@ -69,12 +82,15 @@ private:
     void clampReferenceSize(const ReferenceImageSP &refItem);
     void drawHighlightedBorder();
     qreal ghostOpacity() const;
+    void setMergeDest(ReferenceWindow *target);
+    void setMergeRequester(ReferenceWindow *requester);
 
     void onAppFocusChanged(QWidget *old, QWidget *now);
     void onFrameCrop(QMargins cropBy);
     void onFrameMove(QPoint diff);
     void onFrameResize(Qt::Edges fromEdges, QSize newSize);
     void onFrameViewMoved(QPoint diff);
+    void onTransformFinished(ResizeFrame::TransformType transform);
 
 public slots:
     void showSettingsWindow(const QPoint &atPos = {});
@@ -85,6 +101,11 @@ signals:
     void referenceAdded(const ReferenceImageSP &refItem);
     void referenceRemoved(const ReferenceImageSP &refItem);
     void windowModeChanged(WindowMode newMode);
+
+    // Another window has requested to merge with this window
+    // (e.g. when another ReferenceWindow is dragged over this one)
+    // requester will be null if the merge request has been cancelled.
+    void mergeRequested(ReferenceWindow *requester);
 };
 
 inline ReferenceImageSP &ReferenceWindow::activeImage() { return m_activeImage; }

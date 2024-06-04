@@ -235,6 +235,43 @@ namespace
         }
     };
 
+    class Overlay : public QWidget
+    {
+        Q_OBJECT
+        Q_DISABLE_COPY_MOVE(Overlay)
+    private:
+        bool m_mergeRequested = false;
+
+    public:
+        explicit Overlay(ReferenceWindow *parent)
+            : QWidget(parent)
+        {
+            setAttribute(Qt::WA_TransparentForMouseEvents);
+            setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+
+            QObject::connect(parent, &ReferenceWindow::mergeRequested, this, &Overlay::onMergeRequested);
+        }
+        ~Overlay() override = default;
+
+    protected:
+        void paintEvent(QPaintEvent *event) override
+        {
+            QPainter painter(this);
+            if (m_mergeRequested)
+            {
+                const QColor mergeColor(0, 0, 255, 96);
+                painter.fillRect(event->rect(), mergeColor);
+            }
+        };
+
+    private:
+        void onMergeRequested(ReferenceWindow *requester)
+        {
+            m_mergeRequested = (requester != nullptr);
+            update();
+        }
+    };
+
     template <typename T>
     T flipMargins(const T &margins, bool horizontal, bool vertical)
     {
@@ -275,12 +312,23 @@ namespace
                                 lerp(a.alphaF(), b.alphaF(), t));
     }
 
+    bool windowsShouldMerge(const ReferenceWindow *refWindow, const ReferenceWindow *mergeInto)
+    {
+        const int distThreshold = 100; // Merge distance threshold (pixels)
+        const QPoint mergeIntoCenter = mergeInto->mapToGlobal(mergeInto->rect().center());
+        const QPoint diff = mergeIntoCenter - QCursor::pos(refWindow->screen());
+
+        const int distance2 = diff.x() * diff.x() + diff.y() * diff.y();
+        return distance2 < (distThreshold * distThreshold);
+    }
+
 } // namespace
 
 ReferenceWindow::ReferenceWindow(QWidget *parent)
     : QWidget(parent),
       m_pictureWidget(new PictureWidget(this)),
-      m_tabBar(new TabBar(this))
+      m_tabBar(new TabBar(this)),
+      m_overlay(new Overlay(this))
 {
     setAcceptDrops(true);
     setAttribute(Qt::WA_DeleteOnClose);
@@ -291,6 +339,7 @@ ReferenceWindow::ReferenceWindow(QWidget *parent)
     grid->setContentsMargins(marginSize, marginSize, marginSize, marginSize);
     grid->setSpacing(0);
     grid->addWidget(m_pictureWidget, 1, 0);
+    grid->addWidget(m_overlay, 1, 0);
     grid->addWidget(m_tabBar, 2, 0);
 
     ResizeFrame *resizeFrame = m_pictureWidget->resizeFrame();
@@ -299,6 +348,7 @@ ReferenceWindow::ReferenceWindow(QWidget *parent)
     QObject::connect(resizeFrame, &ResizeFrame::cropped, this, &ReferenceWindow::onFrameCrop);
     QObject::connect(resizeFrame, &ResizeFrame::resized, this, &ReferenceWindow::onFrameResize);
     QObject::connect(resizeFrame, &ResizeFrame::viewMoved, this, &ReferenceWindow::onFrameViewMoved);
+    QObject::connect(resizeFrame, &ResizeFrame::transformFinished, this, &ReferenceWindow::onTransformFinished);
 
     QObject::connect(App::ghostRefInstance(), &App::focusChanged, this, &ReferenceWindow::onAppFocusChanged);
 
@@ -307,6 +357,7 @@ ReferenceWindow::ReferenceWindow(QWidget *parent)
 
 ReferenceWindow::~ReferenceWindow()
 {
+    setMergeDest(nullptr);
     QObject::disconnect(App::ghostRefInstance(), nullptr, this, nullptr);
 }
 
@@ -522,6 +573,40 @@ qreal ReferenceWindow::ghostOpacity() const
                            : appPrefs()->getFloat(Preferences::GhostModeOpacity);
 }
 
+void ReferenceWindow::setMergeDest(ReferenceWindow *target)
+{
+    if (target == this)
+    {
+        qWarning() << "Cannot merge a Reference Window with itself";
+        return;
+    }
+    if (target == m_mergeDest)
+    {
+        return;
+    }
+
+    // If already requesting a merge with another window clear the current request
+    if (m_mergeDest && m_mergeDest != target && m_mergeDest->m_mergeRequester == this)
+    {
+        m_mergeDest->setMergeRequester(nullptr);
+    }
+
+    m_mergeDest = target;
+    if (target)
+    {
+        target->setMergeRequester(this);
+    }
+}
+
+void ReferenceWindow::setMergeRequester(ReferenceWindow *requester)
+{
+    if (requester != m_mergeRequester)
+    {
+        m_mergeRequester = requester;
+        emit mergeRequested(requester);
+    }
+}
+
 void ReferenceWindow::onAppFocusChanged(QWidget *old, QWidget *now)
 {
     if (old == this || now == this)
@@ -564,6 +649,8 @@ void ReferenceWindow::onFrameCrop(QMargins cropBy)
 void ReferenceWindow::onFrameMove(QPoint diff)
 {
     move(pos() + diff);
+
+    checkShouldMerge();
 }
 
 void ReferenceWindow::onFrameResize(Qt::Edges fromEdges, QSize newSize)
@@ -590,6 +677,45 @@ void ReferenceWindow::onFrameViewMoved(QPoint diff)
         const QPointF shiftBy = -diff.toPointF() / m_activeImage->zoom();
         m_activeImage->shiftCropF(shiftBy);
     }
+}
+
+void ReferenceWindow::onTransformFinished(ResizeFrame::TransformType transform)
+{
+    if (transform == ResizeFrame::Moving && m_mergeDest)
+    {
+        mergeInto(m_mergeDest);
+    }
+}
+
+void ReferenceWindow::checkShouldMerge()
+{
+    for (const auto &refWindow : App::ghostRefInstance()->referenceWindows())
+    {
+        if (refWindow && refWindow->isVisible() && refWindow != this)
+        {
+            if (windowsShouldMerge(this, refWindow))
+            {
+                setMergeDest(refWindow);
+                return;
+            }
+        }
+    }
+
+    // No windows found to merge with so clear any already set merge
+    if (m_mergeDest)
+    {
+        setMergeDest(nullptr);
+    }
+}
+
+void ReferenceWindow::mergeInto(ReferenceWindow *other)
+{
+    setMergeDest(nullptr);
+    for (auto &refItem : m_refImages)
+    {
+        other->addReference(refItem);
+    }
+    close();
 }
 
 void ReferenceWindow::closeEvent([[maybe_unused]] QCloseEvent *event)

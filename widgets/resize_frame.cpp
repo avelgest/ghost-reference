@@ -40,9 +40,9 @@ namespace
 ResizeFrame::ResizeFrame(QWidget *parent)
     : QWidget(parent)
 {
+    setAttribute(Qt::WA_MouseNoMask);
     setFocusPolicy(Qt::ClickFocus);
     setMouseTracking(true);
-    // setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     setTarget(parent);
 
@@ -51,7 +51,21 @@ ResizeFrame::ResizeFrame(QWidget *parent)
 
 void ResizeFrame::setCurrentTransform(TransformType transform)
 {
+    const TransformType oldTransform = m_currentTransform;
     m_currentTransform = transform;
+
+    if (oldTransform != transform)
+    {
+        if (oldTransform != NoTransform)
+        {
+            emit transformFinished(oldTransform);
+        }
+        if (transform != NoTransform)
+        {
+            emit transformStarted(transform);
+        }
+    }
+
     if (transform == NoTransform)
     {
         releaseKeyboard();

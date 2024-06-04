@@ -58,6 +58,9 @@ signals:
     void moved(QPoint change);
     void resized(Qt::Edges fromEdges, QSize newSize);
     void viewMoved(QPoint change);
+
+    void transformStarted(TransformType type);
+    void transformFinished(TransformType type);
 };
 
 inline QSize ResizeFrame::targetSize() const { return m_target ? m_target->size() : size(); }
