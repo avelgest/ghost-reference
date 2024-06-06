@@ -1,7 +1,11 @@
 #include "settings_panel.h"
 
+#include <initializer_list>
+#include <utility>
+
 #include <QtCore/Qt>
 
+#include <QtWidgets/QComboBox>
 #include <QtWidgets/QFormLayout>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QScrollArea>
@@ -11,6 +15,7 @@
 #include <QtWidgets/QToolButton>
 
 #include "../reference_image.h"
+#include "reference_window.h"
 
 namespace
 {
@@ -26,23 +31,36 @@ namespace
         qreal max = 1.;
     };
 
-    QSlider *createSlider(QWidget &parent,
+    template <typename Func1, typename Func2>
+    QSlider *createSlider(SettingsPanel *settingsPanel,
                           const QString &label,
-                          qreal value,
+                          Func1 getter,
+                          Func2 setter,
                           minMax range = {})
     {
-        auto *layout = qobject_cast<QFormLayout *>(parent.layout());
-        if (!layout)
-        {
-            qWarning() << "Expected parent to be a QFormLayout";
-            return nullptr;
-        }
+        Q_ASSERT(settingsPanel);
+        Q_ASSERT(settingsPanel->settingsArea());
 
-        auto *slider = new QSlider(Qt::Horizontal, &parent);
+        QWidget *parent = settingsPanel->settingsArea();
+        auto *layout = qobject_cast<QFormLayout *>(parent->layout());
+
+        Q_ASSERT(layout);
+
+        auto *slider = new QSlider(Qt::Horizontal, parent);
         slider->setRange(static_cast<int>(range.min * sliderScale),
                          static_cast<int>(range.max * sliderScale));
         slider->setTracking(true);
-        slider->setValue(static_cast<int>(value * sliderScale));
+
+        QObject::connect(slider, &QSlider::valueChanged, parent, [setter](int value)
+                         { setter(value / sliderScaleF); });
+        QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, slider,
+                         [slider, getter](const ReferenceImageSP &refImage)
+                         { if (refImage) { slider->setValue(getter() * sliderScale); } });
+
+        if (settingsPanel->referenceImage())
+        {
+            slider->setValue(getter() * sliderScale);
+        }
 
         layout->addRow(label, slider);
         return slider;
@@ -80,54 +98,53 @@ namespace
 
 } // namespace
 
-SettingsPanel::SettingsPanel(QWidget *parent, const ReferenceImageSP &refImage)
+SettingsPanel::SettingsPanel(ReferenceWindow *refWindow, QWidget *parent)
     : QWidget(parent, {})
 {
     setAutoFillBackground(true);
-    setReferenceImage(refImage);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
-    if (!m_refImage)
+    new QGridLayout(this);
+
+    buildInterface();
+    setRefWindow(refWindow);
+}
+
+void SettingsPanel::setRefWindow(ReferenceWindow *refWindow)
+{
+    if (refWindow == m_refWindow)
     {
-        setWindowTitle("Settings");
-        auto *layout = new QGridLayout(this);
-
-        auto *label = new QLabel("No Image", this);
-        const int fontSize = 18;
-        label->setAlignment(Qt::AlignCenter);
-        label->setFont(QFont(label->font().families(), fontSize));
-        label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-        layout->addWidget(label);
         return;
     }
 
-    setWindowTitle(refImage->name().isEmpty() ? "Settings" : refImage->name() + " Settings");
+    if (m_refWindow)
+    {
+        QObject::disconnect(m_refWindow, nullptr, this, nullptr);
+    }
 
-    auto *layout = new QGridLayout(this);
-    QToolBar *toolBar = createToolBar(*this);
-    layout->addWidget(toolBar, 0, 0, Qt::AlignTop);
+    m_refWindow = refWindow;
 
-    QWidget *settingsArea = initSettingsArea();
-    layout->addWidget(settingsArea, 1, 0);
+    if (refWindow)
+    {
+        setReferenceImage(m_refWindow->activeImage());
+        QObject::connect(refWindow, &ReferenceWindow::activeImageChanged,
+                         this, &SettingsPanel::setReferenceImage);
+    }
+    else
+    {
+        setReferenceImage(nullptr);
+    }
+}
 
-#if 0
+void SettingsPanel::setReferenceImage(const ReferenceImageSP &image)
+{
+    if (m_refImage != image)
+    {
+        m_refImage = image;
 
-    auto *layout = new QFormLayout(this);
-
-    layout->addRow(createFlipButton(*this, Qt::Horizontal),
-                   createFlipButton(*this, Qt::Vertical));
-
-    QSlider *slider = nullptr;
-
-    slider = createSlider(*this, "Opacity:", m_refImage->opacity());
-    QObject::connect(slider, &QSlider::valueChanged, [this](int value)
-                     { m_refImage->setOpacity(value / sliderScaleF); });
-
-    slider = createSlider(*this, "Saturation:", m_refImage->saturation());
-    QObject::connect(slider, &QSlider::valueChanged, [this](int value)
-                     { m_refImage->setSaturation(value / sliderScaleF); });
-#endif // 0
+        refreshInterface();
+    }
+    emit refImageChanged(m_refImage);
 }
 
 QSize SettingsPanel::sizeHint() const
@@ -145,20 +162,81 @@ void SettingsPanel::flipImageVertically() const
     m_refImage->setFlipVertical(!m_refImage->flipVertical());
 }
 
-QWidget *SettingsPanel::initSettingsArea()
+void SettingsPanel::initNoRefWidget()
 {
+    if (m_noRefWidget)
+    {
+        return;
+    }
+
+    auto *label = new QLabel("No Image", this);
+    const int fontSize = 18;
+    label->setAlignment(Qt::AlignCenter);
+    label->setFont(QFont(label->font().families(), fontSize));
+    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    m_noRefWidget = label;
+
+    m_toolBar->setEnabled(false);
+}
+
+void SettingsPanel::initSettingsArea()
+{
+    if (m_settingsArea)
+    {
+        return;
+    }
+
     auto *scrollArea = new QScrollArea(this);
     auto *layout = new QFormLayout(scrollArea);
 
-    QSlider *slider = nullptr;
+    m_settingsArea = scrollArea;
 
-    slider = createSlider(*scrollArea, "Opacity:", m_refImage->opacity());
-    QObject::connect(slider, &QSlider::valueChanged, [this](int value)
-                     { m_refImage->setOpacity(value / sliderScaleF); });
+    createSlider(this, "Opacity:", [this]()
+                 { return m_refImage->opacity(); }, [this](qreal value)
+                 { m_refImage->setOpacity(value); });
 
-    slider = createSlider(*scrollArea, "Saturation:", m_refImage->saturation());
-    QObject::connect(slider, &QSlider::valueChanged, [this](int value)
-                     { m_refImage->setSaturation(value / sliderScaleF); });
+    createSlider(this, "Saturation:", [this]()
+                 { return m_refImage->saturation(); }, [this](qreal value)
+                 { m_refImage->setSaturation(value); });
+}
 
-    return scrollArea;
+void SettingsPanel::buildInterface()
+{
+    Q_ASSERT(!m_toolBar && !m_settingsArea && !m_noRefWidget);
+
+    auto *gridLayout = qobject_cast<QGridLayout *>(layout());
+    Q_ASSERT(gridLayout);
+
+    m_toolBar = createToolBar(*this);
+    gridLayout->addWidget(m_toolBar, 0, 0, Qt::AlignTop);
+
+    initSettingsArea();
+    gridLayout->addWidget(m_settingsArea, 1, 0);
+
+    initNoRefWidget();
+    gridLayout->addWidget(m_noRefWidget, 1, 0);
+
+    refreshInterface();
+}
+
+void SettingsPanel::refreshInterface()
+{
+    if (!m_refImage)
+    {
+        setWindowTitle("Settings");
+        m_toolBar->setEnabled(false);
+
+        m_settingsArea->hide();
+        m_noRefWidget->show();
+    }
+    else
+    {
+        setWindowTitle(m_refImage->name().isEmpty() ? "Settings" : m_refImage->name() + " Settings");
+
+        m_toolBar->setEnabled(true);
+
+        m_settingsArea->show();
+        m_noRefWidget->hide();
+    }
 }
