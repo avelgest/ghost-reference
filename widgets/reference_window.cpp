@@ -120,6 +120,32 @@ namespace
         return distance2 < (distThreshold * distThreshold);
     }
 
+    void fitToCurrentTab(const ReferenceWindow *refWindow, const ReferenceImageSP &refImage)
+    {
+        const ReferenceImageSP &current = refWindow->activeImage();
+        if (refImage.isNull() || current.isNull() || current == refImage)
+        {
+            return;
+        }
+
+        const QSizeF oldImgSize = current->displaySize().toSizeF();
+        const QSizeF newImgSize = refImage->displaySize().toSizeF();
+        QSizeF fitSize;
+
+        switch (refWindow->tabFit())
+        {
+        case ReferenceWindow::TabFit::FitToHeight:
+            fitSize = newImgSize * oldImgSize.height() / newImgSize.height();
+            break;
+        case ReferenceWindow::TabFit::FitToWidth:
+            fitSize = newImgSize * oldImgSize.width() / newImgSize.width();
+            break;
+        default:
+            return;
+        }
+        refImage->setDisplaySize(fitSize.toSize());
+    }
+
 } // namespace
 
 ReferenceWindow::ReferenceWindow(QWidget *parent)
@@ -308,6 +334,7 @@ void ReferenceWindow::setActiveImage(const ReferenceImageSP &image)
 {
     if (image != activeImage())
     {
+        fitToCurrentTab(this, image);
         m_activeImage = image;
         emit activeImageChanged(m_activeImage);
         adjustSize();
@@ -634,7 +661,7 @@ void ReferenceWindow::showSettingsWindow(const QPoint &atPos)
 {
     if (!m_settingsPanel)
     {
-        m_settingsPanel = new SettingsPanel(parentWidget(), m_activeImage);
+        m_settingsPanel = new SettingsPanel(this, parentWidget());
         m_settingsPanel->setAttribute(Qt::WA_DeleteOnClose);
     }
     m_settingsPanel->move(atPos.isNull() ? QCursor::pos() : atPos);

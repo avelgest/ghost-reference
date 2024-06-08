@@ -6,19 +6,28 @@
 #include <QtCore/QPointer>
 #include <QtWidgets/QWidget>
 
-#include "resize_frame.h"
 #include "../types.h"
+#include "resize_frame.h"
 
 class QTabBar;
 
 class ReferenceWindow : public QWidget
 {
+public:
+    enum class TabFit
+    {
+        NoFit,
+        FitToWidth,
+        FitToHeight
+    };
+
 private:
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(ReferenceWindow)
 
     bool m_ghostState = false;
     WindowMode m_windowMode = GhostMode;
+    TabFit m_tabFit = TabFit::FitToWidth;
 
     ReferenceImageSP m_activeImage;
     QList<ReferenceImageSP> m_refImages;
@@ -51,6 +60,9 @@ public:
 
     bool ghostState() const;
     void setGhostState(bool value);
+
+    TabFit tabFit() const;
+    void setTabFit(TabFit value);
 
     bool windowFocused() const;
 
@@ -113,6 +125,10 @@ inline ReferenceImageSP &ReferenceWindow::activeImage() { return m_activeImage; 
 inline const ReferenceImageSP &ReferenceWindow::activeImage() const { return m_activeImage; }
 
 inline bool ReferenceWindow::ghostState() const { return m_ghostState; }
+
+inline ReferenceWindow::TabFit ReferenceWindow::tabFit() const { return m_tabFit; }
+
+inline void ReferenceWindow::setTabFit(TabFit value) { m_tabFit = value; }
 
 inline const QList<ReferenceImageSP> &ReferenceWindow::referenceImages() const
 {

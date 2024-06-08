@@ -66,6 +66,45 @@ namespace
         return slider;
     }
 
+    /*
+    Creates a QComboBox and adds items as text/userData pairs given in options.
+    getter should be a function of the form QVariant func() that returns the current value to select
+    (by it's userData).
+    setter should be a function of the form void func(QVariant& userData) that sets a property to the
+    value indicated by userData.
+    */
+    template <typename Func1, typename Func2>
+    QComboBox *createComboBox(SettingsPanel *settingsPanel, const QString &label,
+                              std::initializer_list<std::pair<QString, QVariant>> options, Func1 getter, Func2 setter)
+    {
+        QWidget *parent = settingsPanel->settingsArea();
+        Q_ASSERT(parent != nullptr);
+        auto *layout = qobject_cast<QFormLayout *>(parent->layout());
+        Q_ASSERT_X(layout != nullptr, "createComboBox", "parent layout must be a QFormLayout");
+
+        auto *comboBox = new QComboBox(parent);
+        for (const auto &[text, data] : options)
+        {
+            comboBox->addItem(text, data);
+        }
+
+        if (settingsPanel->referenceImage())
+        {
+            comboBox->setCurrentIndex(comboBox->findData(getter()));
+        }
+
+        QObject::connect(comboBox, &QComboBox::currentIndexChanged,
+                         [comboBox, setter](int index) { setter(comboBox->itemData(index)); });
+        QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, comboBox,
+                         [comboBox, getter](const ReferenceImageSP &refImage) {
+                             const int idx = comboBox->findData(static_cast<int>(getter()));
+                             comboBox->setCurrentIndex(idx);
+                         });
+
+        layout->addRow(label, comboBox);
+        return comboBox;
+    }
+
     QToolButton *createFlipButton(SettingsPanel &parent, Qt::Orientation orientation)
     {
         const int btnIconSize = 40;
@@ -94,6 +133,11 @@ namespace
         QObject::connect(action, &QAction::triggered, &parent, &SettingsPanel::flipImageVertically);
 
         return toolBar;
+    }
+
+    template <typename E> E variantToEnum(QVariant &variant)
+    {
+        return variant.isValid() ? static_cast<E>(variant.toInt()) : E();
     }
 
 } // namespace
@@ -196,9 +240,16 @@ void SettingsPanel::initSettingsArea()
                  { return m_refImage->opacity(); }, [this](qreal value)
                  { m_refImage->setOpacity(value); });
 
-    createSlider(this, "Saturation:", [this]()
-                 { return m_refImage->saturation(); }, [this](qreal value)
-                 { m_refImage->setSaturation(value); });
+    using enum ReferenceWindow::TabFit;
+    createComboBox(
+        this, "Fit Tabs to:",
+        {
+            {"Width", static_cast<int>(FitToWidth)},
+            {"Height", static_cast<int>(FitToHeight)},
+            {"None", static_cast<int>(NoFit)},
+        },
+        [this]() { return static_cast<int>(m_refWindow->tabFit()); },
+        [this](QVariant value) { m_refWindow->setTabFit(variantToEnum<ReferenceWindow::TabFit>(value)); });
 }
 
 void SettingsPanel::buildInterface()
