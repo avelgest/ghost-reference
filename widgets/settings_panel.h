@@ -1,13 +1,14 @@
 #pragma once
 
 #include <QtCore/QPointer>
-#include <QtWidgets/QWidget>
+#include <QtWidgets/QFrame>
 
 #include "../types.h"
 
+class QScrollArea;
 class QToolBar;
 
-class SettingsPanel : public QWidget
+class SettingsPanel : public QFrame
 {
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(SettingsPanel)
@@ -17,7 +18,9 @@ private:
     ReferenceImageSP m_refImage = nullptr;
 
     QWidget *m_noRefWidget = nullptr;
+    QScrollArea *m_settingsAreaScroll = nullptr;
     QWidget *m_settingsArea = nullptr;
+    QWidget *m_titleBar = nullptr;
     QToolBar *m_toolBar = nullptr;
 
 public:
@@ -46,8 +49,8 @@ public slots:
 private:
     void initNoRefWidget();
     void initSettingsArea();
-    void buildInterface();
-    void refreshInterface();
+    void buildUI();
+    void refreshUI();
 };
 
 inline ReferenceWindow *SettingsPanel::refWindow() const { return m_refWindow; }

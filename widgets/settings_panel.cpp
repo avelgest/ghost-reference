@@ -5,9 +5,12 @@
 
 #include <QtCore/Qt>
 
+#include <QtGui/QMouseEvent>
+
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QFormLayout>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QPushButton>
 #include <QtWidgets/QScrollArea>
 #include <QtWidgets/QSizePolicy>
 #include <QtWidgets/QSlider>
@@ -20,7 +23,7 @@
 namespace
 {
     const Qt::WindowFlags defaultWindowFlags = Qt::Tool;
-    const QSize defaultSizeHint(256, 256);
+    const QSize defaultSizeHint(256, 376);
 
     const int sliderScale = 100;
     const qreal sliderScaleF = static_cast<qreal>(sliderScale);
@@ -30,6 +33,64 @@ namespace
         qreal min = 0.;
         qreal max = 1.;
     };
+
+    class TitleBar : public QWidget
+    {
+        Q_DISABLE_COPY_MOVE(TitleBar)
+    private:
+        QPointF m_lastMousePos;
+
+    public:
+        explicit TitleBar(SettingsPanel *settingsPanel);
+        ~TitleBar() override = default;
+
+        void mousePressEvent(QMouseEvent *event) override;
+        void mouseMoveEvent(QMouseEvent *event) override;
+    };
+
+    TitleBar::TitleBar(SettingsPanel *settingsPanel) : QWidget(settingsPanel)
+    {
+        const int buttonWidth = 48;
+        const int barHeightMin = 32;
+
+        setCursor(QCursor(Qt::SizeAllCursor));
+        setObjectName("title-bar");
+        setMinimumHeight(barHeightMin);
+
+        auto *layout = new QHBoxLayout(this);
+
+        layout->addStretch();
+        layout->setSpacing(0);
+        layout->setContentsMargins(0, 0, 0, 0);
+
+        auto *closeBtn = new QPushButton(style()->standardIcon(QStyle::SP_TitleBarCloseButton), "", this);
+        closeBtn->setAttribute(Qt::WA_NoMousePropagation);
+        closeBtn->setCursor({});
+        closeBtn->setFlat(true);
+        closeBtn->setMinimumWidth(buttonWidth);
+        closeBtn->setObjectName("title-bar-close");
+        closeBtn->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+        QObject::connect(closeBtn, &QPushButton::clicked, settingsPanel, &SettingsPanel::close);
+        layout->addWidget(closeBtn);
+    }
+
+    void TitleBar::mousePressEvent(QMouseEvent *event)
+    {
+        if (event->button() == Qt::LeftButton)
+        {
+            m_lastMousePos = event->globalPos();
+        }
+    }
+
+    void TitleBar::mouseMoveEvent(QMouseEvent *event)
+    {
+        if (parentWidget() && event->buttons() == Qt::LeftButton)
+        {
+            const QPointF diff = event->globalPos() - m_lastMousePos;
+            parentWidget()->move((parentWidget()->pos() + diff).toPoint());
+            m_lastMousePos = event->globalPos();
+        }
+    }
 
     template <typename Func1, typename Func2>
     QSlider *createSlider(SettingsPanel *settingsPanel,
@@ -95,8 +156,9 @@ namespace
 
         QObject::connect(comboBox, &QComboBox::currentIndexChanged,
                          [comboBox, setter](int index) { setter(comboBox->itemData(index)); });
+
         QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, comboBox,
-                         [comboBox, getter](const ReferenceImageSP &refImage) {
+                         [comboBox, getter]([[maybe_unused]] const ReferenceImageSP &refImage) {
                              const int idx = comboBox->findData(static_cast<int>(getter()));
                              comboBox->setCurrentIndex(idx);
                          });
@@ -107,13 +169,11 @@ namespace
 
     QToolButton *createFlipButton(SettingsPanel &parent, Qt::Orientation orientation)
     {
-        const int btnIconSize = 40;
         const char *iconPath = (orientation == Qt::Vertical) ? "resources/flip_btn_v.png"
                                                              : "resources/flip_btn_h.png";
         auto *flipButton = new QToolButton(&parent);
         flipButton->setAutoRaise(true);
         flipButton->setIcon(QIcon(iconPath));
-        flipButton->setIconSize({btnIconSize, btnIconSize});
 
         QObject::connect(flipButton, &QToolButton::clicked, &parent,
                          (orientation == Qt::Vertical) ? &SettingsPanel::flipImageVertically
@@ -121,16 +181,18 @@ namespace
         return flipButton;
     }
 
-    QToolBar *createToolBar(SettingsPanel &parent)
+    QToolBar *createToolBar(SettingsPanel *settingsPanel)
     {
-        auto *toolBar = new QToolBar(&parent);
+        Q_ASSERT(settingsPanel != nullptr);
+
+        auto *toolBar = new QToolBar(settingsPanel);
         QAction *action = nullptr;
 
         action = toolBar->addAction(QIcon("resources/flip_btn_h.png"), "Flip Horizontally");
-        QObject::connect(action, &QAction::triggered, &parent, &SettingsPanel::flipImageHorizontally);
+        QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::flipImageHorizontally);
 
         action = toolBar->addAction(QIcon("resources/flip_btn_v.png"), "Flip Vertically");
-        QObject::connect(action, &QAction::triggered, &parent, &SettingsPanel::flipImageVertically);
+        QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::flipImageVertically);
 
         return toolBar;
     }
@@ -142,15 +204,12 @@ namespace
 
 } // namespace
 
-SettingsPanel::SettingsPanel(ReferenceWindow *refWindow, QWidget *parent)
-    : QWidget(parent, {})
+SettingsPanel::SettingsPanel(ReferenceWindow *refWindow, QWidget *parent) : QFrame(parent, {})
 {
     setAutoFillBackground(true);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
-    new QGridLayout(this);
-
-    buildInterface();
+    buildUI();
     setRefWindow(refWindow);
 }
 
@@ -186,7 +245,7 @@ void SettingsPanel::setReferenceImage(const ReferenceImageSP &image)
     {
         m_refImage = image;
 
-        refreshInterface();
+        refreshUI();
     }
     emit refImageChanged(m_refImage);
 }
@@ -208,10 +267,7 @@ void SettingsPanel::flipImageVertically() const
 
 void SettingsPanel::initNoRefWidget()
 {
-    if (m_noRefWidget)
-    {
-        return;
-    }
+    Q_ASSERT(m_noRefWidget == nullptr);
 
     auto *label = new QLabel("No Image", this);
     const int fontSize = 18;
@@ -226,19 +282,29 @@ void SettingsPanel::initNoRefWidget()
 
 void SettingsPanel::initSettingsArea()
 {
-    if (m_settingsArea)
-    {
-        return;
-    }
+    Q_ASSERT(m_settingsArea == nullptr);
+    Q_ASSERT(m_settingsAreaScroll == nullptr);
 
-    auto *scrollArea = new QScrollArea(this);
-    auto *layout = new QFormLayout(scrollArea);
+    m_settingsArea = new QWidget(this);
+    m_settingsArea->setObjectName("settings-area");
 
-    m_settingsArea = scrollArea;
+    m_settingsAreaScroll = new QScrollArea(this);
+    m_settingsAreaScroll->setObjectName("settings-area-scroll");
+    m_settingsAreaScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_settingsAreaScroll->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_settingsAreaScroll->setSizeAdjustPolicy(QScrollArea::AdjustIgnored);
+    m_settingsAreaScroll->setWidgetResizable(true);
+    m_settingsAreaScroll->setWidget(m_settingsArea);
 
-    createSlider(this, "Opacity:", [this]()
-                 { return m_refImage->opacity(); }, [this](qreal value)
-                 { m_refImage->setOpacity(value); });
+    auto *layout = new QFormLayout(m_settingsArea);
+
+    createSlider(
+        this, "Opacity:", [this]() { return m_refImage->opacity(); },
+        [this](qreal value) { m_refImage->setOpacity(value); });
+
+    createSlider(
+        this, "Saturation:", [this]() { return m_refImage->saturation(); },
+        [this](qreal value) { m_refImage->setSaturation(value); });
 
     using enum ReferenceWindow::TabFit;
     createComboBox(
@@ -252,26 +318,30 @@ void SettingsPanel::initSettingsArea()
         [this](QVariant value) { m_refWindow->setTabFit(variantToEnum<ReferenceWindow::TabFit>(value)); });
 }
 
-void SettingsPanel::buildInterface()
+void SettingsPanel::buildUI()
 {
-    Q_ASSERT(!m_toolBar && !m_settingsArea && !m_noRefWidget);
+    Q_ASSERT(!m_titleBar && !m_toolBar);
 
-    auto *gridLayout = qobject_cast<QGridLayout *>(layout());
-    Q_ASSERT(gridLayout);
+    auto *gridLayout = new QGridLayout(this);
+    gridLayout->setContentsMargins(0, 0, 0, 0);
+    gridLayout->setSpacing(0);
 
-    m_toolBar = createToolBar(*this);
-    gridLayout->addWidget(m_toolBar, 0, 0, Qt::AlignTop);
+    m_titleBar = new TitleBar(this);
+    gridLayout->addWidget(m_titleBar, 0, 0, Qt::AlignTop);
+
+    m_toolBar = createToolBar(this);
+    gridLayout->addWidget(m_toolBar, 1, 0, Qt::AlignTop);
 
     initSettingsArea();
-    gridLayout->addWidget(m_settingsArea, 1, 0);
+    gridLayout->addWidget(m_settingsAreaScroll, 2, 0);
 
     initNoRefWidget();
-    gridLayout->addWidget(m_noRefWidget, 1, 0);
+    gridLayout->addWidget(m_noRefWidget, 2, 0);
 
-    refreshInterface();
+    refreshUI();
 }
 
-void SettingsPanel::refreshInterface()
+void SettingsPanel::refreshUI()
 {
     if (!m_refImage)
     {

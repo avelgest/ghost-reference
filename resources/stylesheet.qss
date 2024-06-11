@@ -23,3 +23,49 @@ QTabBar QPushButton:hover {
 QTabBar QPushButton:pressed {
     background-color: hsva(0, 0, 50%, 50%);
 }
+
+SettingsPanel {
+    background-color: palette(Window);
+    border: 1px solid darkgray;
+}
+
+SettingsPanel #title-bar {
+    background-color: palette(Base);
+    border-bottom: 1px solid darkgray;
+}
+
+SettingsPanel #title-bar-close:flat {
+    border: none;
+    padding: 4px;
+}
+
+SettingsPanel #title-bar-close:hover {
+    background-color: rgba(100%, 0, 0, 80%);
+}
+
+SettingsPanel #title-bar-close:pressed {
+    background-color: rgba(100%, 0, 0, 30%);
+}
+
+SettingsPanel .QToolBar {
+    border-bottom: 1px solid darkgray;
+    margin: 0px;
+}
+
+SettingsPanel .QToolButton {
+    border: 1px outset darkgray;
+    height: 36px;
+    width: 36px;
+}
+
+SettingsPanel .QToolButton:hover {
+    background-color: hsva(0, 0, 50%, 30%);
+}
+
+SettingsPanel .QToolButton:pressed {
+    border-style: inset;
+}
+
+SettingsPanel #settings-area-scroll {
+    border: none;
+}
