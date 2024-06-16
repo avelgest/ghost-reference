@@ -19,8 +19,13 @@ public:
     void setWindowMode(WindowMode value);
 
 protected:
+    void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
     void showEvent(QShowEvent *event) override;
+
+signals:
+    void modifierKeysChanged(Qt::KeyboardModifiers modifiers);
 };
 
 WindowMode BackWindow::windowMode() const { return m_windowMode; }

@@ -479,18 +479,20 @@ void ReferenceWindow::onFrameMove(QPoint diff)
     checkShouldMerge();
 }
 
-void ReferenceWindow::onFrameResize(Qt::Edges fromEdges, QSize newSize)
+void ReferenceWindow::onFrameResize(Qt::Edges fromEdges, QSize sizeChange)
 {
     if (!m_activeImage)
     {
         return;
     }
 
-    m_activeImage->setDisplaySize(newSize);
+    const QSize newImgSize = m_activeImage->displaySize() + sizeChange;
+
+    m_activeImage->setDisplaySize(newImgSize);
 
     const QSize oldSize = size();
     adjustSize();
-    const QSize sizeChange = size() - oldSize;
+    sizeChange = size() - oldSize;
     const QPoint moveBy((fromEdges & Qt::LeftEdge) ? 0 : -sizeChange.width(),
                         (fromEdges & Qt::TopEdge) ? 0 : -sizeChange.height());
     move(pos() + moveBy);

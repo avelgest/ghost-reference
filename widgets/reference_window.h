@@ -100,7 +100,7 @@ private:
     void onAppFocusChanged(QWidget *old, QWidget *now);
     void onFrameCrop(QMargins cropBy);
     void onFrameMove(QPoint diff);
-    void onFrameResize(Qt::Edges fromEdges, QSize newSize);
+    void onFrameResize(Qt::Edges fromEdges, QSize sizeChange);
     void onFrameViewMoved(QPoint diff);
     void onTransformStarted(ResizeFrame::TransformType transform);
     void onTransformFinished(ResizeFrame::TransformType transform);

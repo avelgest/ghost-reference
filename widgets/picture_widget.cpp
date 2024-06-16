@@ -177,11 +177,10 @@ void PictureWidget::setImage(const ReferenceImageSP &image)
         QObject::connect(image.get(), &ReferenceImage::zoomChanged,
                          this, &PictureWidget::updateGeometry);
 
-        QObject::connect(image.get(), &ReferenceImage::displayImageUpdate, [this]()
-                         { update(); });
-        QObject::connect(image.get(), &ReferenceImage::settingsChanged, [this]()
-                         { update(); });
+        QObject::connect(image.get(), &ReferenceImage::displayImageUpdate, this, [this]() { update(); });
+        QObject::connect(image.get(), &ReferenceImage::settingsChanged, this, [this]() { update(); });
     }
+    m_resizeFrame->showOnlyMoveControl(m_imageSP.isNull());
 
     updateGeometry();
     update();
@@ -194,6 +193,7 @@ void PictureWidget::setReferenceWindow(ReferenceWindow *refWindow)
         m_referenceWindow->disconnect(this);
     }
     m_referenceWindow = refWindow;
+    setImage(refWindow->activeImage());
     QObject::connect(m_referenceWindow, &ReferenceWindow::activeImageChanged, this, &PictureWidget::setImage);
     QObject::connect(m_referenceWindow, &ReferenceWindow::windowModeChanged, this, [this]() { update(); });
 }

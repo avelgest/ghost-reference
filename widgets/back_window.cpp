@@ -5,6 +5,8 @@
 #include <QtGui/QScreen>
 #include <QtGui/QWindow>
 
+#include <QtWidgets/QApplication>
+
 #include "../utils/window_utils.h"
 
 namespace
@@ -30,6 +32,26 @@ void BackWindow::setWindowMode(WindowMode value)
 {
     m_windowMode = value;
     utils::setTransparentForInput(this, value == GhostMode);
+}
+
+void BackWindow::keyPressEvent(QKeyEvent *event)
+{
+    QWidget::keyPressEvent(event);
+    const int key = event->key();
+    if (key == Qt::Key_Control || key == Qt::Key_Shift || Qt::Key_Alt)
+    {
+        emit modifierKeysChanged(event->modifiers());
+    }
+}
+
+void BackWindow::keyReleaseEvent(QKeyEvent *event)
+{
+    QWidget::keyReleaseEvent(event);
+    const int key = event->key();
+    if (key == Qt::Key_Control || key == Qt::Key_Shift || Qt::Key_Alt)
+    {
+        emit modifierKeysChanged(event->modifiers());
+    }
 }
 
 void BackWindow::paintEvent(QPaintEvent *event)

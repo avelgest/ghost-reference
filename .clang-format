@@ -9,6 +9,7 @@ NamespaceIndentation: All
 AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: WithoutElse
 AllowShortLambdasOnASingleLine: All
+PackConstructorInitializers: Never
 
 BinPackArguments: true
 BinPackParameters: true
