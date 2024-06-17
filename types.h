@@ -10,11 +10,13 @@ class RefImageLoader;
 // TODO Separate into widgets/types.h
 // widgets
 class BackWindow;
+class MainToolbar;
 class PictureWidget;
+class PreferencesWindow;
 class ReferenceWindow;
 class ResizeFrame;
-class ReferenceTitlebar;
 class SettingsPanel;
+class TabBar;
 
 // utils
 namespace utils

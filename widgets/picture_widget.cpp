@@ -131,7 +131,7 @@ void PictureWidget::paintEvent(QPaintEvent *event)
     // dispImage should be the same size as this->rect()
     if (destRect.size() != dispImage.size())
     {
-        qDebug() << "Size mismatch when drawing image" << refImage.name();
+        qWarning() << "Size mismatch when drawing image" << refImage.name();
     }
 
     painter.setOpacity(std::max(minOpacity, refImage.opacity() * opacityMultiplier()));
@@ -140,7 +140,6 @@ void PictureWidget::paintEvent(QPaintEvent *event)
 
 void PictureWidget::pasteFromClipboard() const
 {
-    // TODO Support pasting multiple
     const QList<ReferenceImageSP> newRefImages = refLoad::fromClipboard();
 
     if (newRefImages.isEmpty())

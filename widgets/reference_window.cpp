@@ -11,7 +11,6 @@
 
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QGridLayout>
-#include <QtWidgets/QTabBar>
 
 #include "../app.h"
 #include "../preferences.h"
@@ -25,8 +24,6 @@
 #include "tab_bar.h"
 
 #include <QtWidgets/QStyle>
-
-#include <QtWidgets/QPushButton>
 
 namespace
 {
@@ -77,23 +74,6 @@ namespace
                 vertical ? margins.bottom() : margins.top(),
                 horizontal ? margins.left() : margins.right(),
                 vertical ? margins.top() : margins.bottom()};
-    }
-
-    // Unused
-    constexpr qreal minMagnitude(qreal value, qreal minMag)
-    {
-        return (std::abs(value) < minMag && std::abs(value) > DBL_EPSILON)
-                   ? std::copysign(minMag, value)
-                   : value;
-    }
-
-    // Unused
-    constexpr QMarginsF minMagnitude(const QMarginsF &margins, qreal minMag)
-    {
-        return {minMagnitude(margins.left(), minMag),
-                minMagnitude(margins.top(), minMag),
-                minMagnitude(margins.right(), minMag),
-                minMagnitude(margins.bottom(), minMag)};
     }
 
     // Linear interpolation
@@ -279,11 +259,10 @@ void ReferenceWindow::fromJson(const QJsonObject &json)
 QJsonObject ReferenceWindow::toJson() const
 {
     QJsonArray tabs;
-    // Use the tabbar rather than m_refImages so that order of tabs is kept
-    auto *tabbar = qobject_cast<TabBar *>(m_tabBar);
-    for (int i = 0; i < tabbar->count(); i++)
+    // Use the tab bar rather than m_refImages so that order of tabs is kept
+    for (int i = 0; i < m_tabBar->count(); i++)
     {
-        const ReferenceImageSP refItem = tabbar->referenceAt(i);
+        const ReferenceImageSP refItem = m_tabBar->referenceAt(i);
         tabs.push_back(refItem->name());
     }
 
@@ -560,7 +539,7 @@ void ReferenceWindow::mergeInto(ReferenceWindow *other)
 
 void ReferenceWindow::closeEvent([[maybe_unused]] QCloseEvent *event)
 {
-    auto logger = qDebug() << "Closing reference window for references: ";
+    auto logger = qInfo() << "Closing reference window for references: ";
     for (const auto &refItem : m_refImages)
     {
         logger << (refItem->name().isEmpty() ? "[no name]" : refItem->name());
@@ -599,7 +578,7 @@ void ReferenceWindow::dropEvent(QDropEvent *event)
         }
         else
         {
-            qCritical() << "Null referenceImageSP given";
+            qCritical() << "Null ReferenceImageSP given";
         }
     }
 }

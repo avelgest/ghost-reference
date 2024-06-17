@@ -9,7 +9,6 @@
 #include <QtCore/QVariant>
 
 #include <QtGui/QImage>
-// #include <QtGui/QPainter>
 #include <QtGui/QPixmap>
 
 #include "reference_loading.h"
@@ -119,7 +118,7 @@ private:
     ReferenceImage();
     explicit ReferenceImage(const QImage &image);
     explicit ReferenceImage(const QPixmap &pixmap);
-    ReferenceImage(RefImageLoader &&loader);
+    explicit ReferenceImage(RefImageLoader &&loader);
 
     QSizeF minCropSize() const;
     QTransform srcTransfrom() const;

@@ -13,9 +13,6 @@
 
 class QNetworkAccessManager;
 
-class ReferenceWindow;
-class MainToolbar;
-
 class App : public QApplication
 {
     Q_OBJECT

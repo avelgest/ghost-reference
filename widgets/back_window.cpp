@@ -23,7 +23,6 @@ BackWindow::BackWindow(QWidget *parent)
     : QWidget(parent, defaultWindowFlags)
 {
     setAttribute(Qt::WA_TranslucentBackground);
-    // setWindowState(Qt::WindowMaximized);
 
     setGeometry(screen()->virtualGeometry());
 }

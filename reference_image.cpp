@@ -16,7 +16,7 @@
 namespace
 {
     // Minimum width or height for ReferenceImage::crop (px)
-    const qreal minCropAbs = 16.;
+    const qreal minCropAbs = 4.;
     // Minimum size of the image on screen (px)
     const qreal minDisplaySize = 96.;
 
@@ -247,15 +247,8 @@ const QByteArray &ReferenceImage::ensureCompressedImage()
 
 QSize ReferenceImage::displaySize() const
 {
-    // return displaySizeF().toSize();
     return (crop().size().toSizeF() * zoom()).toSize();
-    // return crop().size() * zoom();
 }
-
-/* QSizeF ReferenceImage::displaySizeF() const
-{
-    return cropF().size() * zoom();
-} */
 
 void ReferenceImage::setDisplaySizeF(QSizeF value)
 {

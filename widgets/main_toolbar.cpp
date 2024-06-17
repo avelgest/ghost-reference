@@ -55,7 +55,7 @@ namespace
         };
         ~DragWidget() override = default;
 
-        inline QSize sizeHint() const override { return {s_width, buttonSize.height()}; }
+        QSize sizeHint() const override { return {s_width, buttonSize.height()}; }
 
     protected:
         void mousePressEvent(QMouseEvent *event) override

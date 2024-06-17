@@ -9,8 +9,6 @@
 #include "../types.h"
 #include "resize_frame.h"
 
-class QTabBar;
-
 class ReferenceWindow : public QWidget
 {
 public:
@@ -39,7 +37,7 @@ private:
 
     PictureWidget *m_pictureWidget = nullptr;
     QPointer<SettingsPanel> m_settingsPanel = nullptr;
-    QTabBar *m_tabBar = nullptr;
+    TabBar *m_tabBar = nullptr;
     QWidget *m_overlay = nullptr;
 
 public:
