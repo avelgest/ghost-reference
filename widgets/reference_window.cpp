@@ -377,8 +377,8 @@ void ReferenceWindow::drawHighlightedBorder()
     pen.setWidth(1);
 
     const auto marginSizeF = static_cast<float>(marginSize);
-    const QColor color1(96, 96, 255);
-    const QColor color2(255, 255, 255, static_cast<int>(255 / marginSizeF));
+    const QColor color1(96, 96, 255, 196);
+    const QColor color2(32, 32, 255, 0);
 
     QRect borderRect = rect();
     for (int i = 0; i <= marginSize; i++)
@@ -606,6 +606,18 @@ void ReferenceWindow::dropEvent(QDropEvent *event)
 
 void ReferenceWindow::enterEvent([[maybe_unused]] QEnterEvent *event)
 {
+}
+
+void ReferenceWindow::focusInEvent(QFocusEvent *event)
+{
+    QWidget::focusInEvent(event);
+    update();
+}
+
+void ReferenceWindow::focusOutEvent(QFocusEvent *event)
+{
+    QWidget::focusOutEvent(event);
+    update();
 }
 
 void ReferenceWindow::hideEvent([[maybe_unused]] QHideEvent *event)
