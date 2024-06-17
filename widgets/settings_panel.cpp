@@ -9,6 +9,7 @@
 
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QFormLayout>
+#include <QtWidgets/QGraphicsDropShadowEffect>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QScrollArea>
@@ -229,12 +230,33 @@ namespace
         return variant.isValid() ? static_cast<E>(variant.toInt()) : E();
     }
 
+    QGraphicsEffect *createShadowEffect(SettingsPanel *parent)
+    {
+        const float alpha = 0.4;
+        const int blurRadius = 12;
+        const int offset = 4;
+
+        auto *effect = new QGraphicsDropShadowEffect(parent);
+        QColor color = effect->color();
+        color.setAlphaF(alpha);
+
+        effect->setColor(color);
+        effect->setOffset(offset, offset);
+        effect->setBlurRadius(blurRadius);
+
+        return effect;
+    }
+
 } // namespace
 
 SettingsPanel::SettingsPanel(ReferenceWindow *refWindow, QWidget *parent) : QFrame(parent, {})
 {
     setAutoFillBackground(true);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
+    // Graphics effects can cause issues when the panel is moved outside of the screen (see QTBUG-58602)
+    // so disable for now.
+    // setGraphicsEffect(createShadowEffect(this));
 
     buildUI();
     setRefWindow(refWindow);
