@@ -16,10 +16,7 @@ public:
     ReferenceCollection();
     ~ReferenceCollection() = default;
 
-    // ReferenceCollection(ReferenceCollection &&) = default;
-    // ReferenceCollection &operator=(ReferenceCollection &&) = default;
-
-    ReferenceImageSP newReferenceImage();
+    ReferenceImageSP newReferenceImage(const QString &name = "");
     ReferenceImageSP getReferenceImage(const QString &name);
     void renameReference(ReferenceImage &refItem, const QString &newName);
 

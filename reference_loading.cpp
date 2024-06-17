@@ -1,5 +1,6 @@
 #include "reference_loading.h"
 
+#include <QtCore/QFileInfo>
 #include <QtCore/QFuture>
 #include <QtCore/QMimeData>
 #include <QtCore/QMimeDatabase>
@@ -44,6 +45,16 @@ namespace
         return App::ghostRefInstance()->referenceItems();
     }
 
+    QString stripExt(const QString &filepath)
+    {
+        const qsizetype splitPos = filepath.lastIndexOf(".");
+        if (splitPos > 0)
+        {
+            return filepath.first(splitPos);
+        }
+        return filepath;
+    }
+
 } // namespace
 
 QList<ReferenceImageSP> refLoad::fromClipboard()
@@ -52,7 +63,7 @@ QList<ReferenceImageSP> refLoad::fromClipboard()
     const QMimeData *mimeData = clipboard->mimeData();
     if (!mimeData)
     {
-        qCritical() << "Could get clipboard data";
+        qCritical() << "Could not get clipboard data";
         return {};
     }
     return fromMimeData(mimeData);
@@ -65,11 +76,7 @@ QList<ReferenceImageSP> refLoad::fromDropEvent(const QDropEvent *event)
 
 ReferenceImageSP refLoad::fromFilepath(const QString &filepath)
 {
-    ReferenceImageSP refImage = getRefCollection().newReferenceImage();
-    refImage->setLoader(RefImageLoader(filepath));
-    refImage->setFilepath(filepath);
-
-    return refImage;
+    return fromUrl(filepath);
 }
 
 ReferenceImageSP refLoad::fromPixmap(const QPixmap &pixmap)
@@ -103,7 +110,8 @@ QList<ReferenceImageSP> refLoad::fromMimeData(const QMimeData *mimeData)
 
 ReferenceImageSP refLoad::fromUrl(const QUrl &url)
 {
-    ReferenceImageSP refImage = getRefCollection().newReferenceImage();
+    const QString name = stripExt(url.fileName());
+    ReferenceImageSP refImage = getRefCollection().newReferenceImage(name);
     refImage->setLoader(RefImageLoader(url));
 
     return refImage;

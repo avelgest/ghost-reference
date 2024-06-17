@@ -12,15 +12,14 @@
 
 ReferenceCollection::ReferenceCollection()
     : m_refMap(std::make_unique<ReferenceMap>())
-{
-}
+{}
 
-ReferenceImageSP ReferenceCollection::newReferenceImage()
+ReferenceImageSP ReferenceCollection::newReferenceImage(const QString &name)
 {
     ReferenceMap &refMap = *m_refMap;
 
     const auto refImage = ReferenceImageSP(new ReferenceImage());
-    refImage->m_name = uniqueReferenceName("Untitled");
+    refImage->m_name = uniqueReferenceName(name.isEmpty() ? "Untitled" : name);
 
     refMap[refImage->name()] = refImage;
 

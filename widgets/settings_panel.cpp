@@ -36,32 +36,46 @@ namespace
 
     class TitleBar : public QWidget
     {
+        Q_OBJECT
         Q_DISABLE_COPY_MOVE(TitleBar)
     private:
+        QLabel *m_TitleLabel;
         QPointF m_lastMousePos;
+        QString m_title;
 
     public:
         explicit TitleBar(SettingsPanel *settingsPanel);
         ~TitleBar() override = default;
 
+        void setTitle(const QString &title);
+
         void mousePressEvent(QMouseEvent *event) override;
         void mouseMoveEvent(QMouseEvent *event) override;
+        void resizeEvent(QResizeEvent *event) override;
     };
 
-    TitleBar::TitleBar(SettingsPanel *settingsPanel) : QWidget(settingsPanel)
+    TitleBar::TitleBar(SettingsPanel *settingsPanel)
+        : QWidget(settingsPanel),
+          m_TitleLabel(new QLabel(this))
     {
         const int buttonWidth = 48;
         const int barHeightMin = 32;
+        const int marginLeft = 12;
 
-        setCursor(QCursor(Qt::SizeAllCursor));
+        setCursor(Qt::SizeAllCursor);
         setObjectName("title-bar");
         setMinimumHeight(barHeightMin);
 
         auto *layout = new QHBoxLayout(this);
 
-        layout->addStretch();
+        m_TitleLabel->setObjectName("title-bar-title-label");
+        m_TitleLabel->setTextFormat(Qt::PlainText);
+        m_TitleLabel->setTextInteractionFlags(Qt::NoTextInteraction);
+        layout->addWidget(m_TitleLabel);
+        layout->setStretchFactor(m_TitleLabel, 1);
+
         layout->setSpacing(0);
-        layout->setContentsMargins(0, 0, 0, 0);
+        layout->setContentsMargins(marginLeft, 0, 0, 0);
 
         auto *closeBtn = new QPushButton(style()->standardIcon(QStyle::SP_TitleBarCloseButton), "", this);
         closeBtn->setAttribute(Qt::WA_NoMousePropagation);
@@ -72,6 +86,13 @@ namespace
         closeBtn->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
         QObject::connect(closeBtn, &QPushButton::clicked, settingsPanel, &SettingsPanel::close);
         layout->addWidget(closeBtn);
+    }
+
+    void TitleBar::setTitle(const QString &title)
+    {
+        m_title = title;
+        const QString text = fontMetrics().elidedText(m_title, Qt::ElideRight, m_TitleLabel->width());
+        m_TitleLabel->setText(text);
     }
 
     void TitleBar::mousePressEvent(QMouseEvent *event)
@@ -90,6 +111,12 @@ namespace
             parentWidget()->move((parentWidget()->pos() + diff).toPoint());
             m_lastMousePos = event->globalPos();
         }
+    }
+
+    void TitleBar::resizeEvent(QResizeEvent *event)
+    {
+        QWidget::resizeEvent(event);
+        setTitle(m_title);
     }
 
     template <typename Func1, typename Func2>
@@ -353,11 +380,15 @@ void SettingsPanel::refreshUI()
     }
     else
     {
-        setWindowTitle(m_refImage->name().isEmpty() ? "Settings" : m_refImage->name() + " Settings");
+        setWindowTitle(m_refImage->name().isEmpty() ? "Settings" : m_refImage->name());
 
         m_toolBar->setEnabled(true);
 
         m_settingsArea->show();
         m_noRefWidget->hide();
     }
+    auto *titleBar = qobject_cast<TitleBar *>(m_titleBar);
+    titleBar->setTitle(windowTitle());
 }
+
+#include "settings_panel.moc"

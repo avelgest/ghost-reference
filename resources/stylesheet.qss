@@ -34,6 +34,10 @@ SettingsPanel #title-bar {
     border-bottom: 1px solid darkgray;
 }
 
+SettingsPanel #title-bar-title-label {
+    font-size: 14px;
+}
+
 SettingsPanel #title-bar-close:flat {
     border: none;
     padding: 4px;
