@@ -10,6 +10,7 @@ class RefImageLoader;
 // TODO Separate into widgets/types.h
 // widgets
 class BackWindow;
+class ColorPicker;
 class MainToolbar;
 class PictureWidget;
 class PreferencesWindow;
@@ -17,6 +18,7 @@ class ReferenceWindow;
 class ResizeFrame;
 class SettingsPanel;
 class TabBar;
+class Tool;
 
 // utils
 namespace utils
@@ -35,6 +37,7 @@ enum WindowMode
 {
     GhostMode,
     TransformMode,
+    ToolMode,
 };
 
 enum class RefType

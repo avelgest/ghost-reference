@@ -42,12 +42,13 @@ private:
 
 public:
     explicit ReferenceWindow(QWidget *parent = nullptr);
-    explicit ReferenceWindow(QImage &image, QWidget *parent = nullptr);
     ~ReferenceWindow() override;
 
     void addReference(const ReferenceImageSP &refItem);
     bool removeReference(const ReferenceImageSP &refItem);
     ReferenceWindow *detachReference(ReferenceImageSP refItem);
+
+    PictureWidget *pictureWidget() const;
 
     void fromJson(const QJsonObject &json);
     QJsonObject toJson() const;
@@ -120,6 +121,11 @@ signals:
     // requester will be null if the merge request has been cancelled.
     void mergeRequested(ReferenceWindow *requester);
 };
+
+inline PictureWidget *ReferenceWindow::pictureWidget() const
+{
+    return m_pictureWidget;
+}
 
 inline ReferenceImageSP &ReferenceWindow::activeImage() { return m_activeImage; }
 inline const ReferenceImageSP &ReferenceWindow::activeImage() const { return m_activeImage; }

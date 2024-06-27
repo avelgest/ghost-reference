@@ -46,11 +46,13 @@ qt_standard_project_setup()
 qt_add_executable(GhostReference 
                   main.cpp
                   app.cpp
+                  color_picker.cpp
                   preferences.cpp
                   reference_collection.cpp
                   reference_image.cpp
                   reference_loading.cpp
                   saving.cpp
+                  tool.cpp
                   )
 
 add_subdirectory(utils)

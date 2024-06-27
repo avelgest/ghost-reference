@@ -174,6 +174,13 @@ void App::endGlobalModeOverride()
     startGlobalModeOverride(std::nullopt);
 }
 
+void App::setReferenceCursor(const std::optional<QCursor> &cursor, std::optional<RefType> refType)
+{
+    // The actual changing of cursors should be done by widgets themselves after connecting
+    // to the referenceCursorChanged signal.
+    emit referenceCursorChanged(cursor, refType);
+}
+
 void App::saveSession()
 {
     if (m_saveFilePath.isEmpty())

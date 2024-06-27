@@ -18,6 +18,8 @@
 #include <QtWidgets/QToolBar>
 #include <QtWidgets/QToolButton>
 
+#include "../app.h"
+#include "../color_picker.h"
 #include "../reference_image.h"
 #include "reference_window.h"
 
@@ -221,6 +223,10 @@ namespace
 
         action = toolBar->addAction(QIcon("resources/flip_btn_v.png"), "Flip Vertically");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::flipImageVertically);
+
+        action = toolBar->addAction(QIcon("resources/color_picker.png"), "Color Picker");
+        QObject::connect(action, &QAction::triggered, settingsPanel,
+                         [settingsPanel]() { Tool::activateTool<ColorPicker>(); });
 
         return toolBar;
     }

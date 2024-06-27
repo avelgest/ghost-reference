@@ -335,6 +335,7 @@ void ResizeFrame::keyReleaseEvent(QKeyEvent *event)
     else
     {
         event->ignore();
+        QWidget::keyReleaseEvent(event);
     }
 }
 

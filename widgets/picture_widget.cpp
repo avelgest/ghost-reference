@@ -11,6 +11,7 @@
 #include <QtWidgets/QSizePolicy>
 #include <QtWidgets/QStackedLayout>
 
+#include "../app.h"
 #include "../reference_image.h"
 #include "../reference_loading.h"
 
@@ -51,13 +52,8 @@ namespace
 
 } // namespace
 
-PictureWidget::PictureWidget()
-    : PictureWidget(nullptr, {0})
-{
-}
-
-PictureWidget::PictureWidget(QWidget *parent, Qt::WindowFlags f)
-    : QWidget(parent, f),
+PictureWidget::PictureWidget(QWidget *parent)
+    : QWidget(parent),
       m_resizeFrame(new ResizeFrame(this))
 {
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -68,11 +64,23 @@ PictureWidget::PictureWidget(QWidget *parent, Qt::WindowFlags f)
     m_resizeFrame->setFocusProxy(this);
     m_resizeFrame->setVisible(false);
 
-    setReferenceWindow(qobject_cast<ReferenceWindow *>(parent));
+    if (auto *refWindow = qobject_cast<ReferenceWindow *>(parent); refWindow)
+    {
+        setReferenceWindow(refWindow);
+        QObject::connect(refWindow, &ReferenceWindow::windowModeChanged, this, &PictureWidget::onWindowModeChanged);
+    }
+
+    App *app = App::ghostRefInstance();
+    QObject::connect(app, &App::referenceCursorChanged, this, &PictureWidget::onReferenceCursorChanged);
 }
 
 void PictureWidget::contextMenuEvent(QContextMenuEvent *event)
 {
+    if (referenceWindow()->windowMode() == ToolMode)
+    {
+        // Let the active tool handle the event
+        return;
+    }
     if (referenceWindow())
     {
         referenceWindow()->showSettingsWindow();
@@ -138,6 +146,26 @@ void PictureWidget::paintEvent(QPaintEvent *event)
     painter.drawImage(destRect, dispImage);
 }
 
+void PictureWidget::onReferenceCursorChanged(const std::optional<QCursor> &cursor, std::optional<RefType> refType)
+{
+    if (!refType.has_value() || refType == RefType::Image)
+    {
+        setCursor(cursor.has_value() ? *cursor : QCursor());
+    }
+}
+
+void PictureWidget::onWindowModeChanged(WindowMode newMode)
+{
+    if (newMode == TransformMode)
+    {
+        m_resizeFrame->setVisible(underMouse());
+    }
+    else
+    {
+        m_resizeFrame->hide();
+    }
+}
+
 void PictureWidget::pasteFromClipboard() const
 {
     const QList<ReferenceImageSP> newRefImages = refLoad::fromClipboard();
@@ -152,6 +180,11 @@ void PictureWidget::pasteFromClipboard() const
     {
         referenceWindow()->addReference(refImage);
     }
+}
+
+QPointF PictureWidget::localToImage(const QPointF &localPos) const
+{
+    return localPos;
 }
 
 QSize PictureWidget::sizeHint() const

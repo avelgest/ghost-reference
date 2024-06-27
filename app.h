@@ -4,6 +4,7 @@
 
 #include <QtCore/QPointer>
 #include <QtCore/QScopedPointer>
+#include <QtGui/QCursor>
 #include <QtWidgets/QApplication>
 
 #include "reference_collection.h"
@@ -35,6 +36,13 @@ private:
     QNetworkAccessManager *m_networkManager = nullptr;
     QScopedPointer<Preferences> m_preferences;
 
+    // Used by setReferenceCursor
+    struct
+    {
+        std::optional<QCursor> cursor;
+        std::optional<RefType> refType;
+    } m_referenceCursor;
+
     QString m_saveFilePath;
 
 public:
@@ -59,8 +67,11 @@ public:
 
     ReferenceWindow *newReferenceWindow();
 
-    void startGlobalModeOverride(std::optional<WindowMode> windowMode);
-    void endGlobalModeOverride();
+    // Sets the cursor used for widgets that display references e.g. PictureWidget.
+    // The widgets will revert to their previous cursors when cursor is a null value.
+    // If refType is given then only widgets for that type of reference are affected
+    // (other widgets will use their default cursor).
+    void setReferenceCursor(const std::optional<QCursor> &cursor, std::optional<RefType> refType = {});
 
     void saveSession();
     void saveSessionAs();
@@ -70,10 +81,16 @@ public:
 
 signals:
     void globalModeChanged(WindowMode newValue);
+    void referenceCursorChanged(const std::optional<QCursor> &cursor, std::optional<RefType> refType);
 
 protected:
     void checkModifierKeyStates();
     void checkGhostStates();
+
+    // Override the current WindowMode whilst isOverrideKeyHeld is True
+    void startGlobalModeOverride(std::optional<WindowMode> windowMode);
+    void endGlobalModeOverride();
+
     bool inOverrideMode() const;
     static bool isOverrideKeyHeld();
 
@@ -82,7 +99,6 @@ protected:
 private:
     typedef QMap<QString, ReferenceImageWP> ReferenceMap;
     static ReferenceMap &references();
-    static QString uniqueReferenceName(const QString &basename);
 
     void cleanWindowList();
 };

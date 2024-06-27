@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include <QtWidgets/QWidget>
 
 #include "../types.h"
@@ -17,11 +19,13 @@ class PictureWidget : public QWidget
     qreal m_opacityMultiplier = 1.0;
 
 public:
-    PictureWidget();
-    explicit PictureWidget(QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
+    explicit PictureWidget(QWidget *parent = nullptr);
     ~PictureWidget() override = default;
 
     QSize sizeHint() const override;
+
+    // Map a point from local widget coordinates to reference image coordinates
+    QPointF localToImage(const QPointF &localPos) const;
 
     const ReferenceImageSP &image() const;
     void setImage(const ReferenceImageSP &image);
@@ -43,6 +47,9 @@ protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
+    void onReferenceCursorChanged(const std::optional<QCursor> &cursor, std::optional<RefType> refType);
+    void onWindowModeChanged(WindowMode newMode);
+
     void pasteFromClipboard() const;
 };
 

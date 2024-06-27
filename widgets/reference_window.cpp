@@ -155,7 +155,8 @@ ReferenceWindow::ReferenceWindow(QWidget *parent)
     QObject::connect(resizeFrame, &ResizeFrame::transformStarted, this, &ReferenceWindow::onTransformStarted);
     QObject::connect(resizeFrame, &ResizeFrame::transformFinished, this, &ReferenceWindow::onTransformFinished);
 
-    QObject::connect(App::ghostRefInstance(), &App::focusChanged, this, &ReferenceWindow::onAppFocusChanged);
+    App *app = App::ghostRefInstance();
+    QObject::connect(app, &App::focusChanged, this, &ReferenceWindow::onAppFocusChanged);
 
     setWindowMode(windowMode());
 }
@@ -266,10 +267,7 @@ QJsonObject ReferenceWindow::toJson() const
         tabs.push_back(refItem->name());
     }
 
-    return {
-        {"pos", QJsonArray({pos().x(), pos().y()})},
-        {"tabs", tabs},
-        {"activeTab", m_tabBar->currentIndex()}};
+    return {{"pos", QJsonArray({pos().x(), pos().y()})}, {"tabs", tabs}, {"activeTab", m_tabBar->currentIndex()}};
 }
 
 void ReferenceWindow::setGhostState(bool value)
@@ -304,6 +302,10 @@ void ReferenceWindow::setWindowMode(WindowMode mode)
     if (mode != GhostMode)
     {
         setGhostState(false);
+    }
+    if (mode != TransformMode)
+    {
+        m_pictureWidget->resizeFrame()->setVisible(false);
     }
     m_windowMode = mode;
     emit windowModeChanged(mode);

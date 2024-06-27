@@ -73,3 +73,14 @@ SettingsPanel .QToolButton:pressed {
 SettingsPanel #settings-area-scroll {
     border: none;
 }
+
+ColorPickerWindow > QLineEdit, ColorPickerWindow > QLabel {
+    font-size: 14px;
+}
+
+#color-picker-patch {
+    background-clip: content;
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 1px;
+}
