@@ -6,8 +6,6 @@
 
 #include "../types.h"
 
-class ReferenceImage;
-
 class PictureWidget : public QWidget
 {
     Q_OBJECT

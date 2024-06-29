@@ -50,6 +50,21 @@ namespace
         painter.fillRect(rect, brush);
     }
 
+    // Called when the picture widget has no reference image to display
+    void drawNoImageMessage(QPainter &painter, const QRect &rect)
+    {
+        const int fontSize = 24;
+        const QString message = "Drag and drop an image here";
+        const int textMargin = 8;
+        const QMargins margins(textMargin, textMargin, textMargin, textMargin);
+
+        QFont font = painter.font();
+        font.setPointSize(fontSize);
+        painter.setFont(font);
+
+        painter.drawText(rect.marginsRemoved(margins), Qt::AlignCenter | Qt::TextWordWrap, message);
+    }
+
 } // namespace
 
 PictureWidget::PictureWidget(QWidget *parent)
@@ -114,11 +129,12 @@ void PictureWidget::paintEvent(QPaintEvent *event)
     painter.setClipRegion(event->region());
     const QRectF destRect(0., 0., width(), height());
 
-    // If there is no loaded reference image just draw a solid color
+    // If there is no loaded reference image just draw a message on a solid color
     if (m_imageSP.isNull() || !m_imageSP->isLoaded())
     {
         painter.setOpacity(std::max(minOpacity, opacityMultiplier()));
         painter.fillRect(destRect, Qt::lightGray);
+        drawNoImageMessage(painter, rect());
         return;
     }
 
