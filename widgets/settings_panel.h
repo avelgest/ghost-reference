@@ -51,6 +51,8 @@ private:
     void initSettingsArea();
     void buildUI();
     void refreshUI();
+
+    void onAppFocusChanged(QObject *focusObject);
 };
 
 inline ReferenceWindow *SettingsPanel::refWindow() const { return m_refWindow; }

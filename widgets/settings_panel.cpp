@@ -253,6 +253,22 @@ namespace
         return effect;
     }
 
+    ReferenceWindow *refWindowOf(QObject *obj)
+    {
+        QWidget *widget = qobject_cast<QWidget *>(obj);
+        if (widget != nullptr)
+        {
+            for (ReferenceWindow *refWin : App::ghostRefInstance()->referenceWindows())
+            {
+                if (refWin->isAncestorOf(widget))
+                {
+                    return refWin;
+                }
+            }
+        }
+        return nullptr;
+    }
+
 } // namespace
 
 SettingsPanel::SettingsPanel(ReferenceWindow *refWindow, QWidget *parent) : QFrame(parent, {})
@@ -266,6 +282,8 @@ SettingsPanel::SettingsPanel(ReferenceWindow *refWindow, QWidget *parent) : QFra
 
     buildUI();
     setRefWindow(refWindow);
+
+    QObject::connect(App::ghostRefInstance(), &App::focusObjectChanged, this, &SettingsPanel::onAppFocusChanged);
 }
 
 void SettingsPanel::setRefWindow(ReferenceWindow *refWindow)
@@ -417,6 +435,15 @@ void SettingsPanel::refreshUI()
     }
     auto *titleBar = qobject_cast<TitleBar *>(m_titleBar);
     titleBar->setTitle(windowTitle());
+}
+
+void SettingsPanel::onAppFocusChanged(QObject *focusObject)
+{
+    ReferenceWindow *refWindow = refWindowOf(focusObject);
+    if (refWindow)
+    {
+        setRefWindow(refWindow);
+    }
 }
 
 #include "settings_panel.moc"

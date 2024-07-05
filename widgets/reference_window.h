@@ -35,12 +35,14 @@ private:
     QPointer<ReferenceWindow> m_mergeDest;      // window to merge into
     QPointer<ReferenceWindow> m_mergeRequester; // a window requesting to merge with this window
 
+    BackWindow *m_backWindow = nullptr;
     PictureWidget *m_pictureWidget = nullptr;
-    QPointer<SettingsPanel> m_settingsPanel = nullptr;
     TabBar *m_tabBar = nullptr;
     QWidget *m_overlay = nullptr;
 
 public:
+    static ReferenceWindow *activeWindow();
+
     explicit ReferenceWindow(QWidget *parent = nullptr);
     ~ReferenceWindow() override;
 
@@ -63,7 +65,7 @@ public:
     TabFit tabFit() const;
     void setTabFit(TabFit value);
 
-    bool windowFocused() const;
+    bool isWindowFocused() const;
 
     const QList<ReferenceImageSP> &referenceImages() const;
 
@@ -95,6 +97,7 @@ private:
     void clampReferenceSize(const ReferenceImageSP &refItem);
     void drawHighlightedBorder();
     qreal ghostOpacity() const;
+    SettingsPanel *settingsPanel() const;
     void setMergeDest(ReferenceWindow *target);
     void setMergeRequester(ReferenceWindow *requester);
 

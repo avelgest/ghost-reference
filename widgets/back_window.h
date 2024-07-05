@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QPointer>
 #include <QtWidgets/QWidget>
 
 #include "../types.h"
@@ -10,10 +11,15 @@ class BackWindow : public QWidget
     Q_DISABLE_COPY_MOVE(BackWindow)
 
     WindowMode m_windowMode = TransformMode;
+    QPointer<SettingsPanel> m_settingsPanel = nullptr;
 
 public:
     explicit BackWindow(QWidget *parent = nullptr);
     ~BackWindow() override = default;
+
+    SettingsPanel *settingsWindow();
+    SettingsPanel *showSettingsWindow(const QPoint &atPos);
+    void hideSettingsWindow();
 
     inline WindowMode windowMode() const;
     void setWindowMode(WindowMode value);
@@ -22,10 +28,12 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
-    void showEvent(QShowEvent *event) override;
 
 signals:
     void modifierKeysChanged(Qt::KeyboardModifiers modifiers);
 };
 
-WindowMode BackWindow::windowMode() const { return m_windowMode; }
+inline WindowMode BackWindow::windowMode() const
+{
+    return m_windowMode;
+}

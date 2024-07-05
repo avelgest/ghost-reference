@@ -7,7 +7,10 @@
 
 #include <QtWidgets/QApplication>
 
+#include "../app.h"
 #include "../utils/window_utils.h"
+#include "reference_window.h"
+#include "settings_panel.h"
 
 namespace
 {
@@ -25,6 +28,33 @@ BackWindow::BackWindow(QWidget *parent)
     setAttribute(Qt::WA_TranslucentBackground);
 
     setGeometry(screen()->virtualGeometry());
+}
+
+SettingsPanel *BackWindow::settingsWindow()
+{
+    return m_settingsPanel;
+}
+
+SettingsPanel *BackWindow::showSettingsWindow(const QPoint &atPos)
+{
+    if (m_settingsPanel.isNull())
+    {
+        m_settingsPanel = new SettingsPanel(ReferenceWindow::activeWindow(), this);
+        m_settingsPanel->setAttribute(Qt::WA_DeleteOnClose);
+    }
+    m_settingsPanel->move(atPos.isNull() ? QCursor::pos() : atPos);
+    m_settingsPanel->show();
+    m_settingsPanel->raise();
+    m_settingsPanel->setFocus();
+    return m_settingsPanel;
+}
+
+void BackWindow::hideSettingsWindow()
+{
+    if (!m_settingsPanel.isNull())
+    {
+        m_settingsPanel->hide();
+    }
 }
 
 void BackWindow::setWindowMode(WindowMode value)
@@ -68,8 +98,4 @@ void BackWindow::paintEvent(QPaintEvent *event)
         painter.drawRect(rect());
     }
 #endif // NDEBUG
-}
-
-void BackWindow::showEvent([[maybe_unused]] QShowEvent *event)
-{
 }

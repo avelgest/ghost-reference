@@ -18,6 +18,7 @@
 #include "../reference_image.h"
 #include "../reference_loading.h"
 
+#include "back_window.h"
 #include "picture_widget.h"
 #include "resize_frame.h"
 #include "settings_panel.h"
@@ -128,8 +129,21 @@ namespace
 
 } // namespace
 
+ReferenceWindow *ReferenceWindow::activeWindow()
+{
+    for (const auto &refWindow : App::ghostRefInstance()->referenceWindows())
+    {
+        if (refWindow && refWindow->isWindowFocused())
+        {
+            return refWindow;
+        }
+    }
+    return nullptr;
+}
+
 ReferenceWindow::ReferenceWindow(QWidget *parent)
     : QWidget(parent),
+      m_backWindow(qobject_cast<BackWindow *>(parent)),
       m_pictureWidget(new PictureWidget(this)),
       m_tabBar(new TabBar(this)),
       m_overlay(new Overlay(this))
@@ -286,7 +300,7 @@ void ReferenceWindow::setGhostState(bool value)
     emit ghostStateChanged(ghostState());
 }
 
-bool ReferenceWindow::windowFocused() const
+bool ReferenceWindow::isWindowFocused() const
 {
     const QWidget *focus = QApplication::focusWidget();
     return ((focus != nullptr) && (focus == this || isAncestorOf(focus)));
@@ -378,6 +392,11 @@ qreal ReferenceWindow::ghostOpacity() const
 {
     return (m_activeImage) ? m_activeImage->hoverOpacity()
                            : appPrefs()->getFloat(Preferences::GhostModeOpacity);
+}
+
+SettingsPanel *ReferenceWindow::settingsPanel() const
+{
+    return m_backWindow ? m_backWindow->settingsWindow() : nullptr;
 }
 
 void ReferenceWindow::setMergeDest(ReferenceWindow *target)
@@ -493,9 +512,9 @@ void ReferenceWindow::onTransformStarted(ResizeFrame::TransformType transform)
     if (transform != ResizeFrame::NoTransform)
     {
         raise();
-        if (m_settingsPanel)
+        if (settingsPanel())
         {
-            m_settingsPanel->raise();
+            settingsPanel()->raise();
         }
     }
 }
@@ -603,10 +622,7 @@ void ReferenceWindow::focusOutEvent(QFocusEvent *event)
 
 void ReferenceWindow::hideEvent([[maybe_unused]] QHideEvent *event)
 {
-    if (m_settingsPanel)
-    {
-        m_settingsPanel->close();
-    }
+
 }
 
 void ReferenceWindow::keyReleaseEvent(QKeyEvent *event)
@@ -628,12 +644,12 @@ void ReferenceWindow::leaveEvent([[maybe_unused]] QEvent *event)
 {
 }
 
-void ReferenceWindow::paintEvent([[maybe_unused]] QPaintEvent *event)
+void ReferenceWindow::paintEvent(QPaintEvent *event)
 {
     QWidget::paintEvent(event);
 
     // If this window is active draw a border in its margin that lerps between two colors.
-    if (windowFocused())
+    if (isWindowFocused())
     {
         drawHighlightedBorder();
     }
@@ -654,15 +670,10 @@ void ReferenceWindow::wheelEvent(QWheelEvent *event)
 
 void ReferenceWindow::showSettingsWindow(const QPoint &atPos)
 {
-    if (!m_settingsPanel)
+    if (m_backWindow)
     {
-        m_settingsPanel = new SettingsPanel(this, parentWidget());
-        m_settingsPanel->setAttribute(Qt::WA_DeleteOnClose);
+        m_backWindow->showSettingsWindow(atPos);
     }
-    m_settingsPanel->move(atPos.isNull() ? QCursor::pos() : atPos);
-    m_settingsPanel->raise();
-    m_settingsPanel->show();
-    m_settingsPanel->setFocus();
 }
 
 #include "reference_window.moc"

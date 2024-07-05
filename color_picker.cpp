@@ -105,7 +105,6 @@ namespace
         const QSize maxSize(512, 256);
         const QSize colorPatchSize(48, 32);
 
-        setAttribute(Qt::WA_AlwaysStackOnTop);
         setMinimumSize(minSize);
         setMaximumSize(maxSize);
         setWindowTitle("Color Picker");
