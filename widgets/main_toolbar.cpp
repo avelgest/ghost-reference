@@ -1,5 +1,7 @@
 #include "main_toolbar.h"
 
+#include <ranges>
+
 #include <QtCore/QParallelAnimationGroup>
 #include <QtCore/QPointer>
 #include <QtCore/QPropertyAnimation>
@@ -228,6 +230,29 @@ namespace
         return animGroup.take();
     }
 
+    // Adds a menu to the last added QToolButton of mainToolbar.
+    void addButtonMenu(MainToolbar *mainToolbar, QMenu *menu)
+    {
+        for (const auto &child : std::views::reverse(mainToolbar->children()))
+        {
+            if (child->inherits("QToolButton"))
+            {
+                auto *toolButton = qobject_cast<QToolButton *>(child);
+                toolButton->setMenu(menu);
+                toolButton->setPopupMode(QToolButton::MenuButtonPopup);
+                return;
+            }
+        }
+        qCritical() << "Could not add button menu. No QToolButton found.";
+    }
+
+    QMenu *createSaveButtonMenu(MainToolbar *parent)
+    {
+        auto *menu = new QMenu(parent);
+        menu->addAction(&parent->mainToolbarActions()->saveSessionAs());
+        return menu;
+    }
+
 } // namespace
 
 class MainToolbar::FadeStartTimer : protected QTimer
@@ -295,6 +320,7 @@ MainToolbar::MainToolbar(QWidget *parent)
 
     addAction(&m_windowActions->openSession());
     addAction(&m_windowActions->saveSession());
+    addButtonMenu(this, createSaveButtonMenu(this));
     addSeparator();
 
     addAction(&m_windowActions->showPreferences());
@@ -308,6 +334,11 @@ MainToolbar::MainToolbar(QWidget *parent)
 BackWindow *MainToolbar::backWindow()
 {
     return App::ghostRefInstance()->backWindow();
+}
+
+MainToolbarActions *MainToolbar::mainToolbarActions()
+{
+    return m_windowActions.get();
 }
 
 void MainToolbar::setExpanded(bool value)
@@ -360,11 +391,6 @@ void MainToolbar::actionEvent(QActionEvent *event)
     default:
         break;
     }
-}
-
-void MainToolbar::closeEvent([[maybe_unused]] QCloseEvent *event)
-{
-    // TODO Warn if session has not been saved
 }
 
 void MainToolbar::contextMenuEvent(QContextMenuEvent *event)

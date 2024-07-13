@@ -36,6 +36,8 @@ public:
 
     static BackWindow *backWindow();
 
+    MainToolbarActions *mainToolbarActions();
+
     bool expanded() const;
     void setExpanded(bool value);
 
@@ -47,7 +49,6 @@ public:
 
 protected:
     void actionEvent(QActionEvent *event) override;
-    void closeEvent(QCloseEvent *event) override;
     void contextMenuEvent(QContextMenuEvent *event) override;
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;

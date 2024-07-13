@@ -24,6 +24,7 @@ class MainToolbarActions : public QObject
     ACTION_DECL(paste);
     ACTION_DECL(toggleGhostMode);
     ACTION_DECL(saveSession);
+    ACTION_DECL(saveSessionAs);
     ACTION_DECL(showHelp);
     ACTION_DECL(showPreferences);
 

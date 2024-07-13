@@ -47,6 +47,11 @@ namespace
         App *const app = App::ghostRefInstance();
         app->setGlobalMode((app->globalMode() == GhostMode) ? TransformMode : GhostMode);
     }
+
+    App *getApp()
+    {
+        return App::ghostRefInstance();
+    }
 } // namespace
 
 MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
@@ -85,6 +90,11 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
     saveSession().setIcon(style->standardIcon(QStyle::SP_DialogSaveButton));
     saveSession().setText("Save");
     QObject::connect(&saveSession(), &QAction::triggered, &saveSessionFnc);
+
+    // SaveAs
+    saveSessionAs().setIcon(style->standardIcon(QStyle::SP_DialogSaveButton));
+    saveSessionAs().setText("Save As");
+    QObject::connect(&saveSessionAs(), &QAction::triggered, []() { getApp()->saveSessionAs(); });
 
     // Paste
     paste().setEnabled(refLoad::isSupportedClipboard());
