@@ -112,15 +112,16 @@ namespace
     {
         static const QHash<Preferences::Keys, PrefProp> prefMap = {
             {AllowInternet,
-             {"allowInternet", BoolType, true, "Allow Network Access", "Allow references dragged from a browser or from internet URLs"}},
+             {"allowInternet", BoolType, true, "Allow Network Access",
+              "Allow references dragged from a browser or from internet URLs"}},
             {AnimateToolbarCollapse,
              {"animateToolBarCollapse", BoolType, true, "Animate Toolbar", "Animate collapsing/expanding the toolbar"}},
-            {GhostModeOpacity,
-             {"ghostModeOpacity", 0.5, "Ghost Mode Opacity", "", {0., 1.}}},
-            {LocalFilesStore,
-             {"localFilesLink", BoolType, false, "Link Local Files", ""}},
-            {LocalFilesStoreMaxMB,
-             {"localFilesStoreMaxMB", IntType, 128, "", ""}},
+            {AskSaveBeforeClosing,
+             {"askSaveBeforeClosing", BoolType, true, "Ask to save when exiting",
+              "Ask to save any unsaved changes when closing the application"}},
+            {GhostModeOpacity, {"ghostModeOpacity", 0.5, "Ghost Mode Opacity", "", {0., 1.}}},
+            {LocalFilesStore, {"localFilesLink", BoolType, false, "Link Local Files", ""}},
+            {LocalFilesStoreMaxMB, {"localFilesStoreMaxMB", IntType, 128, "", ""}},
         };
         return prefMap;
     }

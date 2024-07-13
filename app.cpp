@@ -2,6 +2,7 @@
 
 #include <QtCore/QCommandLineParser>
 #include <QtCore/QFile>
+#include <QtCore/QFileInfo>
 #include <QtCore/QMap>
 #include <QtCore/QSet>
 #include <QtCore/QTextStream>
@@ -9,6 +10,7 @@
 #include <QtGui/QCursor>
 #include <QtGui/QScreen>
 #include <QtNetwork/QNetworkAccessManager>
+#include <QtWidgets/QMessageBox>
 
 #include "preferences.h"
 #include "saving.h"
@@ -22,6 +24,8 @@ namespace
     const qreal timerCallsPerSecond = 24.0;
     const WindowMode defaultWindowMode = TransformMode;
     const char *const styleSheetPath = "./resources/stylesheet.qss";
+
+    const Qt::WindowFlags msgBoxWindowFlags = Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint;
 
     struct CmdParseResult
     {
@@ -67,6 +71,36 @@ namespace
             moveTo = {screen->size().width() / 4, screen->size().height() / 4};
         }
         toolbar->move(moveTo);
+    }
+
+    int showUnsavedChangesMsgBox(const App *app)
+    {
+        QMessageBox msgBox;
+        msgBox.setParent(app->backWindow());
+        msgBox.setIcon(QMessageBox::Question);
+        msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Save);
+        msgBox.setWindowFlags(msgBoxWindowFlags);
+        msgBox.setWindowTitle("Ghost Reference");
+
+        if (app->saveFilePath().isEmpty())
+        {
+            msgBox.setText("Save session?");
+        }
+        else
+        {
+            msgBox.setText("Save changes to " + app->saveFilePath() + '?');
+        }
+
+        return msgBox.exec();
+    }
+
+    int showSaveErrorMsgBox(const App *app)
+    {
+        QMessageBox msgBox(QMessageBox::Warning, "Error Saving Session",
+                           "Unable to save session to " + app->saveFilePath(), QMessageBox::NoButton, app->backWindow(),
+                           msgBoxWindowFlags);
+        return msgBox.exec();
     }
 
 } // namespace
@@ -147,8 +181,8 @@ ReferenceWindow *App::newReferenceWindow()
     auto *refWindow = new ReferenceWindow(backWindow());
     refWindow->setWindowMode(m_globalMode);
     QObject::connect(this, &App::globalModeChanged, refWindow, &ReferenceWindow::setWindowMode);
-    QObject::connect(refWindow, &ReferenceWindow::destroyed, [this](QObject *ptr)
-                     { m_refWindows.removeAll(ptr); });
+    QObject::connect(refWindow, &ReferenceWindow::destroyed, this,
+                     [this](QObject *ptr) { m_refWindows.removeAll(ptr); });
 
     m_refWindows.push_back(refWindow);
 
@@ -181,28 +215,40 @@ void App::setReferenceCursor(const std::optional<QCursor> &cursor, std::optional
     emit referenceCursorChanged(cursor, refType);
 }
 
-void App::saveSession()
+bool App::saveSession()
 {
     if (m_saveFilePath.isEmpty())
     {
         QString filePath = sessionSaving::showSaveAsDialog();
         if (filePath.isEmpty())
         {
-            return;
+            return false;
         }
         m_saveFilePath = std::move(filePath);
     }
-    sessionSaving::saveSession(m_saveFilePath);
+    if (!sessionSaving::saveSession(m_saveFilePath))
+    {
+        showSaveErrorMsgBox(this);
+        return false;
+    }
+    m_hasUnsavedChanges = false;
+    refreshAppName();
+    return true;
 }
 
-void App::saveSessionAs()
+bool App::saveSessionAs()
 {
     const QString filePath = sessionSaving::showSaveAsDialog(m_saveFilePath);
     if (filePath.isEmpty())
     {
-        return;
+        return false;
     }
-    sessionSaving::saveSession(m_saveFilePath);
+    if (!sessionSaving::saveSession(m_saveFilePath))
+    {
+        showSaveErrorMsgBox(this);
+        return false;
+    }
+    return true;
 }
 
 void App::loadSession()
@@ -213,6 +259,18 @@ void App::loadSession()
         return;
     }
     sessionSaving::loadSession(filepath);
+    m_saveFilePath = filepath;
+    m_hasUnsavedChanges = false;
+    refreshAppName();
+}
+
+void App::setUnsavedChanges(bool value)
+{
+    if (value != m_hasUnsavedChanges)
+    {
+        m_hasUnsavedChanges = value;
+        refreshAppName();
+    }
 }
 
 void App::closeAllReferenceWindows()
@@ -222,6 +280,28 @@ void App::closeAllReferenceWindows()
         refWindow->deleteLater();
     }
     m_refWindows.clear();
+}
+
+bool App::event(QEvent *event)
+{
+    // Ask to save if exiting when ther are unsaved changes
+    if (event->type() == QEvent::Quit && hasUnsavedChanges() &&
+        preferences()->getBool(Preferences::AskSaveBeforeClosing))
+    {
+        switch (showUnsavedChangesMsgBox(this))
+        {
+        case QMessageBox::Cancel:
+            return true;
+        case QMessageBox::Save:
+            if (!saveSession())
+            {
+                return true;
+            }
+        default:
+            break;
+        }
+    }
+    return QApplication::event(event);
 }
 
 void App::timerEvent([[maybe_unused]] QTimerEvent *event)
@@ -236,6 +316,26 @@ void App::cleanWindowList()
                           { return !refWindow; });
 }
 
+void App::refreshAppName()
+{
+    const QString appNameBase("Ghost Reference");
+    if (saveFilePath().isEmpty())
+    {
+        setApplicationName(appNameBase);
+    }
+    else
+    {
+        const QString filename = QFileInfo(saveFilePath()).fileName();
+        QString appName = filename + " - " + appNameBase;
+        if (hasUnsavedChanges())
+        {
+            appName.prepend('*');
+        }
+        setApplicationName(appName);
+        m_backWindow->setWindowTitle(appName);
+    }
+}
+
 App::App(int &argc, char **argv, int flags)
     : QApplication(argc, argv, flags),
       m_preferences(Preferences::loadFromDisk(this)),
@@ -243,7 +343,7 @@ App::App(int &argc, char **argv, int flags)
       m_backWindow(new BackWindow()),
       m_mainToolbar(new MainToolbar(m_backWindow))
 {
-    setApplicationName("Ghost Reference");
+    refreshAppName();
     loadStyleSheetFor(this);
 
     m_backWindow->show();

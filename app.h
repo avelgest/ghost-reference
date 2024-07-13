@@ -35,6 +35,7 @@ private:
     int m_timer = 0;
     QNetworkAccessManager *m_networkManager = nullptr;
     QScopedPointer<Preferences> m_preferences;
+    bool m_hasUnsavedChanges = false;
 
     // Used by setReferenceCursor
     struct
@@ -73,9 +74,15 @@ public:
     // (other widgets will use their default cursor).
     void setReferenceCursor(const std::optional<QCursor> &cursor, std::optional<RefType> refType = {});
 
-    void saveSession();
-    void saveSessionAs();
+    const QString &saveFilePath() const;
+
+    // Save the current session. Returns true if saved successfully.
+    bool saveSession();
+    bool saveSessionAs();
     void loadSession();
+
+    bool hasUnsavedChanges() const;
+    void setUnsavedChanges(bool value = true);
 
     void closeAllReferenceWindows();
 
@@ -94,6 +101,7 @@ protected:
     bool inOverrideMode() const;
     static bool isOverrideKeyHeld();
 
+    bool event(QEvent *event) override;
     void timerEvent(QTimerEvent *event) override;
 
 private:
@@ -101,6 +109,7 @@ private:
     static ReferenceMap &references();
 
     void cleanWindowList();
+    void refreshAppName();
 };
 
 inline App *App::ghostRefInstance() { return qobject_cast<App *>(App::instance()); }
@@ -116,6 +125,16 @@ inline const App::RefWindowList &App::referenceWindows() const { return m_refWin
 inline const ReferenceCollection &App::referenceItems() const { return m_referenceItems; }
 
 inline ReferenceCollection &App::referenceItems() { return m_referenceItems; }
+
+inline const QString &App::saveFilePath() const
+{
+    return m_saveFilePath;
+}
+
+inline bool App::hasUnsavedChanges() const
+{
+    return m_hasUnsavedChanges;
+}
 
 inline bool App::inOverrideMode() const { return m_globalModeOverride.has_value(); }
 inline BackWindow *App::backWindow() const { return m_backWindow; }

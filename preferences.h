@@ -33,6 +33,7 @@ public:
 
         AllowInternet,
         AnimateToolbarCollapse,
+        AskSaveBeforeClosing,
         GhostModeOpacity,
         LocalFilesStore,
         LocalFilesStoreMaxMB,

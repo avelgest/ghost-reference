@@ -127,6 +127,11 @@ namespace
         refImage->setDisplaySize(fitSize.toSize());
     }
 
+    void markAppUnsavedChanges()
+    {
+        App::ghostRefInstance()->setUnsavedChanges();
+    }
+
 } // namespace
 
 ReferenceWindow *ReferenceWindow::activeWindow()
@@ -196,6 +201,7 @@ void ReferenceWindow::addReference(const ReferenceImageSP &refItem)
     {
         setActiveImage(refItem);
     }
+    markAppUnsavedChanges();
 }
 
 bool ReferenceWindow::removeReference(const ReferenceImageSP &refItem)
@@ -213,6 +219,7 @@ bool ReferenceWindow::removeReference(const ReferenceImageSP &refItem)
         const qsizetype numItems = m_refImages.count();
         setActiveImage((numItems == 0) ? nullptr : m_refImages.at(std::min(numItems - 1, idx)));
     }
+    markAppUnsavedChanges();
     return true;
 }
 
@@ -236,6 +243,8 @@ ReferenceWindow *ReferenceWindow::detachReference(const ReferenceImageSP refItem
     newWindow->addReference(refItem);
     newWindow->move(pos() + windowOffset);
     newWindow->show();
+
+    markAppUnsavedChanges();
 
     return newWindow;
 }
@@ -524,6 +533,10 @@ void ReferenceWindow::onTransformFinished(ResizeFrame::TransformType transform)
     if (transform == ResizeFrame::Moving && m_mergeDest)
     {
         mergeInto(m_mergeDest);
+    }
+    if (!m_refImages.isEmpty())
+    {
+        markAppUnsavedChanges();
     }
 }
 
