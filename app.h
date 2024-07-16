@@ -35,6 +35,8 @@ private:
     int m_timer = 0;
     QNetworkAccessManager *m_networkManager = nullptr;
     QScopedPointer<Preferences> m_preferences;
+
+    bool m_allRefWindowsVisible = true;
     bool m_hasUnsavedChanges = false;
 
     // Used by setReferenceCursor
@@ -84,11 +86,16 @@ public:
     bool hasUnsavedChanges() const;
     void setUnsavedChanges(bool value = true);
 
+    bool allRefWindowsVisible() const;
+    void setAllRefWindowsVisible(bool value);
+
     void closeAllReferenceWindows();
 
 signals:
+    void allRefWindowsVisibleChanged(bool newValue);
     void globalModeChanged(WindowMode newValue);
     void referenceCursorChanged(const std::optional<QCursor> &cursor, std::optional<RefType> refType);
+    void referenceWindowAdded(ReferenceWindow *refWindow);
 
 protected:
     void checkModifierKeyStates();
@@ -134,6 +141,11 @@ inline const QString &App::saveFilePath() const
 inline bool App::hasUnsavedChanges() const
 {
     return m_hasUnsavedChanges;
+}
+
+inline bool App::allRefWindowsVisible() const
+{
+    return m_allRefWindowsVisible;
 }
 
 inline bool App::inOverrideMode() const { return m_globalModeOverride.has_value(); }

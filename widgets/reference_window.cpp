@@ -132,6 +132,17 @@ namespace
         App::ghostRefInstance()->setUnsavedChanges();
     }
 
+    void initActions(ReferenceWindow *refWindow)
+    {
+        QAction *action = nullptr;
+
+        action = refWindow->addAction("Hide", QKeySequence("Alt+H"));
+        QObject::connect(action, &QAction::triggered, refWindow, [refWindow]() { refWindow->hide(); });
+
+        action = refWindow->addAction("Close", QKeySequence::Delete);
+        QObject::connect(action, &QAction::triggered, refWindow, [refWindow]() { refWindow->close(); });
+    }
+
 } // namespace
 
 ReferenceWindow *ReferenceWindow::activeWindow()
@@ -176,6 +187,8 @@ ReferenceWindow::ReferenceWindow(QWidget *parent)
 
     App *app = App::ghostRefInstance();
     QObject::connect(app, &App::focusChanged, this, &ReferenceWindow::onAppFocusChanged);
+
+    initActions(this);
 
     setWindowMode(windowMode());
 }
@@ -617,10 +630,6 @@ void ReferenceWindow::dropEvent(QDropEvent *event)
     }
 }
 
-void ReferenceWindow::enterEvent([[maybe_unused]] QEnterEvent *event)
-{
-}
-
 void ReferenceWindow::focusInEvent(QFocusEvent *event)
 {
     QWidget::focusInEvent(event);
@@ -631,30 +640,6 @@ void ReferenceWindow::focusOutEvent(QFocusEvent *event)
 {
     QWidget::focusOutEvent(event);
     update();
-}
-
-void ReferenceWindow::hideEvent([[maybe_unused]] QHideEvent *event)
-{
-
-}
-
-void ReferenceWindow::keyReleaseEvent(QKeyEvent *event)
-{
-    event->accept();
-    switch (event->key())
-    {
-    case Qt::Key_Delete:
-        close();
-        break;
-    default:
-        event->ignore();
-        QWidget::keyReleaseEvent(event);
-        break;
-    }
-}
-
-void ReferenceWindow::leaveEvent([[maybe_unused]] QEvent *event)
-{
 }
 
 void ReferenceWindow::paintEvent(QPaintEvent *event)

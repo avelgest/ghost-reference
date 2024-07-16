@@ -22,6 +22,7 @@
 
 #include "../app.h"
 #include "../preferences.h"
+#include "../reference_image.h"
 #include "../reference_loading.h"
 
 #include "back_window.h"
@@ -253,6 +254,28 @@ namespace
         return menu;
     }
 
+    QMenu *createHideButtonMenu(MainToolbar *parent)
+    {
+        auto *menu = new QMenu(parent);
+
+        QObject::connect(menu, &QMenu::aboutToShow, [menu]() {
+            App *app = App::ghostRefInstance();
+            menu->clear();
+
+            for (const auto &refWindow : app->referenceWindows())
+            {
+                if (refWindow && !refWindow->isVisible())
+                {
+                    const QString name = refWindow->activeImage() ? refWindow->activeImage()->name() : "No Image";
+                    QAction *action = menu->addAction(name);
+                    QObject::connect(action, &QAction::triggered, refWindow,
+                                     [refWindow]() { refWindow->setVisible(true); });
+                }
+            }
+        });
+        return menu;
+    }
+
 } // namespace
 
 class MainToolbar::FadeStartTimer : protected QTimer
@@ -316,6 +339,8 @@ MainToolbar::MainToolbar(QWidget *parent)
     addSeparator();
 
     addAction(&m_windowActions->toggleGhostMode());
+    addAction(&m_windowActions->toggleAllRefsHidden());
+    addButtonMenu(this, createHideButtonMenu(this));
     addSeparator();
 
     addAction(&m_windowActions->openSession());

@@ -12,6 +12,11 @@
 
 namespace
 {
+    App *getApp()
+    {
+        return App::ghostRefInstance();
+    }
+
     void quitApplication()
     {
         App::quit();
@@ -44,14 +49,45 @@ namespace
 
     void toggleGhostModeFnc()
     {
-        App *const app = App::ghostRefInstance();
+        App *const app = getApp();
         app->setGlobalMode((app->globalMode() == GhostMode) ? TransformMode : GhostMode);
     }
 
-    App *getApp()
+    void toggleAllRefsHiddenFnc()
     {
-        return App::ghostRefInstance();
+        App *app = getApp();
+        app->setAllRefWindowsVisible(!app->allRefWindowsVisible());
     }
+
+    QString appendShortcut(const QString &text, const QAction &action)
+    {
+        if (action.shortcut().isEmpty())
+        {
+            return text;
+        }
+        return text + " (" + action.shortcut().toString() + ')';
+    }
+
+    struct
+    {
+    private:
+        friend class ::MainToolbarActions;
+        bool m_initialized = false;
+
+        QIcon visible, hidden;
+
+        void init()
+        {
+            if (!m_initialized)
+            {
+                visible = QIcon("resources/visible.png");
+                hidden = QIcon("resources/hidden.png");
+            }
+            m_initialized = true;
+        }
+
+    } iconCache;
+
 } // namespace
 
 MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
@@ -61,11 +97,23 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
     const App *const app = App::ghostRefInstance();
     const QClipboard *clipboard = App::clipboard();
     QStyle *style = mainToolbar->style();
+    iconCache.init();
 
     // Close Application
     closeApplication().setIcon(style->standardIcon(QStyle::SP_TitleBarCloseButton));
     closeApplication().setText("Exit");
     QObject::connect(&closeApplication(), &QAction::triggered, &quitApplication);
+
+    // Toggle All Reference Windows Hidden
+    toggleAllRefsHidden().setText("Hide/Show All");
+    toggleAllRefsHidden().setCheckable(true);
+    toggleAllRefsHidden().setChecked(!app->allRefWindowsVisible());
+    toggleAllRefsHidden().setIcon(iconCache.visible);
+    QObject::connect(app, &App::allRefWindowsVisibleChanged, this, [this](bool value) {
+        toggleAllRefsHidden().setChecked(!value);
+        toggleAllRefsHidden().setIcon(value ? iconCache.visible : iconCache.hidden);
+    });
+    QObject::connect(&toggleAllRefsHidden(), &QAction::triggered, &toggleAllRefsHiddenFnc);
 
     // Toggle Ghost Mode
     toggleGhostMode().setText("Ghost Mode");
@@ -88,7 +136,9 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
 
     // Save
     saveSession().setIcon(style->standardIcon(QStyle::SP_DialogSaveButton));
-    saveSession().setText("Save");
+    // TODO Add actions that have shorcuts to app.back_window
+    saveSession().setShortcut(QKeySequence::Save);
+    saveSession().setText(appendShortcut("Save", saveSession()));
     QObject::connect(&saveSession(), &QAction::triggered, &saveSessionFnc);
 
     // SaveAs

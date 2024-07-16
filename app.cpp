@@ -185,6 +185,7 @@ ReferenceWindow *App::newReferenceWindow()
                      [this](QObject *ptr) { m_refWindows.removeAll(ptr); });
 
     m_refWindows.push_back(refWindow);
+    emit referenceWindowAdded(refWindow);
 
     return refWindow;
 }
@@ -270,6 +271,19 @@ void App::setUnsavedChanges(bool value)
     {
         m_hasUnsavedChanges = value;
         refreshAppName();
+    }
+}
+
+void App::setAllRefWindowsVisible(bool value)
+{
+    for (const auto &refWindow : m_refWindows)
+    {
+        refWindow->setVisible(value);
+    }
+    if (m_allRefWindowsVisible != value)
+    {
+        m_allRefWindowsVisible = value;
+        emit allRefWindowsVisibleChanged(value);
     }
 }
 
