@@ -3,9 +3,9 @@
 #include <QtCore/QCommandLineParser>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
-#include <QtCore/QMap>
-#include <QtCore/QSet>
+#include <QtCore/QMimeDatabase>
 #include <QtCore/QTextStream>
+#include <QtCore/QThread>
 
 #include <QtGui/QCursor>
 #include <QtGui/QScreen>
@@ -101,6 +101,29 @@ namespace
                            "Unable to save session to " + app->saveFilePath(), QMessageBox::NoButton, app->backWindow(),
                            msgBoxWindowFlags);
         return msgBox.exec();
+    }
+
+    // QMimeDatabase may take a long time to load.
+    // Use this function to load it in a separate thread so that the application doesn't hang.
+    void preloadMimeDatabase(App *app)
+    {
+        class LoadingThread : public QThread
+        {
+            void run() override
+            {
+                const QMimeDatabase database;
+                database.mimeTypesForFileName("dummy.jpg");
+            }
+
+        public:
+            explicit LoadingThread(QObject *parent)
+                : QThread(parent)
+            {}
+        };
+        auto *thread = new LoadingThread(app);
+        QObject::connect(thread, &LoadingThread::finished, &LoadingThread::deleteLater);
+
+        thread->start();
     }
 
 } // namespace
@@ -359,6 +382,7 @@ App::App(int &argc, char **argv, int flags)
 {
     refreshAppName();
     loadStyleSheetFor(this);
+    preloadMimeDatabase(this);
 
     m_backWindow->show();
 
