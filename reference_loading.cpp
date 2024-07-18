@@ -92,7 +92,25 @@ QList<ReferenceImageSP> refLoad::fromMimeData(const QMimeData *mimeData)
     if (mimeData->hasUrls())
     {
         QList<ReferenceImageSP> results;
-        for (const auto &url : mimeData->urls())
+        const QList<QUrl> urls = mimeData->urls();
+
+        // When dragging and dropping images from Firefox on Windows the URL to a bitmap
+        // in the %TEMP% folder may be given instead of to the image itself (QTBUG-13725).
+        // Try to get around this by using the text of the mimedata instead.
+        if (urls.length() == 1 && urls[0].isLocalFile())
+        {
+            const QString path = urls[0].toLocalFile().toLower();
+            if (path.endsWith(".bmp") && path.contains("/temp/") && mimeData->hasText())
+            {
+                if (auto newUrl = QUrl(mimeData->text()); isSupported(newUrl))
+                {
+                    results.push_back(refLoad::fromUrl(newUrl));
+                    return results;
+                }
+            }
+        }
+
+        for (const auto &url : urls)
         {
             auto result = refLoad::fromUrl(url);
             results.push_back(result);
@@ -153,7 +171,7 @@ bool refLoad::isSupported(const QUrl &url)
     }
     else
     {
-        mimeType = mimeDatabase.mimeTypeForName(url.fileName());
+        mimeType = mimeDatabase.mimeTypesForFileName(url.fileName()).first();
     }
     return supportedMimeTypes.contains(mimeType.name());
 }
@@ -166,8 +184,6 @@ bool refLoad::isSupportedClipboard()
     return mimeData ? isSupported(mimeData) : false;
 }
 
-QFuture<QVariant> RefLoader::future() const { return m_promise.future(); }
-
 RefImageLoader::RefImageLoader(const QUrl &url)
 {
     if (url.isLocalFile())
@@ -179,10 +195,16 @@ RefImageLoader::RefImageLoader(const QUrl &url)
         }
 
         promise().finish();
+        setFuture(promise().future());
     }
     else
     {
         m_download = std::make_unique<utils::NetworkDownload>(url);
+        setFuture(m_download->future().then([](const QByteArray &result) {
+            QPixmap pixmap;
+            pixmap.loadFromData(result);
+            return QVariant::fromValue(pixmap);
+        }));
     }
 }
 
@@ -198,6 +220,7 @@ RefImageLoader::RefImageLoader(const QImage &image)
 
 RefImageLoader::RefImageLoader(const QPixmap &pixmap)
 {
+    setFuture(promise().future());
     if (pixmap.isNull())
     {
         promise().finish();
@@ -207,19 +230,6 @@ RefImageLoader::RefImageLoader(const QPixmap &pixmap)
         promise().addResult(pixmap);
         promise().finish();
     }
-}
-
-QFuture<QVariant> RefImageLoader::future() const
-{
-    if (m_download)
-    {
-        return m_download->future().then([](const QByteArray &result)
-                                         {
-            QPixmap pixmap;
-            pixmap.loadFromData(result);
-            return QVariant::fromValue(pixmap); });
-    }
-    return promise().future();
 }
 
 QPixmap RefImageLoader::pixmap() const

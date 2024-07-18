@@ -63,7 +63,7 @@ void NetworkDownload::deleteNetworkReply()
 void NetworkDownload::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
     const qreal fac = static_cast<qreal>(bytesReceived) / static_cast<qreal>(bytesTotal);
-    const int newProgress = static_cast<int>(std::round(fac * progressValues));
+    const int newProgress = qRound(fac * progressValues);
     m_promise.setProgressValue(newProgress);
 }
 

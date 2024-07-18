@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 
 #include <QtCore/QFuture>
 #include <QtCore/QPromise>
@@ -17,10 +18,7 @@ class QMimeData;
 class QUrl;
 class QVariant;
 
-template <typename T>
-class QList;
-template <typename T>
-class QFuture;
+template <typename T> class QList;
 
 namespace refLoad
 {
@@ -48,12 +46,15 @@ class RefLoader
 
 private:
     QPromise<QVariant> m_promise;
+    QFuture<QVariant> m_future;
     QString m_error;
 
 protected:
     QPromise<QVariant> &promise();
     const QPromise<QVariant> &promise() const;
+
     void setError(const QString &errString);
+    void setFuture(const QFuture<QVariant> &future);
 
 public:
     RefLoader() = default;
@@ -66,7 +67,7 @@ public:
     bool finished() const;
     bool isError() const;
     virtual bool isValid() const;
-    virtual QFuture<QVariant> future() const;
+    QFuture<QVariant> future() const;
 
     virtual RefType type() const = 0;
 };
@@ -88,7 +89,6 @@ public:
     RefImageLoader(RefImageLoader &&) = default;
     RefImageLoader &operator=(RefImageLoader &&) = default;
 
-    QFuture<QVariant> future() const override;
     QPixmap pixmap() const;
     RefType type() const override { return RefType::Image; }
 };
@@ -97,6 +97,15 @@ inline QPromise<QVariant> &RefLoader::promise() { return m_promise; }
 inline const QPromise<QVariant> &RefLoader::promise() const { return m_promise; }
 
 inline void RefLoader::setError(const QString &errString) { m_error = errString; }
+
+inline QFuture<QVariant> RefLoader::future() const
+{
+    return m_future;
+}
+inline void RefLoader::setFuture(const QFuture<QVariant> &future)
+{
+    m_future = future;
+}
 
 inline bool RefLoader::finished() const { return future().isFinished(); }
 
