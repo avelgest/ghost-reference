@@ -58,21 +58,11 @@ namespace
 ReferenceImage::ReferenceImage()
     : m_loader(new RefImageLoader())
 {
-}
-
-ReferenceImage::ReferenceImage(const QImage &image)
-    : ReferenceImage(QPixmap::fromImage(image))
-{
-}
-
-ReferenceImage::ReferenceImage(const QPixmap &pixmap)
-    : m_baseImage(pixmap),
-      m_crop(pixmap.rect().toRectF())
-{
-    updateDisplayImage();
+    QObject::connect(this, &ReferenceImage::settingsChanged, this, &ReferenceImage::updateDisplayImage);
 }
 
 ReferenceImage::ReferenceImage(RefImageLoader &&loader)
+    : ReferenceImage()
 {
     setLoader(std::move(loader));
 }

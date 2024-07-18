@@ -116,8 +116,6 @@ signals:
 private:
     // Constructors should only be called from a ReferenceCollection
     ReferenceImage();
-    explicit ReferenceImage(const QImage &image);
-    explicit ReferenceImage(const QPixmap &pixmap);
     explicit ReferenceImage(RefImageLoader &&loader);
 
     QSizeF minCropSize() const;

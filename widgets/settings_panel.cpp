@@ -7,6 +7,7 @@
 
 #include <QtGui/QMouseEvent>
 
+#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QFormLayout>
 #include <QtWidgets/QGraphicsDropShadowEffect>
@@ -191,6 +192,22 @@ namespace
 
         layout->addRow(label, comboBox);
         return comboBox;
+    }
+
+    template <typename Func1, typename Func2>
+    QCheckBox *createCheckbox(SettingsPanel *settingsPanel, QFormLayout *layout, const QString &label, Func1 getter,
+                              Func2 setter)
+    {
+        auto *checkBox = new QCheckBox(settingsPanel->settingsArea());
+        checkBox->setChecked(settingsPanel->referenceImage() ? getter() : false);
+        checkBox->setText(label);
+
+        QObject::connect(checkBox, &QCheckBox::toggled, [=]() { setter(checkBox->isChecked()); });
+        QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, checkBox,
+                         [=]() { checkBox->setChecked(getter()); });
+
+        layout->addRow("", checkBox);
+        return checkBox;
     }
 
     // Creates a QLineEdit for displaying/editing the name of the active reference image
@@ -406,6 +423,10 @@ void SettingsPanel::initSettingsArea()
     createSlider(
         this, layout, "Saturation:", [this]() { return m_refImage->saturation(); },
         [this](qreal value) { m_refImage->setSaturation(value); });
+
+    createCheckbox(
+        this, layout, "Smooth Filtering", [this]() { return m_refImage->smoothFiltering(); },
+        [this](bool value) { m_refImage->setSmoothFiltering(value); });
 
     using enum ReferenceWindow::TabFit;
     createComboBox(
