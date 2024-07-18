@@ -53,6 +53,7 @@ private:
     void refreshUI();
 
     void onAppFocusChanged(QObject *focusObject);
+    void onRefNameChanged(const QString &newName);
 };
 
 inline ReferenceWindow *SettingsPanel::refWindow() const { return m_refWindow; }

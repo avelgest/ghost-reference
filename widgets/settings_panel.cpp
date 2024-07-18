@@ -11,6 +11,7 @@
 #include <QtWidgets/QFormLayout>
 #include <QtWidgets/QGraphicsDropShadowEffect>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QScrollArea>
 #include <QtWidgets/QSizePolicy>
@@ -89,6 +90,9 @@ namespace
         closeBtn->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
         QObject::connect(closeBtn, &QPushButton::clicked, settingsPanel, &SettingsPanel::close);
         layout->addWidget(closeBtn);
+
+        setTitle(settingsPanel->windowTitle());
+        QObject::connect(settingsPanel, &SettingsPanel::windowTitleChanged, this, &TitleBar::setTitle);
     }
 
     void TitleBar::setTitle(const QString &title)
@@ -123,19 +127,13 @@ namespace
     }
 
     template <typename Func1, typename Func2>
-    QSlider *createSlider(SettingsPanel *settingsPanel,
-                          const QString &label,
-                          Func1 getter,
-                          Func2 setter,
-                          minMax range = {})
+    QSlider *createSlider(SettingsPanel *settingsPanel, QFormLayout *layout, const QString &label, Func1 getter,
+                          Func2 setter, minMax range = {})
     {
         Q_ASSERT(settingsPanel);
         Q_ASSERT(settingsPanel->settingsArea());
 
         QWidget *parent = settingsPanel->settingsArea();
-        auto *layout = qobject_cast<QFormLayout *>(parent->layout());
-
-        Q_ASSERT(layout);
 
         auto *slider = new QSlider(Qt::Horizontal, parent);
         slider->setRange(static_cast<int>(range.min * sliderScale),
@@ -165,13 +163,11 @@ namespace
     value indicated by userData.
     */
     template <typename Func1, typename Func2>
-    QComboBox *createComboBox(SettingsPanel *settingsPanel, const QString &label,
+    QComboBox *createComboBox(SettingsPanel *settingsPanel, QFormLayout *layout, const QString &label,
                               std::initializer_list<std::pair<QString, QVariant>> options, Func1 getter, Func2 setter)
     {
         QWidget *parent = settingsPanel->settingsArea();
         Q_ASSERT(parent != nullptr);
-        auto *layout = qobject_cast<QFormLayout *>(parent->layout());
-        Q_ASSERT_X(layout != nullptr, "createComboBox", "parent layout must be a QFormLayout");
 
         auto *comboBox = new QComboBox(parent);
         for (const auto &[text, data] : options)
@@ -195,6 +191,26 @@ namespace
 
         layout->addRow(label, comboBox);
         return comboBox;
+    }
+
+    // Creates a QLineEdit for displaying/editing the name of the active reference image
+    QLineEdit *createRefNameInput(SettingsPanel *settingsPanel, QFormLayout *layout)
+    {
+        auto *lineEdit = new QLineEdit(settingsPanel->settingsArea());
+        lineEdit->setObjectName("ref-name-input");
+        QObject::connect(lineEdit, &QLineEdit::editingFinished, [=]() {
+            settingsPanel->referenceImage()->setName(lineEdit->text());
+            // The new name may be different from the submitted text so the new text of lineEdit
+            // will be set by the onRefNameChanged slot.
+        });
+
+        QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, lineEdit, [=]() {
+            lineEdit->setText(settingsPanel->referenceImage() ? settingsPanel->referenceImage()->name() : "");
+        });
+
+        layout->addRow(lineEdit);
+
+        return lineEdit;
     }
 
     QToolButton *createFlipButton(SettingsPanel &parent, Qt::Orientation orientation)
@@ -316,7 +332,17 @@ void SettingsPanel::setReferenceImage(const ReferenceImageSP &image)
 {
     if (m_refImage != image)
     {
+        if (!m_refImage.isNull())
+        {
+            QObject::disconnect(m_refImage.get(), nullptr, this, nullptr);
+        }
+
         m_refImage = image;
+
+        if (!m_refImage.isNull())
+        {
+            QObject::connect(m_refImage.get(), &ReferenceImage::nameChanged, this, &SettingsPanel::onRefNameChanged);
+        }
 
         refreshUI();
     }
@@ -371,17 +397,19 @@ void SettingsPanel::initSettingsArea()
 
     auto *layout = new QFormLayout(m_settingsArea);
 
+    createRefNameInput(this, layout);
+
     createSlider(
-        this, "Opacity:", [this]() { return m_refImage->opacity(); },
+        this, layout, "Opacity:", [this]() { return m_refImage->opacity(); },
         [this](qreal value) { m_refImage->setOpacity(value); });
 
     createSlider(
-        this, "Saturation:", [this]() { return m_refImage->saturation(); },
+        this, layout, "Saturation:", [this]() { return m_refImage->saturation(); },
         [this](qreal value) { m_refImage->setSaturation(value); });
 
     using enum ReferenceWindow::TabFit;
     createComboBox(
-        this, "Fit Tabs to:",
+        this, layout, "Fit Tabs to:",
         {
             {"Width", static_cast<int>(FitToWidth)},
             {"Height", static_cast<int>(FitToHeight)},
@@ -433,8 +461,6 @@ void SettingsPanel::refreshUI()
         m_settingsArea->show();
         m_noRefWidget->hide();
     }
-    auto *titleBar = qobject_cast<TitleBar *>(m_titleBar);
-    titleBar->setTitle(windowTitle());
 }
 
 void SettingsPanel::onAppFocusChanged(QObject *focusObject)
@@ -443,6 +469,15 @@ void SettingsPanel::onAppFocusChanged(QObject *focusObject)
     if (refWindow)
     {
         setRefWindow(refWindow);
+    }
+}
+
+void SettingsPanel::onRefNameChanged(const QString &newName)
+{
+    setWindowTitle(newName);
+    if (auto *nameInput = findChild<QLineEdit *>("ref-name-input"); nameInput)
+    {
+        nameInput->setText(newName);
     }
 }
 

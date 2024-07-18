@@ -78,12 +78,19 @@ void TabBar::onReferenceAdded(const ReferenceImageSP &refItem)
 {
     if (refItem)
     {
-
         const int idx = addTab(refItem->name());
         setTabData(idx, QVariant::fromValue(refItem));
         setTabToolTip(idx, refItem->name());
 
         setTabButton(idx, QTabBar::ButtonPosition::RightSide, createButtonWidget(refItem));
+
+        // Update the tab text when refItem's name changes
+        QObject::connect(refItem.get(), &ReferenceImage::nameChanged, this, [=]() {
+            if (int idx = indexOf(refItem); idx >= 0)
+            {
+                setTabText(idx, refItem->name());
+            }
+        });
     }
 }
 
@@ -96,6 +103,7 @@ void TabBar::onReferenceRemoved(const ReferenceImageSP &refItem)
         return;
     }
     removeTab(idx);
+    QObject::disconnect(refItem.get(), nullptr, this, nullptr);
 }
 
 void TabBar::onCurrentChanged(int index)

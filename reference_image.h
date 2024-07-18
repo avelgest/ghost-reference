@@ -65,7 +65,7 @@ public:
 
     const QImage &displayImage();
 
-    QString name() const;
+    const QString &name() const;
     void setName(const QString &newName);
 
     QRect crop() const;
@@ -160,7 +160,10 @@ inline void ReferenceImage::setCompressedImage(const QByteArray &value) { m_comp
 
 inline void ReferenceImage::setCompressedImage(QByteArray &&value) { m_compressedImage = std::move(value); }
 
-inline QString ReferenceImage::name() const { return m_name; }
+inline const QString &ReferenceImage::name() const
+{
+    return m_name;
+}
 
 inline QRect ReferenceImage::crop() const
 {
