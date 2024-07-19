@@ -199,7 +199,7 @@ ReferenceWindow::ReferenceWindow(QWidget *parent)
     grid->addWidget(m_overlay, 1, 0);
     grid->addWidget(m_tabBar, 2, 0);
 
-    ResizeFrame *resizeFrame = m_pictureWidget->resizeFrame();
+    ResizeFrame *resizeFrame = this->resizeFrame();
 
     QObject::connect(resizeFrame, &ResizeFrame::moved, this, &ReferenceWindow::onFrameMove);
     QObject::connect(resizeFrame, &ResizeFrame::cropped, this, &ReferenceWindow::onFrameCrop);
@@ -210,10 +210,13 @@ ReferenceWindow::ReferenceWindow(QWidget *parent)
 
     App *app = App::ghostRefInstance();
     QObject::connect(app, &App::focusChanged, this, &ReferenceWindow::onAppFocusChanged);
+    QObject::connect(app, &App::globalModeChanged, this, &ReferenceWindow::onGlobalModeChanged);
+
+    onGlobalModeChanged(app->globalMode());
 
     initActions(this);
 
-    setWindowMode(windowMode());
+    onGlobalModeChanged(windowMode());
 }
 
 ReferenceWindow::~ReferenceWindow()
@@ -353,20 +356,16 @@ bool ReferenceWindow::isWindowFocused() const
 
 WindowMode ReferenceWindow::windowMode() const
 {
-    return m_windowMode;
+    return m_backWindow->windowMode();
 }
 
-void ReferenceWindow::setWindowMode(WindowMode mode)
+void ReferenceWindow::onGlobalModeChanged(WindowMode mode)
 {
     if (mode != GhostMode)
     {
         setGhostState(false);
     }
-    if (mode != TransformMode)
-    {
-        m_pictureWidget->resizeFrame()->setVisible(false);
-    }
-    m_windowMode = mode;
+    update();
     emit windowModeChanged(mode);
 }
 
@@ -607,6 +606,11 @@ void ReferenceWindow::mergeInto(ReferenceWindow *other)
     close();
 }
 
+ResizeFrame *ReferenceWindow::resizeFrame() const
+{
+    return m_pictureWidget->resizeFrame();
+}
+
 void ReferenceWindow::closeEvent([[maybe_unused]] QCloseEvent *event)
 {
     auto logger = qInfo() << "Closing reference window for references: ";
@@ -695,7 +699,7 @@ void ReferenceWindow::paintEvent(QPaintEvent *event)
     QWidget::paintEvent(event);
 
     // If this window is active draw a border in its margin that lerps between two colors.
-    if (isWindowFocused())
+    if (isWindowFocused() && windowMode() != GhostMode)
     {
         drawHighlightedBorder();
     }

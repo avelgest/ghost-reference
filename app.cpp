@@ -202,8 +202,7 @@ ReferenceWindow *App::newReferenceWindow()
         throw std::runtime_error("Cannot create a ReferenceWindow without a BackWindow.");
     }
     auto *refWindow = new ReferenceWindow(backWindow());
-    refWindow->setWindowMode(m_globalMode);
-    QObject::connect(this, &App::globalModeChanged, refWindow, &ReferenceWindow::setWindowMode);
+
     QObject::connect(refWindow, &ReferenceWindow::destroyed, this,
                      [this](QObject *ptr) { m_refWindows.removeAll(ptr); });
 
@@ -219,10 +218,6 @@ void App::startGlobalModeOverride(std::optional<WindowMode> windowMode)
 
     m_globalModeOverride = windowMode;
     backWindow()->setWindowMode(unwrapped);
-    for (auto &refWindow : m_refWindows)
-    {
-        refWindow->setWindowMode(unwrapped);
-    }
 
     emit globalModeChanged(unwrapped);
 }

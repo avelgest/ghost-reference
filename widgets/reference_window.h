@@ -24,7 +24,6 @@ private:
     Q_DISABLE_COPY_MOVE(ReferenceWindow)
 
     bool m_ghostState = false;
-    WindowMode m_windowMode = GhostMode;
     TabFit m_tabFit = TabFit::FitToWidth;
 
     ReferenceImageSP m_activeImage;
@@ -70,7 +69,6 @@ public:
     const QList<ReferenceImageSP> &referenceImages() const;
 
     WindowMode windowMode() const;
-    void setWindowMode(WindowMode mode);
 
 protected:
     // Check whether this window should request a merge with another ReferenceWindow.
@@ -80,6 +78,8 @@ protected:
     // Merge into ReferenceWindow other. Doing so adds all this window's reference items to other
     // and closes this window.
     void mergeInto(ReferenceWindow *other);
+
+    ResizeFrame *resizeFrame() const;
 
     void closeEvent(QCloseEvent *event) override;
     void contextMenuEvent(QContextMenuEvent *event) override;
@@ -103,6 +103,7 @@ private:
     void onFrameMove(QPoint diff);
     void onFrameResize(Qt::Edges fromEdges, QSize sizeChange);
     void onFrameViewMoved(QPoint diff);
+    void onGlobalModeChanged(WindowMode mode);
     void onTransformStarted(ResizeFrame::TransformType transform);
     void onTransformFinished(ResizeFrame::TransformType transform);
 
