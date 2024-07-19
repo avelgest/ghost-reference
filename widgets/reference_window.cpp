@@ -5,12 +5,14 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
 
+#include <QtGui/QContextMenuEvent>
 #include <QtGui/QDragEnterEvent>
 #include <QtGui/QDropEvent>
 #include <QtGui/QPainter>
 
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QGridLayout>
+#include <QtWidgets/QMenu>
 
 #include "../app.h"
 #include "../preferences.h"
@@ -132,15 +134,36 @@ namespace
         App::ghostRefInstance()->setUnsavedChanges();
     }
 
+    // Paste reference images from the clipboard into refWindow
+    void pasteRefsFromClipboard(ReferenceWindow *refWindow)
+    {
+        const QList<ReferenceImageSP> newRefImages = refLoad::fromClipboard();
+
+        if (newRefImages.isEmpty())
+        {
+            qWarning() << "Unable to load any reference images from the clipboard";
+            return;
+        }
+
+        for (const auto &refImage : newRefImages)
+        {
+            refWindow->addReference(refImage);
+        }
+        refWindow->setActiveImage(newRefImages.last());
+    }
+
     void initActions(ReferenceWindow *refWindow)
     {
         QAction *action = nullptr;
 
         action = refWindow->addAction("Hide", QKeySequence("Alt+H"));
-        QObject::connect(action, &QAction::triggered, refWindow, [refWindow]() { refWindow->hide(); });
+        QObject::connect(action, &QAction::triggered, refWindow, [=]() { refWindow->hide(); });
 
         action = refWindow->addAction("Close", QKeySequence::Delete);
-        QObject::connect(action, &QAction::triggered, refWindow, [refWindow]() { refWindow->close(); });
+        QObject::connect(action, &QAction::triggered, refWindow, [=]() { refWindow->close(); });
+
+        action = refWindow->addAction("Paste", QKeySequence::Paste);
+        QObject::connect(action, &QAction::triggered, refWindow, [=]() { pasteRefsFromClipboard(refWindow); });
     }
 
 } // namespace
@@ -591,6 +614,31 @@ void ReferenceWindow::closeEvent([[maybe_unused]] QCloseEvent *event)
     {
         logger << (refItem->name().isEmpty() ? "[no name]" : refItem->name());
     }
+}
+
+void ReferenceWindow::contextMenuEvent(QContextMenuEvent *event)
+{
+    if (windowMode() == ToolMode)
+    {
+        // Let the active tool handle the event
+        return;
+    }
+
+    if (activeImage())
+    {
+        showSettingsWindow();
+    }
+    else
+    {
+        // Show a context menu
+        QMenu menu(this);
+        QAction *paste = menu.addAction("Paste");
+        QObject::connect(paste, &QAction::triggered, [=]() { pasteRefsFromClipboard(this); });
+        paste->setEnabled(refLoad::isSupportedClipboard());
+
+        menu.exec(event->globalPos());
+    }
+    event->accept();
 }
 
 void ReferenceWindow::dragEnterEvent(QDragEnterEvent *event)

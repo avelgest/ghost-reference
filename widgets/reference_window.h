@@ -82,6 +82,7 @@ protected:
     void mergeInto(ReferenceWindow *other);
 
     void closeEvent(QCloseEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
     void focusInEvent(QFocusEvent *event) override;

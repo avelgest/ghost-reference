@@ -89,27 +89,6 @@ PictureWidget::PictureWidget(QWidget *parent)
     QObject::connect(app, &App::referenceCursorChanged, this, &PictureWidget::onReferenceCursorChanged);
 }
 
-void PictureWidget::contextMenuEvent(QContextMenuEvent *event)
-{
-    if (referenceWindow()->windowMode() == ToolMode)
-    {
-        // Let the active tool handle the event
-        return;
-    }
-    if (referenceWindow())
-    {
-        referenceWindow()->showSettingsWindow();
-    }
-    else
-    {
-        QMenu menu;
-        QAction *paste = menu.addAction("Paste", this, &PictureWidget::pasteFromClipboard);
-        paste->setEnabled(refLoad::isSupportedClipboard());
-
-        menu.exec(event->globalPos());
-    }
-}
-
 void PictureWidget::enterEvent([[maybe_unused]] QEnterEvent *event)
 {
     if (windowMode() == TransformMode)
@@ -179,22 +158,6 @@ void PictureWidget::onWindowModeChanged(WindowMode newMode)
     else
     {
         m_resizeFrame->hide();
-    }
-}
-
-void PictureWidget::pasteFromClipboard() const
-{
-    const QList<ReferenceImageSP> newRefImages = refLoad::fromClipboard();
-
-    if (newRefImages.isEmpty())
-    {
-        qWarning() << "Unable to load any reference images from the clipboard";
-        return;
-    }
-
-    for (const auto &refImage : newRefImages)
-    {
-        referenceWindow()->addReference(refImage);
     }
 }
 

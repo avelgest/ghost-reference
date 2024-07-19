@@ -37,13 +37,20 @@ SettingsPanel *BackWindow::settingsWindow()
 
 SettingsPanel *BackWindow::showSettingsWindow(const QPoint &atPos)
 {
+    const int vOffset = -100;
+
     if (m_settingsPanel.isNull())
     {
         m_settingsPanel = new SettingsPanel(ReferenceWindow::activeWindow(), this);
         m_settingsPanel->setAttribute(Qt::WA_DeleteOnClose);
+        m_settingsPanel->show();
     }
-    m_settingsPanel->move(atPos.isNull() ? QCursor::pos() : atPos);
+    QPoint adjustedPos = atPos.isNull() ? QCursor::pos() : atPos;
+    adjustedPos += QPoint(-m_settingsPanel->width() / 2, vOffset);
+
+    m_settingsPanel->move(adjustedPos);
     m_settingsPanel->show();
+
     m_settingsPanel->raise();
     m_settingsPanel->setFocus();
     return m_settingsPanel;

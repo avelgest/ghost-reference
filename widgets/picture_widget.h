@@ -39,7 +39,6 @@ public:
     WindowMode windowMode() const;
 
 protected:
-    void contextMenuEvent(QContextMenuEvent *event) override;
     void enterEvent(QEnterEvent *event) override;
     void leaveEvent(QEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
@@ -47,8 +46,6 @@ protected:
 private:
     void onReferenceCursorChanged(const std::optional<QCursor> &cursor, std::optional<RefType> refType);
     void onWindowModeChanged(WindowMode newMode);
-
-    void pasteFromClipboard() const;
 };
 
 inline const ReferenceImageSP &PictureWidget::image() const { return m_imageSP; }
