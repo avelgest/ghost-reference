@@ -7,7 +7,6 @@
 #include <QtGui/QBitmap>
 #include <QtGui/QPaintEvent>
 #include <QtGui/QPainter>
-#include <QtWidgets/QMenu>
 #include <QtWidgets/QSizePolicy>
 #include <QtWidgets/QStackedLayout>
 
@@ -17,7 +16,6 @@
 
 #include "reference_window.h"
 #include "resize_frame.h"
-#include "settings_panel.h"
 
 namespace
 {

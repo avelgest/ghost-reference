@@ -21,6 +21,7 @@
 #include "../reference_loading.h"
 
 #include "back_window.h"
+#include "main_toolbar.h"
 #include "picture_widget.h"
 #include "resize_frame.h"
 #include "settings_panel.h"
@@ -166,6 +167,22 @@ namespace
         QObject::connect(action, &QAction::triggered, refWindow, [=]() { pasteRefsFromClipboard(refWindow); });
     }
 
+    QPoint defaultWindowPos()
+    {
+        const App *app = App::ghostRefInstance();
+        if (app->mainToolbar() && app->mainToolbar()->isVisible())
+        {
+            const QPoint offset(50, 50);
+            return app->mainToolbar()->pos() + offset;
+        }
+        const QScreen *screen = app->primaryScreen();
+        if (screen)
+        {
+            return {screen->size().width() / 2, screen->size().height() / 2};
+        }
+        return {};
+    }
+
 } // namespace
 
 ReferenceWindow *ReferenceWindow::activeWindow()
@@ -191,6 +208,8 @@ ReferenceWindow::ReferenceWindow(QWidget *parent)
     setAttribute(Qt::WA_DeleteOnClose);
     setAttribute(Qt::WA_TranslucentBackground);
     setFocusPolicy(Qt::StrongFocus);
+
+    move(defaultWindowPos());
 
     auto *grid = new QGridLayout(this);
     grid->setContentsMargins(marginSize, marginSize, marginSize, marginSize);

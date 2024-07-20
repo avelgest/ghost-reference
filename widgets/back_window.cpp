@@ -67,6 +67,7 @@ void BackWindow::hideSettingsWindow()
 void BackWindow::setWindowMode(WindowMode value)
 {
     m_windowMode = value;
+    hideSettingsWindow();
     utils::setTransparentForInput(this, value == GhostMode);
 }
 
