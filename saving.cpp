@@ -10,6 +10,7 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QMap>
 #include <QtCore/QMimeData>
+#include <QtCore/QSaveFile>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QString>
 #include <QtCore/QTemporaryFile>
@@ -233,32 +234,25 @@ namespace sessionSaving
             return false;
         }
 
-        // TODO Use QSaveFile
-        QTemporaryFile tempFile(filepath + ".XXXXXX.tmp");
+        QSaveFile saveFile(filepath);
+        saveFile.setDirectWriteFallback(true);
 
-        if (!tempFile.open())
+        if (!saveFile.open(QSaveFile::WriteOnly))
         {
-            qCritical() << "Unable to open temp file " << tempFile.fileName();
+            qCritical() << "Unable to open" << saveFile.fileName() << "for writing";
             return false;
         }
 
-        QDataStream dataStream(&tempFile);
+        QDataStream dataStream(&saveFile);
         dataStream.writeRawData(sessionZip.constData(), static_cast<int>(sessionZip.size()));
 
-        QFile destFile(filepath);
-        if (destFile.exists())
+        if (!saveFile.commit())
         {
-            deleteFile(destFile);
-        }
-
-        if (!tempFile.rename(filepath))
-        {
-            qCritical() << "Saving session failed. Unable to rename tmp file to" << filepath;
+            qCritical() << "Unable to save session to" << filepath;
             return false;
         }
 
-        tempFile.setAutoRemove(false);
-        qInfo() << "Session saved as" << QFileInfo(destFile).absoluteFilePath();
+        qInfo() << "Session saved as" << QFileInfo(saveFile).absoluteFilePath();
         return true;
     }
 
