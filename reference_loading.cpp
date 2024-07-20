@@ -154,7 +154,7 @@ bool refLoad::isSupported(const QMimeData *mimeData)
     return false;
 }
 
-bool refLoad::isSupported(const QDragEnterEvent *event)
+bool refLoad::isSupported(const QDropEvent *event)
 {
     return isSupported(event->mimeData());
 }

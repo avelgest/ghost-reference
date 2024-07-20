@@ -33,7 +33,7 @@ namespace refLoad
     QList<ReferenceImageSP> fromMimeData(const QMimeData *mimeData);
 
     bool isSupported(const QMimeData *mimeData);
-    bool isSupported(const QDragEnterEvent *event);
+    bool isSupported(const QDropEvent *event);
     bool isSupported(const QUrl &url);
 
     bool isSupportedClipboard();

@@ -9,10 +9,12 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QMap>
+#include <QtCore/QMimeData>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QString>
 #include <QtCore/QTemporaryFile>
 
+#include <QtGui/QDropEvent>
 #include <QtGui/QPixmap>
 
 #include <QtWidgets/QFileDialog>
@@ -299,6 +301,36 @@ namespace sessionSaving
         return QFileDialog::getOpenFileName(nullptr, "Open Ghost Reference Session",
                                             directory.isEmpty() ? defaultSaveDirectory() : directory,
                                             "Ghost Reference Session (*.ghr)");
+    }
+
+    QString getSessionFilePath(const QDropEvent *dropEvent)
+    {
+        const QMimeData *mimeData = dropEvent->mimeData();
+        if (mimeData->hasUrls())
+        {
+            for (auto &url : mimeData->urls())
+            {
+                if (const QString filePath = url.toLocalFile(); isSessionFile(filePath))
+                {
+                    return filePath;
+                }
+            }
+        }
+        if (mimeData->hasText())
+        {
+            return mimeData->text();
+        }
+        return {};
+    }
+
+    bool isSessionFile(const QDropEvent *dropEvent)
+    {
+        return isSessionFile(getSessionFilePath(dropEvent));
+    }
+
+    bool isSessionFile(const QString &path)
+    {
+        return path.toLower().endsWith(".ghr");
     }
 
 } // namespace sessionSaving

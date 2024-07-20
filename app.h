@@ -82,6 +82,7 @@ public:
     bool saveSession();
     bool saveSessionAs();
     void loadSession();
+    void loadSession(const QString &path);
 
     bool hasUnsavedChanges() const;
     void setUnsavedChanges(bool value = true);

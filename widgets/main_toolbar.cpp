@@ -24,6 +24,7 @@
 #include "../preferences.h"
 #include "../reference_image.h"
 #include "../reference_loading.h"
+#include "../saving.h"
 
 #include "back_window.h"
 #include "main_toolbar_actions.h"
@@ -432,12 +433,22 @@ void MainToolbar::contextMenuEvent(QContextMenuEvent *event)
 
 void MainToolbar::dragEnterEvent(QDragEnterEvent *event)
 {
-    event->setAccepted(refLoad::isSupported(event));
+    event->setAccepted(refLoad::isSupported(event) || sessionSaving::isSessionFile(event));
 }
 
 void MainToolbar::dropEvent(QDropEvent *event)
 {
-    newReferenceWindow(refLoad::fromDropEvent(event));
+    if (refLoad::isSupported(event))
+    {
+        newReferenceWindow(refLoad::fromDropEvent(event));
+    }
+    else if (sessionSaving::isSessionFile(event))
+    {
+        if (const QString filePath = sessionSaving::getSessionFilePath(event); !filePath.isEmpty())
+        {
+            App::ghostRefInstance()->loadSession(filePath);
+        }
+    }
 }
 
 void MainToolbar::enterEvent([[maybe_unused]] QEnterEvent *event)

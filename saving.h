@@ -1,5 +1,6 @@
 #pragma once
 
+class QDropEvent;
 class QJsonDocument;
 class QString;
 
@@ -15,5 +16,9 @@ namespace sessionSaving
 
     QString showSaveAsDialog(const QString &directory = {});
     QString showOpenDialog(const QString &directory = {});
+
+    QString getSessionFilePath(const QDropEvent *dropEvent);
+    bool isSessionFile(const QDropEvent *dropEvent);
+    bool isSessionFile(const QString &path);
 
 } // namespace sessionSaving

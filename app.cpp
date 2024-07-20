@@ -95,6 +95,27 @@ namespace
         return msgBox.exec();
     }
 
+    // Displays a messagebox asking the user about unsaved changes (if necessary) and saves the
+    // session if requested.
+    // Returns false if the user requested to remain in the current session (e.g. by pressing Cancel
+    // in the messagebox) or true overwise;
+    bool askUnsavedChangesOk(App *app)
+    {
+        if (app->hasUnsavedChanges() && app->preferences()->getBool(Preferences::AskSaveBeforeClosing))
+        {
+            switch (showUnsavedChangesMsgBox(app))
+            {
+            case QMessageBox::Cancel:
+                return false;
+            case QMessageBox::Save:
+                return app->saveSession();
+            default:
+                return true;
+            }
+        }
+        return true;
+    }
+
     int showSaveErrorMsgBox(const App *app)
     {
         QMessageBox msgBox(QMessageBox::Warning, "Error Saving Session",
@@ -277,10 +298,22 @@ void App::loadSession()
     {
         return;
     }
-    sessionSaving::loadSession(filepath);
-    m_saveFilePath = filepath;
-    m_hasUnsavedChanges = false;
-    refreshAppName();
+    loadSession(filepath);
+}
+
+void App::loadSession(const QString &filepath)
+{
+    // Ask user about unsaved changes
+    if (!askUnsavedChangesOk(this))
+    {
+        return;
+    }
+    if (sessionSaving::loadSession(filepath))
+    {
+        m_saveFilePath = filepath;
+        m_hasUnsavedChanges = false;
+        refreshAppName();
+    }
 }
 
 void App::setUnsavedChanges(bool value)
@@ -320,17 +353,9 @@ bool App::event(QEvent *event)
     if (event->type() == QEvent::Quit && hasUnsavedChanges() &&
         preferences()->getBool(Preferences::AskSaveBeforeClosing))
     {
-        switch (showUnsavedChangesMsgBox(this))
+        if (!askUnsavedChangesOk(this))
         {
-        case QMessageBox::Cancel:
             return true;
-        case QMessageBox::Save:
-            if (!saveSession())
-            {
-                return true;
-            }
-        default:
-            break;
         }
     }
     return QApplication::event(event);
