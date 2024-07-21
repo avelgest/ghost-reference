@@ -251,6 +251,10 @@ namespace
         auto *toolBar = new QToolBar(settingsPanel);
         QAction *action = nullptr;
 
+        action = toolBar->addAction(toolBar->style()->standardIcon(QStyle::SP_BrowserReload), "Reload");
+        QObject::connect(action, &QAction::triggered, settingsPanel,
+                         [=]() { settingsPanel->referenceImage()->reload(); });
+
         action = toolBar->addAction(QIcon("resources/flip_btn_h.png"), "Flip Horizontally");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::flipImageHorizontally);
 

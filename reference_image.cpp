@@ -147,6 +147,15 @@ void ReferenceImage::setLoader(RefImageLoader &&refLoader)
     m_loaderWatcher.setFuture(m_loader->future());
 }
 
+void ReferenceImage::reload()
+{
+    if (filepath().isEmpty())
+    {
+        return;
+    }
+    setLoader(RefImageLoader(QUrl::fromLocalFile(filepath())));
+}
+
 QSizeF ReferenceImage::minCropSize() const
 {
     return {minDisplaySize / zoom(), minDisplaySize / zoom()};
@@ -218,8 +227,10 @@ void ReferenceImage::setBaseImage(const QPixmap &baseImage)
     m_baseImage = baseImage;
 
     setCrop(baseImage.rect());
-    setDisplaySize(oldDisplaySize.isNull() ? baseImage.size() : oldDisplaySize);
+    setDisplaySize(oldDisplaySize.isNull() ? baseImage.size()
+                                           : baseImage.size().scaled(oldDisplaySize, Qt::KeepAspectRatio));
     updateDisplayImage();
+    emit baseImageChanged(m_baseImage);
 }
 
 const QByteArray &ReferenceImage::ensureCompressedImage()

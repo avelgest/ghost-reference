@@ -46,6 +46,8 @@ public:
 
     void setLoader(RefImageLoader &&RefLoader);
 
+    void reload();
+
     void fromJson(const QJsonObject &json, RefImageLoader &&loader);
     QJsonObject toJson() const;
 
@@ -106,6 +108,7 @@ public:
     void setZoom(qreal value);
 
 signals:
+    void baseImageChanged(QPixmap &baseImage);
     void cropChanged(QRect newCrop);
     void displayImageUpdate();
     void filepathChanged(const QString &newValue);

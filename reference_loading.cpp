@@ -130,6 +130,7 @@ ReferenceImageSP refLoad::fromUrl(const QUrl &url)
 {
     const QString name = stripExt(url.fileName());
     ReferenceImageSP refImage = getRefCollection().newReferenceImage(name);
+    refImage->setFilepath(url.toLocalFile());
     refImage->setLoader(RefImageLoader(url));
 
     return refImage;
