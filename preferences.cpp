@@ -155,6 +155,21 @@ Preferences::Preferences(QObject *parent)
 
 Preferences::~Preferences() = default;
 
+Preferences *Preferences::duplicate(QObject *parent) const
+{
+    auto *newPrefs = new Preferences(parent);
+    newPrefs->p->m_properties = p->m_properties;
+    return newPrefs;
+}
+
+void Preferences::copyFromOther(Preferences *other)
+{
+    if (other)
+    {
+        p->m_properties = other->p->m_properties;
+    }
+}
+
 template <typename T>
 T Preferences::get(Keys key) const
 {
@@ -275,6 +290,24 @@ void Preferences::saveToDisk() const
     const QJsonDocument doc = toJsonDocument();
     configFile.write(doc.toJson());
     qInfo() << "Preferences written to" << configFile.fileName();
+}
+
+bool Preferences::checkAllEqual(Preferences *other)
+{
+    if (other == this)
+    {
+        return true;
+    }
+    if (other == nullptr)
+    {
+        return false;
+    }
+    static const auto keys = prefProperties().keys();
+
+    auto &props = p->m_properties;
+    auto &otherProps = other->p->m_properties;
+
+    return std::ranges::all_of(keys.cbegin(), keys.cend(), [=](auto key) { return props[key] == otherProps[key]; });
 }
 
 const QString &Preferences::getName(Keys key)

@@ -74,14 +74,15 @@ namespace
         friend class ::MainToolbarActions;
         bool m_initialized = false;
 
-        QIcon visible, hidden;
+        QIcon hidden, preferences, visible;
 
         void init()
         {
             if (!m_initialized)
             {
-                visible = QIcon("resources/visible.png");
                 hidden = QIcon("resources/hidden.png");
+                preferences = QIcon("resources/preferences.png");
+                visible = QIcon("resources/visible.png");
             }
             m_initialized = true;
         }
@@ -160,6 +161,7 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
     QObject::connect(&showHelp(), &QAction::triggered, &showHelpFnc);
 
     // Show Preferences
+    showPreferences().setIcon(iconCache.preferences);
     showPreferences().setText("Preferences");
     QObject::connect(&showPreferences(), &QAction::triggered, &showPreferencesFnc);
 

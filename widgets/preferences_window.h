@@ -4,6 +4,8 @@
 
 #include "../types.h"
 
+class QListWidget;
+
 class PreferencesWindow : public QWidget
 {
     Q_OBJECT
@@ -11,6 +13,7 @@ class PreferencesWindow : public QWidget
 
 private:
     Preferences *m_prefs = nullptr;
+    QListWidget *m_pageList = nullptr;
 
 public:
     explicit PreferencesWindow(QWidget *parent = nullptr);
@@ -21,6 +24,16 @@ public:
     void setPrefs(Preferences *prefs);
 
     QSize sizeHint() const override;
+
+    void savePreferences();
+    void restoreDefaults();
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
+
+private:
+    void buildUI();
+    void saveAndClose();
 };
 
 inline Preferences *PreferencesWindow::prefs() const { return m_prefs; }

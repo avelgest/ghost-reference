@@ -61,8 +61,11 @@ public:
     void setGlobalMode(WindowMode mode);
 
     QNetworkAccessManager *networkManager();
+
     const Preferences *preferences() const;
     Preferences *preferences();
+    // Replace the applications preferences with prefs. The ownership of prefs will be transferred.
+    void setPreferences(Preferences *prefs);
 
     const RefWindowList &referenceWindows() const;
     const ReferenceCollection &referenceItems() const;
@@ -95,6 +98,7 @@ public:
 signals:
     void allRefWindowsVisibleChanged(bool newValue);
     void globalModeChanged(WindowMode newValue);
+    void preferencesReplaced(Preferences *prefs);
     void referenceCursorChanged(const std::optional<QCursor> &cursor, std::optional<RefType> refType);
     void referenceWindowAdded(ReferenceWindow *refWindow);
 

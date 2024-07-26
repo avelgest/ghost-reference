@@ -42,10 +42,15 @@ public:
     explicit Preferences(QObject *parent = nullptr);
     ~Preferences() override;
 
+    Preferences *duplicate(QObject *parent = nullptr) const;
+    void copyFromOther(Preferences *other);
+
     static Preferences *loadFromDisk(QObject *parent = nullptr);
     static Preferences *loadFromJson(const QJsonDocument &json, QObject *parent);
     QJsonDocument toJsonDocument() const;
     void saveToDisk() const;
+
+    bool checkAllEqual(Preferences *other);
 
     static const QString &getName(Keys key);
     static const QString &getDisplayName(Keys key);

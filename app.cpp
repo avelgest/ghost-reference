@@ -216,6 +216,19 @@ QNetworkAccessManager *App::networkManager()
     return m_networkManager;
 }
 
+void App::setPreferences(Preferences *prefs)
+{
+    if (prefs == nullptr)
+    {
+        qCritical() << "App::setPreferences called with null pointer";
+        return;
+    }
+
+    prefs->setParent(this);
+    m_preferences.reset(prefs);
+    emit preferencesReplaced(prefs);
+}
+
 ReferenceWindow *App::newReferenceWindow()
 {
     if (!backWindow())

@@ -1,13 +1,19 @@
 #include "preferences_window.h"
 
+#include <QtGui/QCloseEvent>
 #include <QtGui/QScreen>
 
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QDoubleSpinBox>
 #include <QtWidgets/QFormLayout>
+#include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QListWidget>
+#include <QtWidgets/QMessageBox>
+#include <QtWidgets/QPushButton>
 #include <QtWidgets/QSizePolicy>
 #include <QtWidgets/QSlider>
+#include <QtWidgets/QStackedLayout>
 #include <QtWidgets/QVBoxLayout>
 
 #include "../app.h"
@@ -25,6 +31,7 @@ namespace
         Percentage,
     };
 
+    // Creates widgets for preferences.
     class PrefWidgetMaker
     {
     private:
@@ -58,8 +65,8 @@ namespace
         const auto key = m_key;
         auto *prefs = m_prefs;
 
-        QObject::connect(checkBox, &QCheckBox::stateChanged, [=]()
-                         { prefs->setBool(key, checkBox->isChecked()); });
+        QObject::connect(checkBox, &QCheckBox::stateChanged, parentWidget(),
+                         [=]() { prefs->setBool(key, checkBox->isChecked()); });
 
         m_layout->addWidget(checkBox);
         return checkBox;
@@ -72,6 +79,7 @@ namespace
         QScopedPointer<QHBoxLayout> hbox(new QHBoxLayout());
 
         auto *label = new QLabel(m_name + ":", parentWidget());
+        label->setToolTip(m_description);
 
         auto *spinBox = new QDoubleSpinBox(parentWidget());
         spinBox->setSingleStep(range.size() / 100.);
@@ -81,6 +89,12 @@ namespace
 
         hbox->addWidget(label);
         hbox->addWidget(spinBox);
+
+        const auto key = m_key;
+        auto *prefs = m_prefs;
+
+        QObject::connect(spinBox, &QDoubleSpinBox::valueChanged, parentWidget(),
+                         [=](double d) { prefs->setFloat(key, d); });
 
         m_layout->addLayout(hbox.take());
         return spinBox;
@@ -121,10 +135,22 @@ namespace
         }
     }
 
+    void deleteUI(QWidget *widget)
+    {
+        for (auto *obj : widget->children())
+        {
+            if (obj->isWidgetType())
+            {
+                obj->deleteLater();
+            }
+        }
+        delete widget->layout();
+    }
+
 } // namespace
 
 PreferencesWindow::PreferencesWindow(QWidget *parent)
-    : PreferencesWindow(App::ghostRefInstance()->preferences(), parent)
+    : PreferencesWindow(nullptr, parent)
 {
 }
 
@@ -134,28 +160,28 @@ PreferencesWindow::PreferencesWindow(Preferences *prefs, QWidget *parent)
 {
     setWindowFlag(Qt::Dialog);
 
+    if (m_prefs == nullptr)
+    {
+        m_prefs = appPrefs()->duplicate(this);
+    }
+
+    App *app = App::ghostRefInstance();
+
     // Position the window above the main toolbar
-    if (const MainToolbar *mainToolbar = App::ghostRefInstance()->mainToolbar(); isWindow() && mainToolbar)
+    if (const MainToolbar *mainToolbar = app->mainToolbar(); isWindow() && mainToolbar)
     {
         move(mainToolbar->pos());
     }
 
-    auto *layout = new PrefLayoutType(this);
-    // layout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
-    // layout->setLabelAlignment(Qt::AlignLeft);
-    //  layout->setFormAlignment(Qt::AlignHCenter | Qt::AlignTop);
-
-    PrefWidgetMaker widgetMaker(layout, prefs);
-
-    widgetMaker.createWidget(Preferences::AllowInternet);
-    widgetMaker.createWidget(Preferences::AnimateToolbarCollapse);
-    widgetMaker.createWidget(Preferences::GhostModeOpacity);
-
-    layout->addStretch();
+    buildUI();
 }
 
 void PreferencesWindow::setPrefs(Preferences *prefs)
 {
+    if (m_prefs && m_prefs->parent() == this)
+    {
+        m_prefs->deleteLater();
+    }
     m_prefs = prefs;
 }
 
@@ -168,4 +194,131 @@ QSize PreferencesWindow::sizeHint() const
         return {screenSize.width() / 4, screenSize.height() / 2};
     }
     return fallbackSize;
+}
+
+void PreferencesWindow::savePreferences()
+{
+    App *app = App::ghostRefInstance();
+    app->setPreferences(m_prefs);
+    m_prefs->saveToDisk();
+}
+
+void PreferencesWindow::restoreDefaults()
+{
+    const int currentPage = m_pageList->currentRow();
+
+    setPrefs(new Preferences(this));
+    deleteUI(this);
+    buildUI();
+
+    m_pageList->setCurrentRow(currentPage);
+}
+
+void PreferencesWindow::closeEvent(QCloseEvent *event)
+{
+    if (!m_prefs->checkAllEqual(App::ghostRefInstance()->preferences()))
+    {
+        QMessageBox msgbox(QMessageBox::Question, "Save Changes", "Save changes to preferences?",
+                           QMessageBox::Save | QMessageBox::Discard, this);
+        switch (msgbox.exec())
+        {
+        case QMessageBox::Save:
+            savePreferences();
+        default:
+            break;
+        }
+    }
+    event->accept();
+}
+
+void PreferencesWindow::buildUI()
+{
+    if (layout() != nullptr)
+    {
+        qWarning() << "PreferencesWindow::buildUI: UI layout already initalized.";
+        return;
+    }
+
+    auto *gridLayout = new QGridLayout(this);
+    gridLayout->setRowStretch(1, 1);
+    gridLayout->setColumnStretch(1, 1);
+
+    m_pageList = new QListWidget(this);
+    {
+        const int fontSizePt = 12;
+        const int widthPx = 128;
+
+        m_pageList->addItem("General");
+        m_pageList->addItem("Advanced");
+        m_pageList->setCurrentRow(0);
+        m_pageList->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
+        m_pageList->setMaximumWidth(widthPx);
+
+        QFont font = m_pageList->font();
+        font.setPointSize(fontSizePt);
+        m_pageList->setFont(font);
+
+        gridLayout->addWidget(m_pageList, 0, 0);
+    }
+
+    auto *pageFrame = new QFrame(this);
+    auto *pageStack = new QStackedLayout(pageFrame);
+    pageFrame->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    gridLayout->addWidget(pageFrame, 0, 1, 2, 1);
+
+    // Restore Defaults/Ok/Cancel buttons
+    auto *buttons = new QWidget(this);
+    {
+        auto *layout = new QHBoxLayout(buttons);
+
+        auto *resetBtn = new QPushButton("Restore Defaults");
+        QObject::connect(resetBtn, &QPushButton::clicked, this, &PreferencesWindow::restoreDefaults);
+        layout->addWidget(resetBtn);
+
+        layout->addStretch();
+
+        auto *acceptBtn = new QPushButton("Ok", buttons);
+        QObject::connect(acceptBtn, &QPushButton::clicked, this, &PreferencesWindow::saveAndClose);
+        layout->addWidget(acceptBtn);
+
+        auto *cancelBtn = new QPushButton("Cancel", buttons);
+        cancelBtn->setShortcut(QKeySequence::Cancel);
+        QObject::connect(cancelBtn, &QPushButton::clicked, this, &PreferencesWindow::close);
+        layout->addWidget(cancelBtn);
+
+        gridLayout->addWidget(buttons, 2, 0, 1, 2);
+    }
+
+    // General Page
+    auto *general = new QWidget(pageFrame);
+    pageStack->addWidget(general);
+    {
+        auto *layout = new PrefLayoutType(general);
+        PrefWidgetMaker widgetMaker(layout, m_prefs);
+
+        widgetMaker.createWidget(Preferences::AllowInternet);
+        widgetMaker.createWidget(Preferences::AskSaveBeforeClosing);
+        widgetMaker.createWidget(Preferences::AnimateToolbarCollapse);
+        widgetMaker.createWidget(Preferences::GhostModeOpacity);
+        layout->addStretch();
+    }
+
+    // Advanced Page
+    auto *advanced = new QWidget(pageFrame);
+    pageStack->addWidget(advanced);
+    {
+        auto *layout = new PrefLayoutType(advanced);
+        PrefWidgetMaker widgetMaker(layout, m_prefs);
+
+        widgetMaker.createWidget(Preferences::LocalFilesStore);
+        layout->addStretch();
+    }
+
+    QObject::connect(m_pageList, &QListWidget::currentRowChanged, pageStack, &QStackedLayout::setCurrentIndex);
+}
+
+void PreferencesWindow::saveAndClose()
+{
+    savePreferences();
+    close();
 }
