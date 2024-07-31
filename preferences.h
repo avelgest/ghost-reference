@@ -35,7 +35,7 @@ public:
         AnimateToolbarCollapse,
         AskSaveBeforeClosing,
         GhostModeOpacity,
-        LocalFilesStore,
+        LocalFilesLink,
         LocalFilesStoreMaxMB,
     };
 

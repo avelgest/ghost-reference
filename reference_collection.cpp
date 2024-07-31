@@ -82,6 +82,8 @@ QList<ReferenceImageSP> ReferenceCollection::loadJson(const QJsonObject &json,
             loader = std::move(RefImageLoader(pixmapFound.value()));
         }
 
+        // N.B. Linked (not stored in the .ghr) files will be loaded in refImage->fromJson
+
         ReferenceImageSP refImage = newReferenceImage();
         refImage->fromJson(jsonObj, std::move(loader));
         loadedRefs.push_back(std::move(refImage));

@@ -310,7 +310,7 @@ void PreferencesWindow::buildUI()
         auto *layout = new PrefLayoutType(advanced);
         PrefWidgetMaker widgetMaker(layout, m_prefs);
 
-        widgetMaker.createWidget(Preferences::LocalFilesStore);
+        widgetMaker.createWidget(Preferences::LocalFilesLink);
         layout->addStretch();
     }
 

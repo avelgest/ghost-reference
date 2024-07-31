@@ -56,7 +56,8 @@ namespace
 } // namespace
 
 ReferenceImage::ReferenceImage()
-    : m_loader(new RefImageLoader())
+    : m_loader(new RefImageLoader()),
+      m_savedAsLink(appPrefs()->getBool(Preferences::LocalFilesLink))
 {
     QObject::connect(this, &ReferenceImage::settingsChanged, this, &ReferenceImage::updateDisplayImage);
 }
@@ -71,7 +72,7 @@ void ReferenceImage::fromJson(const QJsonObject &json, RefImageLoader &&loader)
 {
     setName(json["name"].toString());
     setFilepath(json["filepath"].toString());
-    if (loader.isValid())
+    if (loader.future().isValid())
     {
         setLoader(std::move(loader));
     }
@@ -83,6 +84,7 @@ void ReferenceImage::fromJson(const QJsonObject &json, RefImageLoader &&loader)
     setZoom(json["zoom"].toDouble(1.0));
     setOpacity(json["opacity"].toDouble(1.0));
     setSaturation(json["saturation"].toDouble(1.0));
+    setSavedAsLink(json["savedAsLink"].toBool());
     setFlipHorizontal(json["flipHorizontal"].toBool(false));
     setFlipVertical(json["flipVertical"].toBool(false));
     setSmoothFiltering(json["smoothFlitering"].toBool(true));
@@ -108,6 +110,7 @@ QJsonObject ReferenceImage::toJson() const
             {"zoom", zoom()},
             {"opacity", opacity()},
             {"saturation", saturation()},
+            {"savedAsLink", savedAsLink()},
             {"flipHorizontal", flipHorizontal()},
             {"flipVertical", flipVertical()},
             {"smoothFiltering", smoothFiltering()}};
@@ -134,14 +137,13 @@ void ReferenceImage::setLoader(RefImageLoader &&refLoader)
     *m_loader = std::move(refLoader);
     if (m_loader->finished())
     {
-        setBaseImage(m_loader->pixmap());
+        onLoaderFinished();
         return;
     }
 
-    QObject::connect(&m_loaderWatcher, &LoaderWatcher::finished, [this]()
-                     { setBaseImage(m_loaderWatcher.result().value<QPixmap>()); });
-    QObject::connect(&m_loaderWatcher, &LoaderWatcher::progressValueChanged, [this]()
-                     { emit settingsChanged(); }); // TODO Add progress signal
+    QObject::connect(&m_loaderWatcher, &LoaderWatcher::finished, this, &ReferenceImage::onLoaderFinished);
+    QObject::connect(&m_loaderWatcher, &LoaderWatcher::progressValueChanged, this,
+                     [this]() { emit settingsChanged(); }); // TODO Add progress signal
     // TODO Connect canceled / progressTextChanged
 
     m_loaderWatcher.setFuture(m_loader->future());
@@ -159,6 +161,11 @@ void ReferenceImage::reload()
 QSizeF ReferenceImage::minCropSize() const
 {
     return {minDisplaySize / zoom(), minDisplaySize / zoom()};
+}
+
+void ReferenceImage::onLoaderFinished()
+{
+    setBaseImage(m_loader->pixmap());
 }
 
 void ReferenceImage::setCropF(QRectF value)
@@ -257,6 +264,11 @@ void ReferenceImage::setDisplaySizeF(QSizeF value)
     const QSizeF &cropSize = cropF().size();
     const QSizeF newSize = cropSize.scaled(value, Qt::KeepAspectRatioByExpanding);
     setZoom(newSize.width() / cropSize.width());
+}
+
+bool ReferenceImage::isLocalFile() const
+{
+    return !m_filepath.isEmpty();
 }
 
 void ReferenceImage::setDisplaySize(QSize value)

@@ -11,6 +11,7 @@
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QFormLayout>
 #include <QtWidgets/QGraphicsDropShadowEffect>
+#include <QtWidgets/QGroupBox>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
@@ -230,6 +231,39 @@ namespace
         return lineEdit;
     }
 
+    void createLinkSettings(SettingsPanel *settingsPanel, QFormLayout *layout)
+    {
+        const int outerSpacing = 10;
+        layout->addItem(new QSpacerItem(0, outerSpacing));
+
+        auto *frame = new QGroupBox("File", settingsPanel);
+        auto *frameLayout = new QFormLayout(frame);
+
+        auto *filepathBox = new QLineEdit(frame);
+        filepathBox->setReadOnly(true);
+        filepathBox->setObjectName("filepath-text");
+
+        frameLayout->addRow(filepathBox);
+
+        auto *checkBox = createCheckbox(
+            settingsPanel, frameLayout, "Store as Link",
+            [=]() { return settingsPanel->referenceImage()->savedAsLink(); },
+            [=](bool value) { settingsPanel->referenceImage()->setSavedAsLink(value); });
+
+        checkBox->setToolTip("Only store a link when saving the session rather than storing a copy of this file.");
+
+        QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, filepathBox,
+                         [=](const ReferenceImageSP &image) {
+                             frame->setVisible(image && image->isLocalFile());
+                             if (image)
+                             {
+                                 filepathBox->setText(image->filepath());
+                                 checkBox->setChecked(image->savedAsLink());
+                             }
+                         });
+        layout->addRow(frame);
+    }
+
     QToolButton *createFlipButton(SettingsPanel &parent, Qt::Orientation orientation)
     {
         const char *iconPath = (orientation == Qt::Vertical) ? "resources/flip_btn_v.png"
@@ -254,6 +288,8 @@ namespace
         action = toolBar->addAction(toolBar->style()->standardIcon(QStyle::SP_BrowserReload), "Reload");
         QObject::connect(action, &QAction::triggered, settingsPanel,
                          [=]() { settingsPanel->referenceImage()->reload(); });
+        QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, action,
+                         [=](const ReferenceImageSP &image) { action->setEnabled(image && image->isLocalFile()); });
 
         action = toolBar->addAction(QIcon("resources/flip_btn_h.png"), "Flip Horizontally");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::flipImageHorizontally);
@@ -442,6 +478,8 @@ void SettingsPanel::initSettingsArea()
         },
         [this]() { return static_cast<int>(m_refWindow->tabFit()); },
         [this](QVariant value) { m_refWindow->setTabFit(variantToEnum<ReferenceWindow::TabFit>(value)); });
+
+    createLinkSettings(this, layout);
 }
 
 void SettingsPanel::buildUI()

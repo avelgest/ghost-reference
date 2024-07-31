@@ -37,6 +37,7 @@ class ReferenceImage : public QObject
     qreal m_zoom = 1.0;
     qreal m_opacity = 1.0;
     qreal m_saturation = 1.0;
+    bool m_savedAsLink = false;
     bool m_filpHorizontal = false;
     bool m_flipVertical = false;
     bool m_smoothFiltering = true;
@@ -87,6 +88,11 @@ public:
     // QSizeF displaySizeF() const;
     void setDisplaySizeF(QSizeF value);
 
+    bool isLocalFile() const;
+    // Should this image should be stored only as a link to a local file when saving the session.
+    bool savedAsLink() const;
+    void setSavedAsLink(bool value);
+
     bool flipHorizontal() const;
     void setFlipHorizontal(bool value);
 
@@ -122,6 +128,7 @@ private:
     explicit ReferenceImage(RefImageLoader &&loader);
 
     QSizeF minCropSize() const;
+    void onLoaderFinished();
     QTransform srcTransfrom() const;
     void redrawImage();
 };
@@ -181,6 +188,16 @@ inline bool ReferenceImage::isLoaded() const { return !m_baseImage.isNull(); }
 inline void ReferenceImage::setCrop(QRect value)
 {
     setCropF(value.toRectF());
+}
+
+inline bool ReferenceImage::savedAsLink() const
+{
+    return m_savedAsLink && !m_filepath.isEmpty();
+}
+
+inline void ReferenceImage::setSavedAsLink(bool value)
+{
+    m_savedAsLink = value;
 }
 
 inline QRectF ReferenceImage::cropF() const { return m_crop; }

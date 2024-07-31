@@ -74,6 +74,11 @@ SettingsPanel #settings-area-scroll {
     border: none;
 }
 
+SettingsPanel #filepath-text {
+    background-color: hsva(0, 0, 50%, 20%);
+    border: 1px ridge gray;
+}
+
 ColorPickerWindow > QLineEdit, ColorPickerWindow > QLabel {
     font-size: 14px;
 }

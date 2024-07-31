@@ -21,6 +21,7 @@
 #include <QtWidgets/QFileDialog>
 
 #include "app.h"
+#include "preferences.h"
 #include "reference_image.h"
 #include "utils/zip_file.h"
 #include "widgets/main_toolbar.h"
@@ -48,6 +49,20 @@ namespace
         return dir;
     }
 
+    // Returns true if refItem should be stored as a file in the session ZIP when saving.
+    bool shouldStoreRefItem(const ReferenceImageSP &refItem)
+    {
+        const qint64 maxSizeBytes = appPrefs()->getInt(Preferences::LocalFilesStoreMaxMB) * 1000000LL;
+
+        // Only link the item instead of storing it if it is a local file with a size less than maxSizeBytes
+        if (refItem->savedAsLink() && !refItem->filepath().isEmpty())
+        {
+            const QFileInfo fileInfo(refItem->filepath());
+            return !fileInfo.isFile() || (maxSizeBytes > 0 && fileInfo.size() > maxSizeBytes);
+        }
+        return true;
+    }
+
     QByteArray createSessionZip()
     {
         const App *app = App::ghostRefInstance();
@@ -60,9 +75,12 @@ namespace
         {
             for (const auto &refItem : refWindow->referenceImages())
             {
-                QByteArray itemData = refItem->ensureCompressedImage();
-                // FIXME Ensure name is unique
-                zipFile.addFile(refItem->name(), std::move(itemData));
+                if (shouldStoreRefItem(refItem))
+                {
+                    QByteArray itemData = refItem->ensureCompressedImage();
+                    // FIXME Ensure name is unique
+                    zipFile.addFile(refItem->name(), std::move(itemData));
+                }
             }
         }
 

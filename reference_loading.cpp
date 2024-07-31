@@ -209,8 +209,8 @@ RefImageLoader::RefImageLoader(const QUrl &url)
     }
 }
 
-RefImageLoader::RefImageLoader(const QString &url)
-    : RefImageLoader(QUrl(url))
+RefImageLoader::RefImageLoader(const QString &filepath)
+    : RefImageLoader(QUrl::fromLocalFile(filepath))
 {
 }
 
