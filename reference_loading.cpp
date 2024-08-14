@@ -18,6 +18,7 @@
 #include "reference_image.h"
 
 #include "utils/network_download.h"
+#include "utils/result.h"
 
 namespace
 {
@@ -27,17 +28,43 @@ namespace
         LoadException *clone() const override { return new LoadException(*this); }
     };
 
-    using PixmapResult = utils::result<QPixmap, QString>;
+    struct LoadedPixmap
+    {
+        QByteArray fileData;
+        QPixmap pixmap;
+    };
+
+    using PixmapResult = utils::result<LoadedPixmap, QString>;
 
     PixmapResult loadLocalPixmap(const QString &filepath)
     {
-        QPixmap pixmap;
-        if (!pixmap.load(filepath))
+        const qint64 maxFileSize = 1e9;
+
+        if (const QImageReader imageReader(filepath); !imageReader.canRead())
         {
+            const QString msg("Unable to load file %1 as an image: %2");
+            return PixmapResult::Err(msg.arg(filepath).arg(imageReader.errorString()));
+        }
+
+        if (QFile file(filepath); file.open(QIODevice::ReadOnly))
+        {
+            const QByteArray fileData = file.read(maxFileSize);
+            if (!file.atEnd())
+            {
+                const QString msg("%1 exceeds maximum file size");
+                return PixmapResult::Err(msg.arg(filepath));
+            }
+
+            if (QPixmap pixmap; pixmap.loadFromData(fileData))
+            {
+                return LoadedPixmap(fileData, pixmap);
+            }
             const QString msg("Unable to load file %1");
             return PixmapResult::Err(msg.arg(filepath));
         }
-        return pixmap;
+
+        const QString msg("Unable to open file %1");
+        return PixmapResult::Err(msg.arg(filepath));
     }
 
     ReferenceCollection &getRefCollection()
@@ -192,7 +219,13 @@ RefImageLoader::RefImageLoader(const QUrl &url)
         PixmapResult result = loadLocalPixmap(url.toLocalFile());
         if (result.isOk())
         {
-            promise().addResult(std::move(result.value()));
+            auto value = result.value();
+            m_fileData = value.fileData;
+            promise().addResult(value.pixmap);
+        }
+        else
+        {
+            setError(result.error());
         }
 
         promise().finish();
@@ -201,9 +234,10 @@ RefImageLoader::RefImageLoader(const QUrl &url)
     else
     {
         m_download = std::make_unique<utils::NetworkDownload>(url);
-        setFuture(m_download->future().then([](const QByteArray &result) {
+        setFuture(m_download->future().then([this](const QByteArray &result) {
             QPixmap pixmap;
             pixmap.loadFromData(result);
+            m_fileData = result;
             return QVariant::fromValue(pixmap);
         }));
     }

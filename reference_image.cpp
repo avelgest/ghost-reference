@@ -166,6 +166,7 @@ QSizeF ReferenceImage::minCropSize() const
 void ReferenceImage::onLoaderFinished()
 {
     setBaseImage(m_loader->pixmap());
+    setCompressedImage(m_loader->fileData());
 }
 
 void ReferenceImage::setCropF(QRectF value)

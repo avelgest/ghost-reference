@@ -3,6 +3,7 @@
 #include <memory>
 #include <utility>
 
+#include <QtCore/QByteArray>
 #include <QtCore/QFuture>
 #include <QtCore/QPromise>
 #include <QtCore/QString>
@@ -10,7 +11,6 @@
 
 #include "types.h"
 #include "utils/network_download.h"
-#include "utils/result.h"
 
 class QDragEnterEvent;
 class QDropEvent;
@@ -66,7 +66,6 @@ public:
 
     bool finished() const;
     bool isError() const;
-    virtual bool isValid() const;
     QFuture<QVariant> future() const;
 
     virtual RefType type() const = 0;
@@ -77,11 +76,12 @@ class RefImageLoader : public RefLoader
     Q_DISABLE_COPY(RefImageLoader)
 
     std::unique_ptr<utils::NetworkDownload> m_download = nullptr;
+    QByteArray m_fileData;
 
 public:
     RefImageLoader() = default;
     explicit RefImageLoader(const QUrl &url);
-    explicit RefImageLoader(const QString &url);
+    explicit RefImageLoader(const QString &filepath);
     explicit RefImageLoader(const QImage &image);
     explicit RefImageLoader(const QPixmap &pixmap);
     ~RefImageLoader() override = default;
@@ -89,6 +89,7 @@ public:
     RefImageLoader(RefImageLoader &&) = default;
     RefImageLoader &operator=(RefImageLoader &&) = default;
 
+    const QByteArray &fileData() const;
     QPixmap pixmap() const;
     RefType type() const override { return RefType::Image; }
 };
@@ -111,4 +112,7 @@ inline bool RefLoader::finished() const { return future().isFinished(); }
 
 inline bool RefLoader::isError() const { return !m_error.isEmpty(); }
 
-inline bool RefLoader::isValid() const { return finished(); }
+inline const QByteArray &RefImageLoader::fileData() const
+{
+    return m_fileData;
+}
