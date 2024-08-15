@@ -62,23 +62,23 @@ ReferenceImage::ReferenceImage()
     QObject::connect(this, &ReferenceImage::settingsChanged, this, &ReferenceImage::updateDisplayImage);
 }
 
-ReferenceImage::ReferenceImage(RefImageLoader &&loader)
+ReferenceImage::ReferenceImage(RefImageLoaderUP &&loader)
     : ReferenceImage()
 {
     setLoader(std::move(loader));
 }
 
-void ReferenceImage::fromJson(const QJsonObject &json, RefImageLoader &&loader)
+void ReferenceImage::fromJson(const QJsonObject &json, RefImageLoaderUP &&loader)
 {
     setName(json["name"].toString());
     setFilepath(json["filepath"].toString());
-    if (loader.future().isValid())
+    if (loader && loader->future().isValid())
     {
         setLoader(std::move(loader));
     }
     else if (!filepath().isEmpty())
     {
-        setLoader(RefImageLoader(filepath()));
+        setLoader(std::make_unique<RefImageLoader>(filepath()));
     }
 
     setZoom(json["zoom"].toDouble(1.0));
@@ -130,11 +130,11 @@ qreal ReferenceImage::hoverOpacity() const
     return appPrefs()->getFloat(Preferences::GhostModeOpacity);
 }
 
-void ReferenceImage::setLoader(RefImageLoader &&refLoader)
+void ReferenceImage::setLoader(RefImageLoaderUP &&refLoader)
 {
     QObject::disconnect(&m_loaderWatcher);
 
-    *m_loader = std::move(refLoader);
+    m_loader = std::move(refLoader);
     if (m_loader->finished())
     {
         onLoaderFinished();
@@ -155,7 +155,7 @@ void ReferenceImage::reload()
     {
         return;
     }
-    setLoader(RefImageLoader(QUrl::fromLocalFile(filepath())));
+    setLoader(std::make_unique<RefImageLoader>(QUrl::fromLocalFile(filepath())));
 }
 
 QSizeF ReferenceImage::minCropSize() const
@@ -169,10 +169,16 @@ void ReferenceImage::onLoaderFinished()
     setCompressedImage(m_loader->fileData());
 }
 
+const QString &ReferenceImage::errorMessage() const
+{
+    static const QString empty;
+    return m_loader ? m_loader->errorMessage() : empty;
+}
+
 void ReferenceImage::setCropF(QRectF value)
 {
     // Ensure there is already a valid crop (needed for clamping)
-    if (cropF().isNull())
+    if (!m_crop.isValid())
     {
         m_crop = m_baseImage.rect().toRectF();
     }
@@ -230,13 +236,13 @@ void ReferenceImage::shiftCropF(QPointF shiftBy)
 
 void ReferenceImage::setBaseImage(const QPixmap &baseImage)
 {
-    const QSize oldDisplaySize = displaySize();
+    const QSize oldDisplaySize = m_crop.isValid() ? displaySize() : QSize();
 
     m_baseImage = baseImage;
 
     setCrop(baseImage.rect());
-    setDisplaySize(oldDisplaySize.isNull() ? baseImage.size()
-                                           : baseImage.size().scaled(oldDisplaySize, Qt::KeepAspectRatio));
+    setDisplaySize(oldDisplaySize.isValid() ? baseImage.size().scaled(oldDisplaySize, Qt::KeepAspectRatio)
+                                            : baseImage.size());
     updateDisplayImage();
     emit baseImageChanged(m_baseImage);
 }
@@ -264,7 +270,8 @@ void ReferenceImage::setDisplaySizeF(QSizeF value)
     value = value.expandedTo({minDisplaySize, minDisplaySize});
     const QSizeF &cropSize = cropF().size();
     const QSizeF newSize = cropSize.scaled(value, Qt::KeepAspectRatioByExpanding);
-    setZoom(newSize.width() / cropSize.width());
+    const qreal newZoom = cropSize.isNull() ? 1.0 : newSize.width() / cropSize.width();
+    setZoom(newZoom);
 }
 
 bool ReferenceImage::isLocalFile() const
@@ -280,9 +287,9 @@ void ReferenceImage::setDisplaySize(QSize value)
 void ReferenceImage::setZoom(qreal value)
 {
     const qreal minZoom = 0.1;
-    // const qreal maxZoom = 16.0;
+    const qreal maxZoom = 128.0;
 
-    value = std::max(value, minZoom);
+    value = std::min(std::max(value, minZoom), maxZoom);
     m_zoom = value;
     updateDisplayImage();
     emit zoomChanged(value);
@@ -327,6 +334,7 @@ void ReferenceImage::redrawImage()
         QPainter painter(&m_displayImage);
         painter.setCompositionMode(QPainter::CompositionMode_Source);
         painter.setTransform(srcTransfrom());
+        painter.setRenderHint(QPainter::SmoothPixmapTransform);
         painter.drawPixmap(m_displayImage.rect(), m_baseImage, crop());
     }
 

@@ -18,7 +18,12 @@ class QMimeData;
 class QUrl;
 class QVariant;
 
+class RefLoader;
+class RefImageLoader;
+
 template <typename T> class QList;
+
+typedef std::unique_ptr<RefImageLoader> RefImageLoaderUP;
 
 namespace refLoad
 {
@@ -42,7 +47,7 @@ namespace refLoad
 
 class RefLoader
 {
-    Q_DISABLE_COPY(RefLoader);
+    Q_DISABLE_COPY_MOVE(RefLoader);
 
 private:
     QPromise<QVariant> m_promise;
@@ -59,13 +64,11 @@ protected:
 public:
     RefLoader() = default;
 
-    RefLoader(RefLoader &&) = default;
-    RefLoader &operator=(RefLoader &&) = default;
-
     virtual ~RefLoader() = default;
 
     bool finished() const;
     bool isError() const;
+    const QString &errorMessage() const;
     QFuture<QVariant> future() const;
 
     virtual RefType type() const = 0;
@@ -73,7 +76,7 @@ public:
 
 class RefImageLoader : public RefLoader
 {
-    Q_DISABLE_COPY(RefImageLoader)
+    Q_DISABLE_COPY_MOVE(RefImageLoader)
 
     std::unique_ptr<utils::NetworkDownload> m_download = nullptr;
     QByteArray m_fileData;
@@ -85,9 +88,6 @@ public:
     explicit RefImageLoader(const QImage &image);
     explicit RefImageLoader(const QPixmap &pixmap);
     ~RefImageLoader() override = default;
-
-    RefImageLoader(RefImageLoader &&) = default;
-    RefImageLoader &operator=(RefImageLoader &&) = default;
 
     const QByteArray &fileData() const;
     QPixmap pixmap() const;
@@ -111,6 +111,11 @@ inline void RefLoader::setFuture(const QFuture<QVariant> &future)
 inline bool RefLoader::finished() const { return future().isFinished(); }
 
 inline bool RefLoader::isError() const { return !m_error.isEmpty(); }
+
+inline const QString &RefLoader::errorMessage() const
+{
+    return m_error;
+}
 
 inline const QByteArray &RefImageLoader::fileData() const
 {

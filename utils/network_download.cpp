@@ -47,6 +47,21 @@ int NetworkDownload::statusCode() const
     return m_networkReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 }
 
+bool utils::NetworkDownload::anyError() const
+{
+    return m_networkReply && m_networkReply->error() != QNetworkReply::NoError;
+}
+
+QString utils::NetworkDownload::errorMessage() const
+{
+    return anyError() ? m_networkReply->errorString() : QString();
+}
+
+QUrl utils::NetworkDownload::url() const
+{
+    return m_networkReply ? m_networkReply->url() : QUrl();
+}
+
 QFuture<QByteArray> NetworkDownload::future() const { return m_promise.future(); }
 
 const QPromise<QByteArray> &NetworkDownload::promise() const { return m_promise; }
@@ -79,5 +94,6 @@ void NetworkDownload::onFinished()
         qCritical() << "Download of" << m_networkReply->url()
                     << "failed with error code" << m_networkReply->error();
     }
+    deleteNetworkReply();
     m_promise.finish();
 }

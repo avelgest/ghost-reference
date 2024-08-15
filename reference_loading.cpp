@@ -42,8 +42,8 @@ namespace
 
         if (const QImageReader imageReader(filepath); !imageReader.canRead())
         {
-            const QString msg("Unable to load file %1 as an image: %2");
-            return PixmapResult::Err(msg.arg(filepath).arg(imageReader.errorString()));
+            qCritical() << "Unable to load " << filepath << " " << imageReader.errorString();
+            return PixmapResult::Err(imageReader.errorString());
         }
 
         if (QFile file(filepath); file.open(QIODevice::ReadOnly))
@@ -51,16 +51,16 @@ namespace
             const QByteArray fileData = file.read(maxFileSize);
             if (!file.atEnd())
             {
-                const QString msg("%1 exceeds maximum file size");
-                return PixmapResult::Err(msg.arg(filepath));
+                qCritical() << filepath << "exceeds maximum file size";
+                return PixmapResult::Err("Exceeded maximum file size");
             }
 
             if (QPixmap pixmap; pixmap.loadFromData(fileData))
             {
                 return LoadedPixmap(fileData, pixmap);
             }
-            const QString msg("Unable to load file %1");
-            return PixmapResult::Err(msg.arg(filepath));
+            qCritical() << "Unable to load file " << filepath;
+            return PixmapResult::Err("Unable to load file");
         }
 
         const QString msg("Unable to open file %1");
@@ -109,7 +109,7 @@ ReferenceImageSP refLoad::fromFilepath(const QString &filepath)
 ReferenceImageSP refLoad::fromPixmap(const QPixmap &pixmap)
 {
     ReferenceImageSP refImage = getRefCollection().newReferenceImage();
-    refImage->setLoader(RefImageLoader(pixmap));
+    refImage->setLoader(std::make_unique<RefImageLoader>(pixmap));
 
     return refImage;
 }
@@ -158,7 +158,7 @@ ReferenceImageSP refLoad::fromUrl(const QUrl &url)
     const QString name = stripExt(url.fileName());
     ReferenceImageSP refImage = getRefCollection().newReferenceImage(name);
     refImage->setFilepath(url.toLocalFile());
-    refImage->setLoader(RefImageLoader(url));
+    refImage->setLoader(std::make_unique<RefImageLoader>(url));
 
     return refImage;
 }
@@ -192,16 +192,14 @@ bool refLoad::isSupported(const QUrl &url)
     static const QList<QByteArray> supportedMimeTypes = QImageReader::supportedMimeTypes();
     static const QMimeDatabase mimeDatabase;
 
-    QMimeType mimeType;
     if (url.isLocalFile())
     {
-        mimeType = mimeDatabase.mimeTypeForFile(url.fileName());
+        const QMimeType mimeType = mimeDatabase.mimeTypeForFile(url.fileName());
+        return supportedMimeTypes.contains(mimeType.name());
     }
-    else
-    {
-        mimeType = mimeDatabase.mimeTypesForFileName(url.fileName()).first();
-    }
-    return supportedMimeTypes.contains(mimeType.name());
+
+    QList<QMimeType> mimeTypes = mimeDatabase.mimeTypesForFileName(url.fileName());
+    return mimeTypes.isEmpty() ? false : supportedMimeTypes.contains(mimeTypes.first().name());
 }
 
 bool refLoad::isSupportedClipboard()
@@ -236,8 +234,20 @@ RefImageLoader::RefImageLoader(const QUrl &url)
         m_download = std::make_unique<utils::NetworkDownload>(url);
         setFuture(m_download->future().then([this](const QByteArray &result) {
             QPixmap pixmap;
-            pixmap.loadFromData(result);
-            m_fileData = result;
+
+            if (!m_download->errorMessage().isEmpty())
+            {
+                setError(m_download->errorMessage());
+            }
+            else if (pixmap.loadFromData(result))
+            {
+                m_fileData = result;
+            }
+            else
+            {
+                const QString msg("Unable to load %1 as an image.");
+                setError(msg.arg(m_download->url().toString()));
+            }
             return QVariant::fromValue(pixmap);
         }));
     }

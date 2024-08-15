@@ -20,6 +20,9 @@ namespace utils
         ~NetworkDownload() override;
 
         int statusCode() const;
+        bool anyError() const;
+        QString errorMessage() const;
+        QUrl url() const;
 
         QFuture<QByteArray> future() const;
         const QPromise<QByteArray> &promise() const;

@@ -45,11 +45,11 @@ class ReferenceImage : public QObject
 public:
     ~ReferenceImage() override = default;
 
-    void setLoader(RefImageLoader &&RefLoader);
+    void setLoader(RefImageLoaderUP &&RefLoader);
 
     void reload();
 
-    void fromJson(const QJsonObject &json, RefImageLoader &&loader);
+    void fromJson(const QJsonObject &json, RefImageLoaderUP &&loader);
     QJsonObject toJson() const;
 
     void applyRenderHints(QPainter &painter) const;
@@ -79,6 +79,7 @@ public:
     void shiftCropF(QPointF shiftBy);
 
     bool isLoaded() const;
+    const QString &errorMessage() const;
 
     /*The size (in px) this image should be displayed at.*/
     QSize displaySize() const;
@@ -125,7 +126,7 @@ signals:
 private:
     // Constructors should only be called from a ReferenceCollection
     ReferenceImage();
-    explicit ReferenceImage(RefImageLoader &&loader);
+    explicit ReferenceImage(RefImageLoaderUP &&loader);
 
     QSizeF minCropSize() const;
     void onLoaderFinished();

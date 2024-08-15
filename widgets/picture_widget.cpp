@@ -48,11 +48,9 @@ namespace
         painter.fillRect(rect, brush);
     }
 
-    // Called when the picture widget has no reference image to display
-    void drawNoImageMessage(QPainter &painter, const QRect &rect)
+    void drawMessage(QPainter &painter, const QRect &rect, const QString &msg)
     {
         const int fontSize = 24;
-        const QString message = "Drag and drop an image here";
         const int textMargin = 8;
         const QMargins margins(textMargin, textMargin, textMargin, textMargin);
 
@@ -60,7 +58,7 @@ namespace
         font.setPointSize(fontSize);
         painter.setFont(font);
 
-        painter.drawText(rect.marginsRemoved(margins), Qt::AlignCenter | Qt::TextWordWrap, message);
+        painter.drawText(rect.marginsRemoved(margins), Qt::AlignCenter | Qt::TextWordWrap, msg);
     }
 
 } // namespace
@@ -106,12 +104,15 @@ void PictureWidget::paintEvent(QPaintEvent *event)
     painter.setClipRegion(event->region());
     const QRectF destRect(0., 0., width(), height());
 
-    // If there is no loaded reference image just draw a message on a solid color
+    // If there is no vaild reference image loaded just draw a message on a solid color
     if (m_imageSP.isNull() || !m_imageSP->isLoaded())
     {
+        // If an error occurred during loading then draw the error message
+        const QString msg = (m_imageSP && !m_imageSP->errorMessage().isEmpty()) ? m_imageSP->errorMessage()
+                                                                                : "Drag and drop an image here";
         painter.setOpacity(std::max(minOpacity, opacityMultiplier()));
         painter.fillRect(destRect, Qt::lightGray);
-        drawNoImageMessage(painter, rect());
+        drawMessage(painter, rect(), msg);
         return;
     }
 
@@ -188,8 +189,11 @@ void PictureWidget::setImage(const ReferenceImageSP &image)
 
         QObject::connect(image.get(), &ReferenceImage::displayImageUpdate, this, [this]() { update(); });
         QObject::connect(image.get(), &ReferenceImage::settingsChanged, this, [this]() { update(); });
+
+        QObject::connect(image.get(), &ReferenceImage::baseImageChanged, this,
+                         [this]() { m_resizeFrame->showOnlyMoveControl(!m_imageSP || !m_imageSP->isLoaded()); });
     }
-    m_resizeFrame->showOnlyMoveControl(m_imageSP.isNull());
+    m_resizeFrame->showOnlyMoveControl(!m_imageSP || !m_imageSP->isLoaded());
 
     updateGeometry();
     update();
