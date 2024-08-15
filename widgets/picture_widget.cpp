@@ -117,7 +117,7 @@ void PictureWidget::paintEvent(QPaintEvent *event)
     }
 
     ReferenceImage &refImage = *m_imageSP;
-    const QImage &dispImage = refImage.displayImage();
+    const QPixmap &dispImage = refImage.displayImage();
 
     // Draw a checkered background for images with alpha
     if (refImage.baseImage().hasAlphaChannel() && referenceWindow()->windowMode() != GhostMode)
@@ -137,7 +137,7 @@ void PictureWidget::paintEvent(QPaintEvent *event)
     }
 
     painter.setOpacity(std::max(minOpacity, refImage.opacity() * opacityMultiplier()));
-    painter.drawImage(destRect, dispImage);
+    painter.drawPixmap(destRect, dispImage, dispImage.rect());
 }
 
 void PictureWidget::onReferenceCursorChanged(const std::optional<QCursor> &cursor, std::optional<RefType> refType)

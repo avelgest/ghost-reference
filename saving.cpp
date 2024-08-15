@@ -16,7 +16,7 @@
 #include <QtCore/QTemporaryFile>
 
 #include <QtGui/QDropEvent>
-#include <QtGui/QPixmap>
+#include <QtGui/QImage>
 
 #include <QtWidgets/QFileDialog>
 
@@ -104,7 +104,7 @@ namespace
             return false;
         }
 
-        QMap<QString, QPixmap> pixmapMap;
+        QMap<QString, QImage> imageMap;
 
         for (const auto &refName : references.keys())
         {
@@ -112,19 +112,19 @@ namespace
 
             if (!imgData.isEmpty())
             {
-                QPixmap pixmap;
-                pixmap.loadFromData(imgData);
-                if (pixmap.isNull())
+                QImage image;
+                image.loadFromData(imgData);
+                if (image.isNull())
                 {
                     qWarning() << "Unable to load embeded reference " << refName;
                     continue;
                 }
-                pixmapMap.insert(refName, pixmap);
+                imageMap.insert(refName, image);
             }
         }
 
         App *app = App::ghostRefInstance();
-        newItemsOut.append(std::move(app->referenceItems().loadJson(references, pixmapMap)));
+        newItemsOut.append(std::move(app->referenceItems().loadJson(references, imageMap)));
         return true;
     }
 

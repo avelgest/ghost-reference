@@ -165,11 +165,13 @@ namespace
     {
         if (const ReferenceImageSP &refImage = widget->image(); refImage)
         {
-            const QImage &image = refImage->displayImage();
-            const QPoint imgPos = widget->localToImage(localPos).toPoint();
-            if (image.rect().contains(imgPos))
+            const QPixmap &pixmap = refImage->displayImage();
+            const QPointF imgPos = widget->localToImage(localPos);
+
+            if (pixmap.rect().toRectF().contains(imgPos))
             {
-                return image.pixel(imgPos);
+                QImage pick = pixmap.copy(qFloor(imgPos.x()), qFloor(imgPos.y()), 1, 1).toImage();
+                return pick.isNull() ? QColor() : pick.pixel(0, 0);
             }
         }
         return {};

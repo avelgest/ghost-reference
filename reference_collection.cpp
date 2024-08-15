@@ -61,8 +61,7 @@ void ReferenceCollection::renameReference(ReferenceImage &refItem, const QString
     refMap.remove(oldName);
 }
 
-QList<ReferenceImageSP> ReferenceCollection::loadJson(const QJsonObject &json,
-                                                      const QMap<QString, QPixmap> &pixmaps)
+QList<ReferenceImageSP> ReferenceCollection::loadJson(const QJsonObject &json, const QMap<QString, QImage> &images)
 {
     QList<ReferenceImageSP> loadedRefs;
 
@@ -75,11 +74,11 @@ QList<ReferenceImageSP> ReferenceCollection::loadJson(const QJsonObject &json,
             continue;
         }
 
-        const auto pixmapFound = pixmaps.find(it.key());
+        const auto imageFound = images.find(it.key());
         RefImageLoaderUP loader;
-        if (pixmapFound != pixmaps.end())
+        if (imageFound != images.end())
         {
-            loader = std::move(std::make_unique<RefImageLoader>(pixmapFound.value()));
+            loader = std::move(std::make_unique<RefImageLoader>(imageFound.value()));
         }
 
         // N.B. Linked (not stored in the .ghr) files will be loaded in refImage->fromJson

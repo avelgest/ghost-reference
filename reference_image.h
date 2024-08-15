@@ -27,8 +27,8 @@ class ReferenceImage : public QObject
     LoaderWatcher m_loaderWatcher;
 
     QByteArray m_compressedImage;
-    QPixmap m_baseImage;
-    QImage m_displayImage;
+    QImage m_baseImage;
+    QPixmap m_displayImage;
     bool m_displayImageUpdate = true;
 
     QString m_filepath;
@@ -58,15 +58,15 @@ public:
     const QString &filepath() const;
     void setFilepath(const QString &filepath);
 
-    const QPixmap &baseImage() const;
-    void setBaseImage(const QPixmap &baseImage);
+    const QImage &baseImage() const;
+    void setBaseImage(const QImage &baseImage);
 
     const QByteArray &compressedImage() const;
     const QByteArray &ensureCompressedImage();
     void setCompressedImage(const QByteArray &value);
     void setCompressedImage(QByteArray &&value);
 
-    const QImage &displayImage();
+    const QPixmap &displayImage();
 
     const QString &name() const;
     void setName(const QString &newName);
@@ -115,7 +115,7 @@ public:
     void setZoom(qreal value);
 
 signals:
-    void baseImageChanged(QPixmap &baseImage);
+    void baseImageChanged(QImage &baseImage);
     void cropChanged(QRect newCrop);
     void displayImageUpdate();
     void filepathChanged(const QString &newValue);
@@ -152,7 +152,7 @@ inline void ReferenceImage::setFilepath(const QString &filepath)
     emit filepathChanged(m_filepath);
 }
 
-inline const QImage &ReferenceImage::displayImage()
+inline const QPixmap &ReferenceImage::displayImage()
 {
     if (m_displayImageUpdate)
     {
@@ -161,7 +161,10 @@ inline const QImage &ReferenceImage::displayImage()
     return m_displayImage;
 }
 
-inline const QPixmap &ReferenceImage::baseImage() const { return m_baseImage; }
+inline const QImage &ReferenceImage::baseImage() const
+{
+    return m_baseImage;
+}
 
 inline const QByteArray &ReferenceImage::compressedImage() const { return m_compressedImage; }
 

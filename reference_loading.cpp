@@ -28,22 +28,22 @@ namespace
         LoadException *clone() const override { return new LoadException(*this); }
     };
 
-    struct LoadedPixmap
+    struct LoadedImage
     {
         QByteArray fileData;
-        QPixmap pixmap;
+        QImage image;
     };
 
-    using PixmapResult = utils::result<LoadedPixmap, QString>;
+    using ImageResult = utils::result<LoadedImage, QString>;
 
-    PixmapResult loadLocalPixmap(const QString &filepath)
+    ImageResult loadLocalImage(const QString &filepath)
     {
         const qint64 maxFileSize = 1e9;
 
         if (const QImageReader imageReader(filepath); !imageReader.canRead())
         {
             qCritical() << "Unable to load " << filepath << " " << imageReader.errorString();
-            return PixmapResult::Err(imageReader.errorString());
+            return ImageResult::Err(imageReader.errorString());
         }
 
         if (QFile file(filepath); file.open(QIODevice::ReadOnly))
@@ -52,19 +52,19 @@ namespace
             if (!file.atEnd())
             {
                 qCritical() << filepath << "exceeds maximum file size";
-                return PixmapResult::Err("Exceeded maximum file size");
+                return ImageResult::Err("Exceeded maximum file size");
             }
 
-            if (QPixmap pixmap; pixmap.loadFromData(fileData))
+            if (QImage image; image.loadFromData(fileData))
             {
-                return LoadedPixmap(fileData, pixmap);
+                return LoadedImage(fileData, image);
             }
             qCritical() << "Unable to load file " << filepath;
-            return PixmapResult::Err("Unable to load file");
+            return ImageResult::Err("Unable to load file");
         }
 
         const QString msg("Unable to open file %1");
-        return PixmapResult::Err(msg.arg(filepath));
+        return ImageResult::Err(msg.arg(filepath));
     }
 
     ReferenceCollection &getRefCollection()
@@ -106,10 +106,10 @@ ReferenceImageSP refLoad::fromFilepath(const QString &filepath)
     return fromUrl(filepath);
 }
 
-ReferenceImageSP refLoad::fromPixmap(const QPixmap &pixmap)
+ReferenceImageSP refLoad::fromImage(const QImage &image)
 {
     ReferenceImageSP refImage = getRefCollection().newReferenceImage();
-    refImage->setLoader(std::make_unique<RefImageLoader>(pixmap));
+    refImage->setLoader(std::make_unique<RefImageLoader>(image));
 
     return refImage;
 }
@@ -147,7 +147,7 @@ QList<ReferenceImageSP> refLoad::fromMimeData(const QMimeData *mimeData)
     if (mimeData->hasImage())
     {
         auto qImage = qvariant_cast<QImage>(mimeData->imageData());
-        return {refLoad::fromPixmap(QPixmap::fromImage(qImage))};
+        return {refLoad::fromImage(qImage)};
     }
 
     return {};
@@ -214,12 +214,12 @@ RefImageLoader::RefImageLoader(const QUrl &url)
 {
     if (url.isLocalFile())
     {
-        PixmapResult result = loadLocalPixmap(url.toLocalFile());
+        ImageResult result = loadLocalImage(url.toLocalFile());
         if (result.isOk())
         {
             auto value = result.value();
             m_fileData = value.fileData;
-            promise().addResult(value.pixmap);
+            promise().addResult(value.image);
         }
         else
         {
@@ -233,13 +233,13 @@ RefImageLoader::RefImageLoader(const QUrl &url)
     {
         m_download = std::make_unique<utils::NetworkDownload>(url);
         setFuture(m_download->future().then([this](const QByteArray &result) {
-            QPixmap pixmap;
+            QImage image;
 
             if (!m_download->errorMessage().isEmpty())
             {
                 setError(m_download->errorMessage());
             }
-            else if (pixmap.loadFromData(result))
+            else if (image.loadFromData(result))
             {
                 m_fileData = result;
             }
@@ -248,7 +248,7 @@ RefImageLoader::RefImageLoader(const QUrl &url)
                 const QString msg("Unable to load %1 as an image.");
                 setError(msg.arg(m_download->url().toString()));
             }
-            return QVariant::fromValue(pixmap);
+            return QVariant::fromValue(image);
         }));
     }
 }
@@ -259,26 +259,25 @@ RefImageLoader::RefImageLoader(const QString &filepath)
 }
 
 RefImageLoader::RefImageLoader(const QImage &image)
-    : RefImageLoader(QPixmap::fromImage(image))
-{
-}
-
-RefImageLoader::RefImageLoader(const QPixmap &pixmap)
 {
     setFuture(promise().future());
-    if (pixmap.isNull())
+    if (image.isNull())
     {
         promise().finish();
     }
     else
     {
-        promise().addResult(pixmap);
+        promise().addResult(image);
         promise().finish();
     }
 }
 
-QPixmap RefImageLoader::pixmap() const
+RefImageLoader::RefImageLoader(const QPixmap &pixmap)
+    : RefImageLoader(pixmap.toImage())
+{}
+
+QImage RefImageLoader::image() const
 {
     const QFuture<QVariant> thisFuture = future();
-    return thisFuture.isResultReadyAt(0) ? thisFuture.result().value<QPixmap>() : QPixmap();
+    return thisFuture.isResultReadyAt(0) ? thisFuture.result().value<QImage>() : QImage();
 }

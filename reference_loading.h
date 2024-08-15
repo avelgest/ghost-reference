@@ -30,7 +30,7 @@ namespace refLoad
     using RefImageList = QList<ReferenceImageSP>;
 
     ReferenceImageSP fromFilepath(const QString &filepath);
-    ReferenceImageSP fromPixmap(const QPixmap &pixmap);
+    ReferenceImageSP fromImage(const QImage &image);
     ReferenceImageSP fromUrl(const QUrl &url);
 
     QList<ReferenceImageSP> fromClipboard();
@@ -90,7 +90,7 @@ public:
     ~RefImageLoader() override = default;
 
     const QByteArray &fileData() const;
-    QPixmap pixmap() const;
+    QImage image() const;
     RefType type() const override { return RefType::Image; }
 };
 

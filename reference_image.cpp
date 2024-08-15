@@ -165,7 +165,7 @@ QSizeF ReferenceImage::minCropSize() const
 
 void ReferenceImage::onLoaderFinished()
 {
-    setBaseImage(m_loader->pixmap());
+    setBaseImage(m_loader->image());
     setCompressedImage(m_loader->fileData());
 }
 
@@ -234,7 +234,7 @@ void ReferenceImage::shiftCropF(QPointF shiftBy)
     emit cropChanged(crop());
 }
 
-void ReferenceImage::setBaseImage(const QPixmap &baseImage)
+void ReferenceImage::setBaseImage(const QImage &baseImage)
 {
     const QSize oldDisplaySize = m_crop.isValid() ? displaySize() : QSize();
 
@@ -315,32 +315,24 @@ void ReferenceImage::redrawImage()
     m_displayImageUpdate = false;
     if (m_baseImage.isNull())
     {
-        if (!m_displayImage.isNull())
-        {
-            m_displayImage = QImage();
-        }
         return;
     }
 
     const QSize dispImgSize = smallestSize(displaySize(), crop().size());
 
-    if (m_displayImage.isNull() || m_displayImage.size() != dispImgSize)
-    {
-        m_displayImage = QImage(dispImgSize, QImage::Format_ARGB32_Premultiplied);
-        // m_displayImage.fill(0U);
-    }
+    QImage redrawTarget(dispImgSize, QImage::Format_ARGB32_Premultiplied);
 
     {
-        QPainter painter(&m_displayImage);
+        QPainter painter(&redrawTarget);
         painter.setCompositionMode(QPainter::CompositionMode_Source);
         painter.setTransform(srcTransfrom());
         painter.setRenderHint(QPainter::SmoothPixmapTransform);
-        painter.drawPixmap(m_displayImage.rect(), m_baseImage, crop());
+        painter.drawImage(redrawTarget.rect(), m_baseImage, crop());
     }
 
     if (!nearlyEqual(saturation(), 1.0))
     {
-        adjustSaturation(m_displayImage, saturation());
+        adjustSaturation(redrawTarget, saturation());
     }
 
     // Scale the image to displaySize
@@ -348,8 +340,9 @@ void ReferenceImage::redrawImage()
     {
         const Qt::TransformationMode filtering = smoothFiltering() ? Qt::SmoothTransformation
                                                                    : Qt::FastTransformation;
-        m_displayImage = m_displayImage.scaled(displaySize(), Qt::IgnoreAspectRatio, filtering);
+        redrawTarget = redrawTarget.scaled(displaySize(), Qt::IgnoreAspectRatio, filtering);
     }
+    m_displayImage = QPixmap::fromImage(redrawTarget);
 }
 
 void ReferenceImage::setName(const QString &newName)
