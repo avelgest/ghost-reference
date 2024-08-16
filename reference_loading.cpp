@@ -263,18 +263,33 @@ RefImageLoader::RefImageLoader(const QImage &image)
     setFuture(promise().future());
     if (image.isNull())
     {
-        promise().finish();
+        setError("Null image");
     }
     else
     {
         promise().addResult(image);
-        promise().finish();
     }
+    promise().finish();
 }
 
 RefImageLoader::RefImageLoader(const QPixmap &pixmap)
     : RefImageLoader(pixmap.toImage())
 {}
+
+RefImageLoader::RefImageLoader(const QByteArray &data)
+{
+    setFuture(promise().future());
+    if (QImage image; image.loadFromData(data))
+    {
+        m_fileData = data;
+        promise().addResult(image);
+    }
+    else
+    {
+        setError("Error loading QImage from file data");
+    }
+    promise().finish();
+}
 
 QImage RefImageLoader::image() const
 {

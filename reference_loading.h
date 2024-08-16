@@ -87,6 +87,7 @@ public:
     explicit RefImageLoader(const QString &filepath);
     explicit RefImageLoader(const QImage &image);
     explicit RefImageLoader(const QPixmap &pixmap);
+    explicit RefImageLoader(const QByteArray &data);
     ~RefImageLoader() override = default;
 
     const QByteArray &fileData() const;

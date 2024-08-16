@@ -61,7 +61,8 @@ void ReferenceCollection::renameReference(ReferenceImage &refItem, const QString
     refMap.remove(oldName);
 }
 
-QList<ReferenceImageSP> ReferenceCollection::loadJson(const QJsonObject &json, const QMap<QString, QImage> &images)
+QList<ReferenceImageSP> ReferenceCollection::loadJson(const QJsonObject &json,
+                                                      const QMap<QString, QByteArray> &imageData)
 {
     QList<ReferenceImageSP> loadedRefs;
 
@@ -74,9 +75,9 @@ QList<ReferenceImageSP> ReferenceCollection::loadJson(const QJsonObject &json, c
             continue;
         }
 
-        const auto imageFound = images.find(it.key());
+        const auto imageFound = imageData.find(it.key());
         RefImageLoaderUP loader;
-        if (imageFound != images.end())
+        if (imageFound != imageData.end())
         {
             loader = std::move(std::make_unique<RefImageLoader>(imageFound.value()));
         }

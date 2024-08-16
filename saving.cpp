@@ -104,7 +104,7 @@ namespace
             return false;
         }
 
-        QMap<QString, QImage> imageMap;
+        QMap<QString, QByteArray> imageDataMap;
 
         for (const auto &refName : references.keys())
         {
@@ -112,19 +112,12 @@ namespace
 
             if (!imgData.isEmpty())
             {
-                QImage image;
-                image.loadFromData(imgData);
-                if (image.isNull())
-                {
-                    qWarning() << "Unable to load embeded reference " << refName;
-                    continue;
-                }
-                imageMap.insert(refName, image);
+                imageDataMap.insert(refName, imgData);
             }
         }
 
         App *app = App::ghostRefInstance();
-        newItemsOut.append(std::move(app->referenceItems().loadJson(references, imageMap)));
+        newItemsOut.append(std::move(app->referenceItems().loadJson(references, imageDataMap)));
         return true;
     }
 
