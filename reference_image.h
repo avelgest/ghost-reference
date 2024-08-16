@@ -79,6 +79,8 @@ public:
     void shiftCropF(QPointF shiftBy);
 
     bool isLoaded() const;
+    // Returns true if this item is loaded or in the process of loading
+    bool isValid() const;
     const QString &errorMessage() const;
 
     /*The size (in px) this image should be displayed at.*/

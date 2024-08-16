@@ -13,6 +13,8 @@
 #include <QtWidgets/QMessageBox>
 
 #include "preferences.h"
+#include "reference_image.h"
+#include "reference_loading.h"
 #include "saving.h"
 
 #include "widgets/back_window.h"
@@ -29,17 +31,31 @@ namespace
 
     struct CmdParseResult
     {
-        QStringList files;
+        QString sessionFile;
+        QStringList references;
     };
 
     CmdParseResult parseCommandLine(const App *app)
     {
         QCommandLineParser parser;
-        parser.addPositionalArgument("files", "Session or image files to open when the application starts.",
-                                     "[files...]");
+        parser.addPositionalArgument("session", "Session file (.ghr) to open when the application starts.");
+        parser.addOption({{"r", "ref"}, "Open <file> as a reference image.", "file"});
+        parser.addHelpOption();
         parser.process(*app);
 
-        return {parser.positionalArguments()};
+        CmdParseResult result;
+        QStringList positional = parser.positionalArguments();
+
+        if (positional.size() == 1)
+        {
+            result.sessionFile = positional.first();
+        }
+        else if (!positional.isEmpty())
+        {
+            qCritical() << "Expected only one positional argument.";
+        }
+        result.references = parser.values("ref");
+        return result;
     }
 
     void loadStyleSheetFor(QApplication *app, bool replace = false)
@@ -327,6 +343,10 @@ void App::loadSession(const QString &filepath)
         m_hasUnsavedChanges = false;
         refreshAppName();
     }
+    else
+    {
+        qCritical() << "Unable to load session from " << filepath;
+    }
 }
 
 void App::setUnsavedChanges(bool value)
@@ -360,6 +380,18 @@ void App::closeAllReferenceWindows()
     m_refWindows.clear();
 }
 
+void App::onStartUp()
+{
+    processCommandLineArgs();
+
+    // Create an empty reference window if none have been added
+    if (m_refWindows.isEmpty())
+    {
+        ReferenceWindow *refWindow = newReferenceWindow();
+        refWindow->show();
+    }
+}
+
 bool App::event(QEvent *event)
 {
     // Ask to save if exiting when ther are unsaved changes
@@ -384,6 +416,27 @@ void App::cleanWindowList()
 {
     m_refWindows.removeIf([](auto &refWindow)
                           { return !refWindow; });
+}
+
+void App::processCommandLineArgs()
+{
+    const CmdParseResult parsed = parseCommandLine(this);
+    if (!parsed.sessionFile.isEmpty())
+    {
+        this->loadSession(parsed.sessionFile);
+    }
+
+    // Load any specified reference items
+    for (const auto &filename : parsed.references)
+    {
+        const ReferenceImageSP refItem = refLoad::fromUrl(QUrl::fromUserInput(filename));
+        if (refItem && refItem->isValid())
+        {
+            ReferenceWindow *refWindow = newReferenceWindow();
+            refWindow->addReference(refItem);
+            refWindow->show();
+        }
+    }
 }
 
 void App::refreshAppName()
@@ -422,13 +475,8 @@ App::App(int &argc, char **argv, int flags)
     positionToolBarDefault(m_mainToolbar);
     m_mainToolbar->show();
 
-    ReferenceWindow *refWindow = newReferenceWindow();
-    refWindow->show();
-
     const int timerIntervalMs = static_cast<int>(1000.0 / timerCallsPerSecond);
     m_timer = startTimer(timerIntervalMs);
-
-    // const CmdParseResult parsedCmdArgs = parseCommandLine(this);
 }
 
 App::~App() = default;

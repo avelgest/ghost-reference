@@ -95,6 +95,8 @@ public:
 
     void closeAllReferenceWindows();
 
+    void onStartUp();
+
 signals:
     void allRefWindowsVisibleChanged(bool newValue);
     void globalModeChanged(WindowMode newValue);
@@ -121,6 +123,7 @@ private:
     static ReferenceMap &references();
 
     void cleanWindowList();
+    void processCommandLineArgs();
     void refreshAppName();
 };
 

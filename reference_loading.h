@@ -98,7 +98,10 @@ public:
 inline QPromise<QVariant> &RefLoader::promise() { return m_promise; }
 inline const QPromise<QVariant> &RefLoader::promise() const { return m_promise; }
 
-inline void RefLoader::setError(const QString &errString) { m_error = errString; }
+inline void RefLoader::setError(const QString &errString)
+{
+    m_error = errString.isEmpty() ? "Error" : errString;
+}
 
 inline QFuture<QVariant> RefLoader::future() const
 {

@@ -20,7 +20,8 @@ int main(int argc, char *argv[])
 {
     try
     {
-        const App app(argc, argv);
+        App app(argc, argv);
+        app.onStartUp();
         return App::exec();
     }
     catch (const std::exception &e)

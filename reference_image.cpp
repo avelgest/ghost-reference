@@ -169,6 +169,11 @@ void ReferenceImage::onLoaderFinished()
     setCompressedImage(m_loader->fileData());
 }
 
+bool ReferenceImage::isValid() const
+{
+    return isLoaded() || (m_loader && !m_loader->isError());
+}
+
 const QString &ReferenceImage::errorMessage() const
 {
     static const QString empty;

@@ -22,12 +22,6 @@
 
 namespace
 {
-    class LoadException : QException
-    {
-        void raise() const override { throw *this; }
-        LoadException *clone() const override { return new LoadException(*this); }
-    };
-
     struct LoadedImage
     {
         QByteArray fileData;
@@ -103,7 +97,7 @@ QList<ReferenceImageSP> refLoad::fromDropEvent(const QDropEvent *event)
 
 ReferenceImageSP refLoad::fromFilepath(const QString &filepath)
 {
-    return fromUrl(filepath);
+    return fromUrl(QUrl::fromLocalFile(filepath));
 }
 
 ReferenceImageSP refLoad::fromImage(const QImage &image)
