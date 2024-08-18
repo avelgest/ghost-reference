@@ -80,9 +80,9 @@ namespace
         {
             if (!m_initialized)
             {
-                hidden = QIcon("resources/hidden.png");
-                preferences = QIcon("resources/preferences.png");
-                visible = QIcon("resources/visible.png");
+                hidden = QIcon(":/hidden.png");
+                preferences = QIcon(":/preferences.png");
+                visible = QIcon(":/visible.png");
             }
             m_initialized = true;
         }

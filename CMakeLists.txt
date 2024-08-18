@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.28)
 
 project(ghost-reference VERSION 0.1)
 
-option(QT_ROOT_DIR "The directory that Qt is installed to.")
+option(QT_ROOT_DIR "The directory that Qt is installed to (contains bin, include, lib etc).")
+option(SHOW_WINDOWS_CONSOLE "Show a console on Windows [ON/OFF].")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -23,6 +24,7 @@ FetchContent_Declare(
 	minizip-ng
 	GIT_REPOSITORY https://github.com/zlib-ng/minizip-ng.git
 	GIT_SHALLOW true
+    EXCLUDE_FROM_ALL
 )
 
 set(MZ_ZLIB OFF)
@@ -41,9 +43,12 @@ FetchContent_MakeAvailable(minizip-ng)
 include_directories(${minizip-ng_SOURCE_DIR})
 link_directories(${minizip-ng_BINARY_DIR})
 
+set(CMAKE_AUTORCC ON)
+
 qt_standard_project_setup()
 
 qt_add_executable(GhostReference 
+                  resources/resources.qrc
                   main.cpp
                   app.cpp
                   color_picker.cpp
@@ -53,6 +58,7 @@ qt_add_executable(GhostReference
                   reference_loading.cpp
                   saving.cpp
                   tool.cpp
+                  undo_stack.cpp
                   )
 
 add_subdirectory(utils)
@@ -60,5 +66,20 @@ add_subdirectory(widgets)
 
 target_link_libraries(GhostReference PRIVATE Qt6::Widgets
                                      PRIVATE Qt6::Network
-                                     PRIVATE MINIZIP::minizip)
+                                     PRIVATE MINIZIP::minizip
+)
 
+if (NOT SHOW_WINDOWS_CONSOLE)
+    set_target_properties(GhostReference PROPERTIES
+                          WIN32_EXECUTABLE ON
+    )
+endif()
+
+install(TARGETS GhostReference)
+qt_generate_deploy_app_script(
+    TARGET GhostReference
+    OUTPUT_SCRIPT deploy_script
+    NO_TRANSLATIONS
+    NO_UNSUPPORTED_PLATFORM_ERROR
+)
+install(SCRIPT ${deploy_script})

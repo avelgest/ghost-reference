@@ -25,7 +25,7 @@ namespace
 {
     const qreal timerCallsPerSecond = 24.0;
     const WindowMode defaultWindowMode = TransformMode;
-    const char *const styleSheetPath = "./resources/stylesheet.qss";
+    const char *const styleSheetPath = ":/stylesheet.qss";
 
     const Qt::WindowFlags msgBoxWindowFlags = Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint;
 
@@ -390,6 +390,7 @@ void App::onStartUp()
         ReferenceWindow *refWindow = newReferenceWindow();
         refWindow->show();
     }
+    setGlobalMode(defaultWindowMode);
 }
 
 bool App::event(QEvent *event)

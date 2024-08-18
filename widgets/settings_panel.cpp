@@ -266,8 +266,7 @@ namespace
 
     QToolButton *createFlipButton(SettingsPanel &parent, Qt::Orientation orientation)
     {
-        const char *iconPath = (orientation == Qt::Vertical) ? "resources/flip_btn_v.png"
-                                                             : "resources/flip_btn_h.png";
+        const char *iconPath = (orientation == Qt::Vertical) ? ":/flip_btn_v.png" : ":/flip_btn_h.png";
         auto *flipButton = new QToolButton(&parent);
         flipButton->setAutoRaise(true);
         flipButton->setIcon(QIcon(iconPath));
@@ -291,13 +290,13 @@ namespace
         QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, action,
                          [=](const ReferenceImageSP &image) { action->setEnabled(image && image->isLocalFile()); });
 
-        action = toolBar->addAction(QIcon("resources/flip_btn_h.png"), "Flip Horizontally");
+        action = toolBar->addAction(QIcon(":/flip_btn_h.png"), "Flip Horizontally");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::flipImageHorizontally);
 
-        action = toolBar->addAction(QIcon("resources/flip_btn_v.png"), "Flip Vertically");
+        action = toolBar->addAction(QIcon(":/flip_btn_v.png"), "Flip Vertically");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::flipImageVertically);
 
-        action = toolBar->addAction(QIcon("resources/color_picker.png"), "Color Picker");
+        action = toolBar->addAction(QIcon(":/color_picker.png"), "Color Picker");
         QObject::connect(action, &QAction::triggered, settingsPanel,
                          [settingsPanel]() { Tool::activateTool<ColorPicker>(); });
 

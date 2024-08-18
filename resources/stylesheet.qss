@@ -3,11 +3,11 @@ MainToolbar {
 }
 
 QTabBar #close-tab-btn {
-    image: url(resources/close_tab_btn.png);
+    image: url(:/close_tab_btn.png);
 }
 
 QTabBar #detach-tab-btn {
-    image: url(resources/detach_tab_btn.png);
+    image: url(:/detach_tab_btn.png);
 }
 
 QTabBar QPushButton {
