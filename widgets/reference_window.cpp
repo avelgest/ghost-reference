@@ -175,7 +175,7 @@ namespace
             const QPoint offset(50, 50);
             return app->mainToolbar()->pos() + offset;
         }
-        const QScreen *screen = app->primaryScreen();
+        const QScreen *screen = App::primaryScreen();
         if (screen)
         {
             return {screen->size().width() / 2, screen->size().height() / 2};
@@ -662,7 +662,7 @@ void ReferenceWindow::contextMenuEvent(QContextMenuEvent *event)
         // Show a context menu
         QMenu menu(this);
         QAction *paste = menu.addAction("Paste");
-        QObject::connect(paste, &QAction::triggered, [=]() { pasteRefsFromClipboard(this); });
+        QObject::connect(paste, &QAction::triggered, [this]() { pasteRefsFromClipboard(this); });
         paste->setEnabled(refLoad::isSupportedClipboard());
 
         menu.exec(event->globalPos());

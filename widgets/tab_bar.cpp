@@ -85,8 +85,8 @@ void TabBar::onReferenceAdded(const ReferenceImageSP &refItem)
         setTabButton(idx, QTabBar::ButtonPosition::RightSide, createButtonWidget(refItem));
 
         // Update the tab text when refItem's name changes
-        QObject::connect(refItem.get(), &ReferenceImage::nameChanged, this, [=]() {
-            if (int idx = indexOf(refItem); idx >= 0)
+        QObject::connect(refItem.get(), &ReferenceImage::nameChanged, this, [this, refItem]() {
+            if (const int idx = indexOf(refItem); idx >= 0)
             {
                 setTabText(idx, refItem->name());
             }

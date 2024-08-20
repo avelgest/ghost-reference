@@ -72,7 +72,7 @@ void ReferenceImage::fromJson(const QJsonObject &json, RefImageLoaderUP &&loader
 {
     setName(json["name"].toString());
     setFilepath(json["filepath"].toString());
-    if (loader && loader->future().isValid())
+    if (loader && !loader->isError())
     {
         setLoader(std::move(loader));
     }
