@@ -9,6 +9,7 @@
 
 #include "../app.h"
 #include "../utils/window_utils.h"
+#include "main_toolbar_actions.h"
 #include "reference_window.h"
 #include "settings_panel.h"
 
@@ -69,6 +70,14 @@ void BackWindow::setWindowMode(WindowMode value)
     m_windowMode = value;
     hideSettingsWindow();
     utils::setTransparentForInput(this, value == GhostMode);
+}
+
+void BackWindow::setMainToolbarActions(MainToolbarActions *actions)
+{
+    // Add all actions with shortcuts
+    const QList<QAction *> to_add{&actions->openSession(), &actions->paste(), &actions->saveSession(),
+                                  &actions->saveSessionAs()};
+    addActions(to_add);
 }
 
 void BackWindow::keyPressEvent(QKeyEvent *event)

@@ -476,6 +476,7 @@ App::App(int &argc, char **argv, int flags)
     loadStyleSheetFor(this);
     preloadMimeDatabase(this);
 
+    m_backWindow->setMainToolbarActions(m_mainToolbar->mainToolbarActions());
     m_backWindow->show();
 
     positionToolBarDefault(m_mainToolbar);

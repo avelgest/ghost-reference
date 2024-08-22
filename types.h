@@ -12,6 +12,7 @@ class RefImageLoader;
 class BackWindow;
 class ColorPicker;
 class MainToolbar;
+class MainToolbarActions;
 class PictureWidget;
 class PreferencesWindow;
 class ReferenceWindow;

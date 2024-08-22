@@ -24,6 +24,10 @@ public:
     inline WindowMode windowMode() const;
     void setWindowMode(WindowMode value);
 
+    // Add actions from the main toolbar to the back window so they are always accessible
+    // via keyboard shortcuts.
+    void setMainToolbarActions(MainToolbarActions *actions);
+
 protected:
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;

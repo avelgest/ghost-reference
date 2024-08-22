@@ -133,6 +133,7 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
     // Open
     openSession().setIcon(style->standardIcon(QStyle::SP_DialogOpenButton));
     openSession().setText("Open");
+    openSession().setShortcut(QKeySequence::Open);
     QObject::connect(&openSession(), &QAction::triggered, &openSessionFnc);
 
     // Save
@@ -140,11 +141,13 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
     // TODO Add actions that have shorcuts to app.back_window
     saveSession().setShortcut(QKeySequence::Save);
     saveSession().setText(appendShortcut("Save", saveSession()));
+    saveSession().setShortcut(QKeySequence::Save);
     QObject::connect(&saveSession(), &QAction::triggered, &saveSessionFnc);
 
     // SaveAs
     saveSessionAs().setIcon(style->standardIcon(QStyle::SP_DialogSaveButton));
     saveSessionAs().setText("Save As");
+    saveSessionAs().setShortcut(QKeySequence::SaveAs);
     QObject::connect(&saveSessionAs(), &QAction::triggered, []() { getApp()->saveSessionAs(); });
 
     // Paste
