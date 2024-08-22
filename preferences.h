@@ -21,6 +21,12 @@ struct PrefFloatRange
     qreal size() const { return max - min; }
 };
 
+struct PrefIntRange
+{
+    qint32 min = std::numeric_limits<qint32>::min();
+    qint32 max = std::numeric_limits<qint32>::max();
+};
+
 class Preferences : public QObject
 {
     Q_OBJECT
@@ -57,6 +63,7 @@ public:
     static const QString &getDescription(Keys key);
     static const PrefEnumItem &getEnumItem(Keys key, int idx);
     static PrefFloatRange getFloatRange(Keys key);
+    static PrefIntRange getIntRange(Keys key);
     static QMetaType::Type getType(Keys key);
 
     template <typename T>

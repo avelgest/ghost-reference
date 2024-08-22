@@ -13,6 +13,7 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QSizePolicy>
 #include <QtWidgets/QSlider>
+#include <QtWidgets/QSpinBox>
 #include <QtWidgets/QStackedLayout>
 #include <QtWidgets/QVBoxLayout>
 
@@ -47,6 +48,7 @@ namespace
     protected:
         QWidget *createWidgetBool();
         QWidget *createWidgetFloat();
+        QWidget *createWidgetInt();
 
         QWidget *parentWidget() { return m_layout ? m_layout->parentWidget() : nullptr; }
 
@@ -100,6 +102,32 @@ namespace
         return spinBox;
     }
 
+    QWidget *PrefWidgetMaker::createWidgetInt()
+    {
+        const PrefIntRange range = Preferences::getIntRange(m_key);
+        QScopedPointer<QHBoxLayout> hbox(new QHBoxLayout());
+
+        auto *label = new QLabel(m_name + ":", parentWidget());
+        label->setToolTip(m_description);
+
+        auto *spinBox = new QSpinBox(parentWidget());
+        spinBox->setRange(range.min, range.max);
+        spinBox->setToolTip(m_description);
+        spinBox->setValue(m_prefs->getInt(m_key));
+
+        hbox->addWidget(label);
+        hbox->addWidget(spinBox);
+
+        const auto key = m_key;
+        auto *prefs = m_prefs;
+
+        QObject::connect(spinBox, &QSpinBox::valueChanged, parentWidget(), [=](int i) { prefs->setInt(key, i); });
+
+        m_layout->addLayout(hbox.take());
+
+        return spinBox;
+    }
+
     PrefWidgetMaker::PrefWidgetMaker(PrefLayoutType *layout, Preferences *prefs)
         : m_layout(layout),
           m_prefs(prefs)
@@ -126,6 +154,9 @@ namespace
         case QMetaType::Float:
         case QMetaType::Double:
             return createWidgetFloat();
+
+        case QMetaType::Int:
+            return createWidgetInt();
 
         case QMetaType::UnknownType:
         case QMetaType::Void:
@@ -311,6 +342,7 @@ void PreferencesWindow::buildUI()
         PrefWidgetMaker widgetMaker(layout, m_prefs);
 
         widgetMaker.createWidget(Preferences::LocalFilesLink);
+        widgetMaker.createWidget(Preferences::LocalFilesStoreMaxMB);
         layout->addStretch();
     }
 

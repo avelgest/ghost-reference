@@ -43,6 +43,7 @@ namespace
         QString m_description;
 
         PrefFloatRange m_range = {};
+        PrefIntRange m_intRange = {};
         const QVector<PrefEnumItem> *m_enumValues = nullptr;
 
     public:
@@ -62,24 +63,27 @@ namespace
         }
 
         // Constructor for float Props
-        PrefProp(QString name, qreal defaultValue,
-                 QString displayName, QString description,
-                 PrefFloatRange range)
-            : PrefProp(std::move(name), FloatType,
-                       std::move(defaultValue), std::move(displayName), std::move(description))
+        PrefProp(QString name, qreal defaultValue, QString displayName, QString description, PrefFloatRange range)
+            : PrefProp(std::move(name), FloatType, defaultValue, std::move(displayName), std::move(description))
         {
             m_range = range;
+            m_intRange = {qRound(range.min), qRound(range.max)};
         }
 
         // Constructor for string / enum properties
-        PrefProp(QString name, QString defaultValue,
-                 QString displayName, QString description,
+        PrefProp(QString name, const QString &defaultValue, QString displayName, QString description,
                  const QVector<PrefEnumItem> *enumValues)
-            : PrefProp(std::move(name), StrType,
-                       std::move(defaultValue), std::move(displayName), std::move(description))
+            : PrefProp(std::move(name), StrType, defaultValue, std::move(displayName), std::move(description))
         {
             m_enumValues = enumValues;
         }
+
+        PrefProp(QString name, qint32 defaultValue, QString displayName, QString description, PrefIntRange range)
+            : PrefProp(std::move(name), IntType, defaultValue, std::move(displayName), std::move(description))
+        {
+            m_intRange = range;
+            m_range = {static_cast<qreal>(range.min), static_cast<qreal>(range.max)};
+        };
 
         const QString &name() const { return m_name; }
         QMetaType::Type type() const { return m_type; }
@@ -87,6 +91,7 @@ namespace
         const QString &displayName() const { return m_displayName; }
         const QString &description() const { return m_description; }
         const PrefFloatRange &range() const { return m_range; }
+        const PrefIntRange &intRange() const { return m_intRange; }
 
         const PrefEnumItem &enumItem(int idx) const
         {
@@ -346,6 +351,12 @@ PrefFloatRange Preferences::getFloatRange(Keys key)
 {
     const auto it = prefProperties().find(key);
     return (it != prefProperties().end()) ? it.value().range() : PrefFloatRange();
+}
+
+PrefIntRange Preferences::getIntRange(Keys key)
+{
+    const auto it = prefProperties().find(key);
+    return (it != prefProperties().end()) ? it.value().intRange() : PrefIntRange();
 }
 
 QMetaType::Type Preferences::getType(Keys key)
