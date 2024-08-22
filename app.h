@@ -23,6 +23,7 @@ public:
     typedef QList<QPointer<ReferenceWindow>> RefWindowList;
 
 private:
+    QScopedPointer<Preferences> m_preferences;
     QPointer<BackWindow> m_backWindow = nullptr;
     MainToolbar *m_mainToolbar = nullptr;
 
@@ -124,7 +125,7 @@ private:
 
     void cleanWindowList();
     void processCommandLineArgs();
-    void refreshAppName();
+    void refreshWindowName();
 };
 
 inline App *App::ghostRefInstance() { return qobject_cast<App *>(App::instance()); }

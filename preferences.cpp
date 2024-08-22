@@ -23,7 +23,7 @@ namespace
 
     const char *const configName = "ghost_reference_config.json";
 
-    QDir configDir()
+    QDir getConfigDir()
     {
         const QString configDirPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
         return {configDirPath};
@@ -219,8 +219,7 @@ void Preferences::set(Keys key, const QVariant &value)
 
 Preferences *Preferences::loadFromDisk(QObject *parent)
 {
-    const QString configDirPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    const QDir configDir(configDirPath);
+    const QDir configDir = getConfigDir();
     if (configDir.exists(configName))
     {
         QFile configFile(configDir.absoluteFilePath(configName));
@@ -230,6 +229,7 @@ Preferences *Preferences::loadFromDisk(QObject *parent)
             Preferences *loaded = loadFromJson(QJsonDocument::fromJson(json), parent);
             if (loaded)
             {
+                qInfo() << "Loaded preferences from" << configFile.fileName();
                 return loaded;
             }
             qCritical() << "Error reading from config";
@@ -241,7 +241,7 @@ Preferences *Preferences::loadFromDisk(QObject *parent)
     }
     else
     {
-        qInfo() << "Config file not found. Using default preferences.";
+        qInfo() << "Config file not found in" << configDir.absolutePath() << "Using default preferences.";
     }
 
     // Return default preferences if loading the config file failed
@@ -256,7 +256,8 @@ Preferences *Preferences::loadFromJson(const QJsonDocument &json, QObject *paren
     {
         return nullptr;
     }
-    for (auto it = json.object().constBegin(); it < json.object().constEnd(); it++)
+    const QJsonObject obj = json.object();
+    for (auto it = obj.constBegin(); it < obj.constEnd(); it++)
     {
         prefs->set(nameToKey(it.key()), it.value().toVariant());
     }
@@ -285,7 +286,7 @@ QJsonDocument Preferences::toJsonDocument() const
 
 void Preferences::saveToDisk() const
 {
-    const QDir dir = configDir();
+    const QDir dir = getConfigDir();
     if (!dir.exists())
     {
         dir.mkpath(dir.path());

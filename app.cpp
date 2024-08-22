@@ -301,7 +301,7 @@ bool App::saveSession()
         return false;
     }
     m_hasUnsavedChanges = false;
-    refreshAppName();
+    refreshWindowName();
     return true;
 }
 
@@ -341,7 +341,7 @@ void App::loadSession(const QString &filepath)
     {
         m_saveFilePath = filepath;
         m_hasUnsavedChanges = false;
-        refreshAppName();
+        refreshWindowName();
     }
     else
     {
@@ -354,7 +354,7 @@ void App::setUnsavedChanges(bool value)
     if (value != m_hasUnsavedChanges)
     {
         m_hasUnsavedChanges = value;
-        refreshAppName();
+        refreshWindowName();
     }
 }
 
@@ -440,34 +440,39 @@ void App::processCommandLineArgs()
     }
 }
 
-void App::refreshAppName()
+void App::refreshWindowName()
 {
-    const QString appNameBase("Ghost Reference");
+    const QString baseName = applicationDisplayName();
     if (saveFilePath().isEmpty())
     {
-        setApplicationName(appNameBase);
+        m_backWindow->setWindowTitle(baseName);
     }
     else
     {
         const QString filename = QFileInfo(saveFilePath()).fileName();
-        QString appName = filename + " - " + appNameBase;
+        QString appName = filename + " - " + baseName;
         if (hasUnsavedChanges())
         {
             appName.prepend('*');
         }
-        setApplicationName(appName);
         m_backWindow->setWindowTitle(appName);
     }
 }
 
 App::App(int &argc, char **argv, int flags)
     : QApplication(argc, argv, flags),
-      m_preferences(Preferences::loadFromDisk(this)),
-      m_globalMode(defaultWindowMode),
-      m_backWindow(new BackWindow()),
-      m_mainToolbar(new MainToolbar(m_backWindow))
+      m_globalMode(defaultWindowMode)
 {
-    refreshAppName();
+    setApplicationName("Ghost Reference");
+    setApplicationDisplayName("Ghost Reference");
+
+    // Loading preferences requires applicationName to be set first. So initialize here instead of
+    // as member initailizers.
+    m_preferences.reset(Preferences::loadFromDisk(this));
+    m_backWindow = new BackWindow();
+    m_mainToolbar = new MainToolbar(m_backWindow);
+
+    refreshWindowName();
     loadStyleSheetFor(this);
     preloadMimeDatabase(this);
 
