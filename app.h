@@ -73,6 +73,7 @@ public:
     ReferenceCollection &referenceItems();
 
     ReferenceWindow *newReferenceWindow();
+    ReferenceWindow *getReferenceWindow(RefWindowId identifier) const;
 
     // Sets the cursor used for widgets that display references e.g. PictureWidget.
     // The widgets will revert to their previous cursors when cursor is a null value.

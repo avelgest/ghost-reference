@@ -1,5 +1,7 @@
 #include "app.h"
 
+#include <set>
+
 #include <QtCore/QCommandLineParser>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
@@ -163,6 +165,12 @@ namespace
         thread->start();
     }
 
+    RefWindowId createRefWindowId()
+    {
+        static RefWindowId previous = 0;
+        return ++previous;
+    }
+
 } // namespace
 
 void App::checkModifierKeyStates()
@@ -252,6 +260,7 @@ ReferenceWindow *App::newReferenceWindow()
         throw std::runtime_error("Cannot create a ReferenceWindow without a BackWindow.");
     }
     auto *refWindow = new ReferenceWindow(backWindow());
+    refWindow->setIdentifier(createRefWindowId());
 
     QObject::connect(refWindow, &ReferenceWindow::destroyed, this,
                      [this](QObject *ptr) { m_refWindows.removeAll(ptr); });
@@ -260,6 +269,18 @@ ReferenceWindow *App::newReferenceWindow()
     emit referenceWindowAdded(refWindow);
 
     return refWindow;
+}
+
+ReferenceWindow *App::getReferenceWindow(RefWindowId identifier) const
+{
+    for (const auto &refWinPtr : m_refWindows)
+    {
+        if (refWinPtr && refWinPtr->identifier() == identifier)
+        {
+            return refWinPtr;
+        }
+    }
+    return nullptr;
 }
 
 void App::startGlobalModeOverride(std::optional<WindowMode> windowMode)

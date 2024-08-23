@@ -23,6 +23,7 @@ private:
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(ReferenceWindow)
 
+    RefWindowId m_identifier = 0;
     bool m_ghostState = false;
     TabFit m_tabFit = TabFit::FitToWidth;
 
@@ -45,7 +46,10 @@ public:
     explicit ReferenceWindow(QWidget *parent = nullptr);
     ~ReferenceWindow() override;
 
-    void addReference(const ReferenceImageSP &refItem);
+    RefWindowId identifier() const;
+    void setIdentifier(RefWindowId id);
+
+    void addReference(const ReferenceImageSP &refItem, bool clampSize = true);
     bool removeReference(const ReferenceImageSP &refItem);
     ReferenceWindow *detachReference(ReferenceImageSP refItem);
 
@@ -122,6 +126,16 @@ signals:
     // requester will be null if the merge request has been cancelled.
     void mergeRequested(ReferenceWindow *requester);
 };
+
+inline RefWindowId ReferenceWindow::identifier() const
+{
+    return m_identifier;
+}
+
+inline void ReferenceWindow::setIdentifier(RefWindowId id)
+{
+    m_identifier = id;
+}
 
 inline PictureWidget *ReferenceWindow::pictureWidget() const
 {
