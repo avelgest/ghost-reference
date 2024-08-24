@@ -186,8 +186,8 @@ namespace
                          [comboBox, setter](int index) { setter(comboBox->itemData(index)); });
 
         QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, comboBox,
-                         [comboBox, getter]([[maybe_unused]] const ReferenceImageSP &refImage) {
-                             const int idx = comboBox->findData(static_cast<int>(getter()));
+                         [comboBox, getter](const ReferenceImageSP &refImage) {
+                             const int idx = refImage ? comboBox->findData(static_cast<int>(getter())) : 0;
                              comboBox->setCurrentIndex(idx);
                          });
 
@@ -205,7 +205,7 @@ namespace
 
         QObject::connect(checkBox, &QCheckBox::toggled, [=]() { setter(checkBox->isChecked()); });
         QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, checkBox,
-                         [=]() { checkBox->setChecked(getter()); });
+                         [=](const ReferenceImageSP &refImage) { checkBox->setChecked(refImage ? getter() : false); });
 
         layout->addRow("", checkBox);
         return checkBox;
@@ -377,6 +377,7 @@ void SettingsPanel::setRefWindow(ReferenceWindow *refWindow)
         setReferenceImage(m_refWindow->activeImage());
         QObject::connect(refWindow, &ReferenceWindow::activeImageChanged,
                          this, &SettingsPanel::setReferenceImage);
+        QObject::connect(refWindow, &ReferenceWindow::destroyed, this, [this]() { setRefWindow(nullptr); });
     }
     else
     {
