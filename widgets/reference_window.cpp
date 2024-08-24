@@ -175,6 +175,11 @@ namespace
 
         action = refWindow->addAction("Paste", QKeySequence::Paste);
         QObject::connect(action, &QAction::triggered, refWindow, [=]() { pasteRefsFromClipboard(refWindow); });
+
+        for (QAction *action : refWindow->actions())
+        {
+            action->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+        }
     }
 
     QPoint defaultWindowPos()
