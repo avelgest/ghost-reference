@@ -50,10 +50,23 @@ void ReferenceCollection::renameReference(ReferenceImage &refItem, const QString
     {
         return;
     }
-    const QString uniqueName = uniqueReferenceName(newName);
+
+    QString uniqueName = uniqueReferenceName(newName);
     if (uniqueName.isEmpty())
     {
         return;
+    }
+
+    // When force is true always set refItemSP's name to newName and rename any other
+    // ReferenceImage with that name.
+    if (force)
+    {
+        if (const ReferenceImageSP existing = getReferenceImage(newName); existing)
+        {
+            renameReference(*existing, uniqueName, false);
+            uniqueName = newName;
+        }
+        Q_ASSERT(uniqueName == newName);
     }
 
     refItemSP->m_name = uniqueName;
