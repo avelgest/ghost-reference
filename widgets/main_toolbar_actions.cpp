@@ -6,6 +6,7 @@
 #include "../app.h"
 #include "../reference_loading.h"
 #include "../saving.h"
+#include "../undo_stack.h"
 
 #include "main_toolbar.h"
 #include "preferences_window.h"
@@ -138,8 +139,6 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
 
     // Save
     saveSession().setIcon(style->standardIcon(QStyle::SP_DialogSaveButton));
-    // TODO Add actions that have shorcuts to app.back_window
-    saveSession().setShortcut(QKeySequence::Save);
     saveSession().setText(appendShortcut("Save", saveSession()));
     saveSession().setShortcut(QKeySequence::Save);
     QObject::connect(&saveSession(), &QAction::triggered, &saveSessionFnc);
@@ -167,6 +166,16 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
     showPreferences().setIcon(iconCache.preferences);
     showPreferences().setText("Preferences");
     QObject::connect(&showPreferences(), &QAction::triggered, &showPreferencesFnc);
+
+    // Undo
+    undo().setShortcut(QKeySequence::Undo);
+    undo().setText("Undo");
+    QObject::connect(&undo(), &QAction::triggered, []() { getApp()->undoStack()->undo(); });
+
+    // Redo
+    redo().setShortcut(QKeySequence::Redo);
+    redo().setText("Redo");
+    QObject::connect(&redo(), &QAction::triggered, []() { getApp()->undoStack()->redo(); });
 
     m_windowModeGroup.addAction(&toggleGhostMode());
 }

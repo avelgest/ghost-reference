@@ -18,7 +18,7 @@ public:
 
     ReferenceImageSP newReferenceImage(const QString &name = "");
     ReferenceImageSP getReferenceImage(const QString &name);
-    void renameReference(ReferenceImage &refItem, const QString &newName);
+    void renameReference(ReferenceImage &refItem, const QString &newName, bool force = false);
 
     QList<ReferenceImageSP> loadJson(const QJsonObject &json, const QMap<QString, QByteArray> &imageData);
     QJsonObject toJson() const;

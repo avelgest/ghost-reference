@@ -36,7 +36,7 @@ ReferenceImageSP ReferenceCollection::getReferenceImage(const QString &name)
     return {};
 }
 
-void ReferenceCollection::renameReference(ReferenceImage &refItem, const QString &newName)
+void ReferenceCollection::renameReference(ReferenceImage &refItem, const QString &newName, bool force)
 {
     ReferenceMap &refMap = *m_refMap;
     const QString oldName = refItem.name();

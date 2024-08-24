@@ -487,7 +487,7 @@ void MainToolbar::paintEvent(QPaintEvent *event)
 ReferenceWindow *MainToolbar::newReferenceWindow(const ReferenceImageSP &refItem)
 {
     ReferenceWindow *ref_win = App::ghostRefInstance()->newReferenceWindow();
-    ref_win->addReference(refItem);
+    ref_win->addReference(refItem, true);
     ref_win->setActiveImage(refItem);
     ref_win->show();
     return ref_win;
@@ -506,7 +506,7 @@ ReferenceWindow *MainToolbar::newReferenceWindow(const QList<ReferenceImageSP> &
             }
             else
             {
-                refWindow->addReference(result);
+                refWindow->addReference(result, true);
             }
         }
         else

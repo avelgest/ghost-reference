@@ -76,7 +76,7 @@ void ReferenceImage::fromJson(const QJsonObject &json, RefImageLoaderUP &&loader
     {
         setLoader(std::move(loader));
     }
-    else if (!filepath().isEmpty())
+    else if (!m_loader && !filepath().isEmpty())
     {
         setLoader(std::make_unique<RefImageLoader>(filepath()));
     }
@@ -114,6 +114,11 @@ QJsonObject ReferenceImage::toJson() const
             {"flipHorizontal", flipHorizontal()},
             {"flipVertical", flipVertical()},
             {"smoothFiltering", smoothFiltering()}};
+}
+
+const RefImageLoaderUP &ReferenceImage::loader() const
+{
+    return m_loader;
 }
 
 void ReferenceImage::applyRenderHints(QPainter &painter) const
@@ -165,7 +170,11 @@ QSizeF ReferenceImage::minCropSize() const
 
 void ReferenceImage::onLoaderFinished()
 {
-    setBaseImage(m_loader->image());
+    const QImage image = m_loader->image();
+    if (image != m_baseImage)
+    {
+        setBaseImage(image);
+    }
     setCompressedImage(m_loader->fileData());
 }
 

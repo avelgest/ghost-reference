@@ -35,7 +35,7 @@ private:
 
     int m_timer = 0;
     QNetworkAccessManager *m_networkManager = nullptr;
-    QScopedPointer<Preferences> m_preferences;
+    UndoStack *m_undoStack;
 
     bool m_allRefWindowsVisible = true;
     bool m_hasUnsavedChanges = false;
@@ -67,6 +67,8 @@ public:
     Preferences *preferences();
     // Replace the applications preferences with prefs. The ownership of prefs will be transferred.
     void setPreferences(Preferences *prefs);
+
+    UndoStack *undoStack() const;
 
     const RefWindowList &referenceWindows() const;
     const ReferenceCollection &referenceItems() const;
@@ -136,6 +138,11 @@ inline WindowMode App::globalMode() const { return m_globalMode; }
 inline const Preferences *App::preferences() const { return m_preferences.get(); }
 
 inline Preferences *App::preferences() { return m_preferences.get(); }
+
+inline UndoStack *App::undoStack() const
+{
+    return m_undoStack;
+}
 
 inline const App::RefWindowList &App::referenceWindows() const { return m_refWindows; }
 

@@ -24,10 +24,12 @@ class MainToolbarActions : public QObject
     ACTION_DECL(paste);
     ACTION_DECL(toggleAllRefsHidden);
     ACTION_DECL(toggleGhostMode);
+    ACTION_DECL(redo);
     ACTION_DECL(saveSession);
     ACTION_DECL(saveSessionAs);
     ACTION_DECL(showHelp);
     ACTION_DECL(showPreferences);
+    ACTION_DECL(undo);
 
 private:
     QActionGroup m_windowModeGroup;

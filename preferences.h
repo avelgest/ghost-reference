@@ -43,6 +43,7 @@ public:
         GhostModeOpacity,
         LocalFilesLink,
         LocalFilesStoreMaxMB,
+        UndoMaxSteps,
     };
 
     explicit Preferences(QObject *parent = nullptr);

@@ -75,8 +75,8 @@ void BackWindow::setWindowMode(WindowMode value)
 void BackWindow::setMainToolbarActions(MainToolbarActions *actions)
 {
     // Add all actions with shortcuts
-    const QList<QAction *> to_add{&actions->openSession(), &actions->paste(), &actions->saveSession(),
-                                  &actions->saveSessionAs()};
+    const QList<QAction *> to_add{&actions->openSession(), &actions->paste(),         &actions->redo(),
+                                  &actions->saveSession(), &actions->saveSessionAs(), &actions->undo()};
     addActions(to_add);
 }
 

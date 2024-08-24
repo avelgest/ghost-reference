@@ -52,6 +52,8 @@ public:
     void fromJson(const QJsonObject &json, RefImageLoaderUP &&loader);
     QJsonObject toJson() const;
 
+    const RefImageLoaderUP &loader() const;
+
     void applyRenderHints(QPainter &painter) const;
     void updateDisplayImage();
 

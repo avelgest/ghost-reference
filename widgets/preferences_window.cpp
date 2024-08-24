@@ -343,6 +343,7 @@ void PreferencesWindow::buildUI()
 
         widgetMaker.createWidget(Preferences::LocalFilesLink);
         widgetMaker.createWidget(Preferences::LocalFilesStoreMaxMB);
+        widgetMaker.createWidget(Preferences::UndoMaxSteps);
         layout->addStretch();
     }
 

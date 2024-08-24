@@ -51,6 +51,7 @@ public:
 
     void addReference(const ReferenceImageSP &refItem, bool clampSize = true);
     bool removeReference(const ReferenceImageSP &refItem);
+    void clearReferences();
     ReferenceWindow *detachReference(ReferenceImageSP refItem);
 
     PictureWidget *pictureWidget() const;

@@ -132,7 +132,12 @@ namespace
             {LocalFilesStoreMaxMB,
              {"localFilesStoreMaxMB", IntType, 128, "Link Files Larger Than (MB)",
               "Always link local files that are larger than this."}},
-        };
+            {UndoMaxSteps,
+             {"undoMaxSteps",
+              32,
+              "Max undo steps",
+              "The maximum number of undo steps to keep. 0 to disable undo.",
+              {0, 1024}}}};
         return prefMap;
     }
 

@@ -7,6 +7,8 @@
 #include <QtWidgets/QStyle>
 
 #include "../reference_image.h"
+#include "../undo_stack.h"
+
 #include "reference_window.h"
 
 TabBar::TabBar(ReferenceWindow *parent)
@@ -150,10 +152,17 @@ QWidget *TabBar::createButtonWidget(const ReferenceImageSP &refItem)
         return widget;
     }
 
-    QObject::connect(closeBtn, &QPushButton::clicked, [this, refItem]()
-                     { removeTab(indexOf(refItem)); });
-    QObject::connect(detachBtn, &QPushButton::clicked, [this, refItem]()
-                     { if (m_parent) {m_parent->detachReference(refItem);} });
+    QObject::connect(closeBtn, &QPushButton::clicked, [this, refItem]() {
+        UndoStack::get()->pushRefWindow(m_parent);
+        removeTab(indexOf(refItem));
+    });
+    QObject::connect(detachBtn, &QPushButton::clicked, [this, refItem]() {
+        if (m_parent)
+        {
+            UndoStack::get()->pushGlobalUndo();
+            m_parent->detachReference(refItem);
+        }
+    });
 
     return widget;
 }

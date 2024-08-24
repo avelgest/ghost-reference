@@ -18,6 +18,7 @@
 #include "reference_image.h"
 #include "reference_loading.h"
 #include "saving.h"
+#include "undo_stack.h"
 
 #include "widgets/back_window.h"
 #include "widgets/main_toolbar.h"
@@ -455,7 +456,7 @@ void App::processCommandLineArgs()
         if (refItem && refItem->isValid())
         {
             ReferenceWindow *refWindow = newReferenceWindow();
-            refWindow->addReference(refItem);
+            refWindow->addReference(refItem, true);
             refWindow->show();
         }
     }
@@ -492,6 +493,7 @@ App::App(int &argc, char **argv, int flags)
     m_preferences.reset(Preferences::loadFromDisk(this));
     m_backWindow = new BackWindow();
     m_mainToolbar = new MainToolbar(m_backWindow);
+    m_undoStack = new UndoStack(this);
 
     refreshWindowName();
     loadStyleSheetFor(this);

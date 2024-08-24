@@ -6,6 +6,7 @@ class ReferenceCollection;
 class ReferenceImage;
 class RefLoader;
 class RefImageLoader;
+class UndoStack;
 
 // TODO Separate into widgets/types.h
 // widgets
@@ -33,6 +34,8 @@ namespace utils
 
 typedef QSharedPointer<ReferenceImage> ReferenceImageSP;
 typedef QWeakPointer<ReferenceImage> ReferenceImageWP;
+
+typedef qint64 RefWindowId;
 
 enum WindowMode
 {

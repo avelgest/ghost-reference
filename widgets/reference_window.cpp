@@ -19,6 +19,7 @@
 #include "../reference_collection.h"
 #include "../reference_image.h"
 #include "../reference_loading.h"
+#include "../undo_stack.h"
 
 #include "back_window.h"
 #include "main_toolbar.h"
@@ -148,9 +149,15 @@ namespace
 
         for (const auto &refImage : newRefImages)
         {
-            refWindow->addReference(refImage);
+            refWindow->addReference(refImage, true);
         }
         refWindow->setActiveImage(newRefImages.last());
+    }
+
+    void addUndoStep(ReferenceWindow *refWindow, bool refItems = false)
+    {
+        UndoStack *undoStack = App::ghostRefInstance()->undoStack();
+        undoStack->pushRefWindow(refWindow, refItems);
     }
 
     void initActions(ReferenceWindow *refWindow)
@@ -161,7 +168,10 @@ namespace
         QObject::connect(action, &QAction::triggered, refWindow, [=]() { refWindow->hide(); });
 
         action = refWindow->addAction("Close", QKeySequence::Delete);
-        QObject::connect(action, &QAction::triggered, refWindow, [=]() { refWindow->close(); });
+        QObject::connect(action, &QAction::triggered, refWindow, [=]() {
+            addUndoStep(refWindow, true);
+            refWindow->close();
+        });
 
         action = refWindow->addAction("Paste", QKeySequence::Paste);
         QObject::connect(action, &QAction::triggered, refWindow, [=]() { pasteRefsFromClipboard(refWindow); });
@@ -244,7 +254,7 @@ ReferenceWindow::~ReferenceWindow()
     QObject::disconnect(App::ghostRefInstance(), nullptr, this, nullptr);
 }
 
-void ReferenceWindow::addReference(const ReferenceImageSP &refItem)
+void ReferenceWindow::addReference(const ReferenceImageSP &refItem, bool clampSize)
 {
     if (m_refImages.contains(refItem))
     {
@@ -252,7 +262,11 @@ void ReferenceWindow::addReference(const ReferenceImageSP &refItem)
         return;
     }
     m_refImages.append(refItem);
-    clampReferenceSize(refItem);
+
+    if (clampSize)
+    {
+        clampReferenceSize(refItem);
+    }
     emit referenceAdded(refItem);
 
     if (!m_activeImage)
@@ -281,6 +295,19 @@ bool ReferenceWindow::removeReference(const ReferenceImageSP &refItem)
     return true;
 }
 
+void ReferenceWindow::clearReferences()
+{
+    setActiveImage(nullptr);
+    while (!m_refImages.isEmpty())
+    {
+        const bool success = removeReference(m_refImages.back());
+        if (!success)
+        {
+            qCritical() << "Unable to remove reference while clearing ReferenceWindow:" << m_refImages.back()->name();
+        }
+    }
+}
+
 ReferenceWindow *ReferenceWindow::detachReference(const ReferenceImageSP refItem)
 {
     // Offset for the new window
@@ -298,7 +325,7 @@ ReferenceWindow *ReferenceWindow::detachReference(const ReferenceImageSP refItem
     }
 
     ReferenceWindow *newWindow = App::ghostRefInstance()->newReferenceWindow();
-    newWindow->addReference(refItem);
+    newWindow->addReference(refItem, false);
     newWindow->move(pos() + windowOffset);
     newWindow->show();
 
@@ -309,6 +336,10 @@ ReferenceWindow *ReferenceWindow::detachReference(const ReferenceImageSP refItem
 
 void ReferenceWindow::fromJson(const QJsonObject &json)
 {
+    // Prevent reference images from being deleted after clear
+    const QList<ReferenceImageSP> oldRefImages = m_refImages;
+    clearReferences();
+
     const QJsonArray posArray = json["pos"].toArray();
     if (posArray.count() == 2)
     {
@@ -322,7 +353,7 @@ void ReferenceWindow::fromJson(const QJsonObject &json)
         const ReferenceImageSP refImage = refCollection.getReferenceImage(refName);
         if (refImage)
         {
-            addReference(refImage); // TODO Disable image size clamping
+            addReference(refImage, false);
         }
         else
         {
@@ -397,9 +428,12 @@ void ReferenceWindow::setActiveImage(const ReferenceImageSP &image)
             QObject::disconnect(activeImage().get(), &ReferenceImage::baseImageChanged, this,
                                 &ReferenceWindow::adjustSize);
         }
-        fitToCurrentTab(this, image);
         m_activeImage = image;
-        QObject::connect(activeImage().get(), &ReferenceImage::baseImageChanged, this, &ReferenceWindow::adjustSize);
+        if (!image.isNull())
+        {
+            fitToCurrentTab(this, image);
+            QObject::connect(image.get(), &ReferenceImage::baseImageChanged, this, &ReferenceWindow::adjustSize);
+        }
         emit activeImageChanged(m_activeImage);
         adjustSize();
     }
@@ -585,6 +619,7 @@ void ReferenceWindow::onTransformStarted(ResizeFrame::TransformType transform)
         {
             settingsPanel()->raise();
         }
+        App::ghostRefInstance()->undoStack()->pushWindowAndRefItem(this, activeImage());
     }
 }
 
@@ -626,7 +661,7 @@ void ReferenceWindow::mergeInto(ReferenceWindow *other)
     setMergeDest(nullptr);
     for (auto &refItem : m_refImages)
     {
-        other->addReference(refItem);
+        other->addReference(refItem, true);
     }
     close();
 }
@@ -693,7 +728,7 @@ void ReferenceWindow::dropEvent(QDropEvent *event)
     {
         if (refImage)
         {
-            addReference(refImage);
+            addReference(refImage, true);
             if (!okResultFound)
             {
                 okResultFound = true;
