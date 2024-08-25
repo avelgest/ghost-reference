@@ -35,7 +35,6 @@ class ReferenceImage : public QObject
     QString m_name;
     QRectF m_crop;
     qreal m_zoom = 1.0;
-    qreal m_opacity = 1.0;
     qreal m_saturation = 1.0;
     bool m_savedAsLink = false;
     bool m_filpHorizontal = false;
@@ -105,9 +104,6 @@ public:
     void setFlipVertical(bool value);
 
     qreal hoverOpacity() const;
-
-    qreal opacity() const;
-    void setOpacity(qreal value);
 
     qreal saturation() const;
     void setSaturation(qreal value);
@@ -224,14 +220,6 @@ inline void ReferenceImage::setFlipVertical(bool value)
 {
     m_flipVertical = value;
     updateDisplayImage();
-}
-
-inline qreal ReferenceImage::opacity() const { return m_opacity; }
-
-inline void ReferenceImage::setOpacity(qreal value)
-{
-    m_opacity = std::clamp(value, 0., 1.);
-    emit settingsChanged();
 }
 
 inline qreal ReferenceImage::saturation() const { return m_saturation; }

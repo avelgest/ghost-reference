@@ -351,6 +351,8 @@ void ReferenceWindow::fromJson(const QJsonObject &json)
         move(posArray[0].toInt(), posArray[1].toInt());
     }
 
+    setOpacity(json["opacity"].toDouble(1.0));
+
     ReferenceCollection &refCollection = App::ghostRefInstance()->referenceItems();
     for (auto jsonVal : json["tabs"].toArray())
     {
@@ -384,7 +386,10 @@ QJsonObject ReferenceWindow::toJson() const
         tabs.push_back(refItem->name());
     }
 
-    return {{"pos", QJsonArray({pos().x(), pos().y()})}, {"tabs", tabs}, {"activeTab", m_tabBar->currentIndex()}};
+    return {{"pos", QJsonArray({pos().x(), pos().y()})},
+            {"tabs", tabs},
+            {"activeTab", m_tabBar->currentIndex()},
+            {"opacity", m_opacity}};
 }
 
 void ReferenceWindow::setGhostState(bool value)
@@ -401,6 +406,12 @@ void ReferenceWindow::setGhostState(bool value)
     m_pictureWidget->setOpacityMultiplier(value ? ghostOpacity() : 1.0);
 
     emit ghostStateChanged(ghostState());
+}
+
+void ReferenceWindow::setOpacity(qreal value)
+{
+    m_opacity = std::clamp(value, 0., 1.0);
+    m_pictureWidget->update();
 }
 
 bool ReferenceWindow::isWindowFocused() const

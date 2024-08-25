@@ -26,6 +26,7 @@ private:
     RefWindowId m_identifier = 0;
     bool m_ghostState = false;
     TabFit m_tabFit = TabFit::FitToWidth;
+    qreal m_opacity = 1.0;
 
     ReferenceImageSP m_activeImage;
     QList<ReferenceImageSP> m_refImages;
@@ -68,6 +69,9 @@ public:
 
     TabFit tabFit() const;
     void setTabFit(TabFit value);
+
+    qreal opacity() const;
+    void setOpacity(qreal value);
 
     bool isWindowFocused() const;
 
@@ -151,6 +155,11 @@ inline bool ReferenceWindow::ghostState() const { return m_ghostState; }
 inline ReferenceWindow::TabFit ReferenceWindow::tabFit() const { return m_tabFit; }
 
 inline void ReferenceWindow::setTabFit(TabFit value) { m_tabFit = value; }
+
+inline qreal ReferenceWindow::opacity() const
+{
+    return m_opacity;
+}
 
 inline const QList<ReferenceImageSP> &ReferenceWindow::referenceImages() const
 {

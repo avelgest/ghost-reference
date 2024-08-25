@@ -136,7 +136,8 @@ void PictureWidget::paintEvent(QPaintEvent *event)
         qWarning() << "Size mismatch when drawing image" << refImage.name();
     }
 
-    painter.setOpacity(std::max(minOpacity, refImage.opacity() * opacityMultiplier()));
+    const qreal opacity = m_referenceWindow ? m_referenceWindow->opacity() : 1.0;
+    painter.setOpacity(std::max(minOpacity, opacity) * opacityMultiplier());
     painter.drawPixmap(destRect, dispImage, dispImage.rect());
 }
 

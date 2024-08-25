@@ -82,7 +82,6 @@ void ReferenceImage::fromJson(const QJsonObject &json, RefImageLoaderUP &&loader
     }
 
     setZoom(json["zoom"].toDouble(1.0));
-    setOpacity(json["opacity"].toDouble(1.0));
     setSaturation(json["saturation"].toDouble(1.0));
     setSavedAsLink(json["savedAsLink"].toBool());
     setFlipHorizontal(json["flipHorizontal"].toBool(false));
@@ -108,7 +107,6 @@ QJsonObject ReferenceImage::toJson() const
             {"name", name()},
             {"crop", cropArray},
             {"zoom", zoom()},
-            {"opacity", opacity()},
             {"saturation", saturation()},
             {"savedAsLink", savedAsLink()},
             {"flipHorizontal", flipHorizontal()},

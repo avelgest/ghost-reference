@@ -29,7 +29,7 @@
 namespace
 {
     const Qt::WindowFlags defaultWindowFlags = Qt::Tool;
-    const QSize defaultSizeHint(256, 376);
+    const QSize defaultSizeHint(280, 392);
 
     const int sliderScale = 100;
     const qreal sliderScaleF = static_cast<qreal>(sliderScale);
@@ -233,9 +233,6 @@ namespace
 
     void createLinkSettings(SettingsPanel *settingsPanel, QFormLayout *layout)
     {
-        const int outerSpacing = 10;
-        layout->addItem(new QSpacerItem(0, outerSpacing));
-
         auto *frame = new QGroupBox("File", settingsPanel);
         auto *frameLayout = new QFormLayout(frame);
 
@@ -456,28 +453,44 @@ void SettingsPanel::initSettingsArea()
 
     createRefNameInput(this, layout);
 
-    createSlider(
-        this, layout, "Opacity:", [this]() { return m_refImage->opacity(); },
-        [this](qreal value) { m_refImage->setOpacity(value); });
+    // ReferenceWindow Settings
+    {
+        auto *groupBox = new QGroupBox("Window", m_settingsArea);
+        auto *groupLayout = new QFormLayout(groupBox);
 
-    createSlider(
-        this, layout, "Saturation:", [this]() { return m_refImage->saturation(); },
-        [this](qreal value) { m_refImage->setSaturation(value); });
+        createSlider(
+            this, groupLayout, "Opacity:", [this]() { return m_refWindow->opacity(); },
+            [this](qreal value) { m_refWindow->setOpacity(value); });
 
-    createCheckbox(
-        this, layout, "Smooth Filtering", [this]() { return m_refImage->smoothFiltering(); },
-        [this](bool value) { m_refImage->setSmoothFiltering(value); });
+        using enum ReferenceWindow::TabFit;
+        createComboBox(
+            this, groupLayout, "Fit Tabs to:",
+            {
+                {"Width", static_cast<int>(FitToWidth)},
+                {"Height", static_cast<int>(FitToHeight)},
+                {"None", static_cast<int>(NoFit)},
+            },
+            [this]() { return static_cast<int>(m_refWindow->tabFit()); },
+            [this](QVariant value) { m_refWindow->setTabFit(variantToEnum<ReferenceWindow::TabFit>(value)); });
 
-    using enum ReferenceWindow::TabFit;
-    createComboBox(
-        this, layout, "Fit Tabs to:",
-        {
-            {"Width", static_cast<int>(FitToWidth)},
-            {"Height", static_cast<int>(FitToHeight)},
-            {"None", static_cast<int>(NoFit)},
-        },
-        [this]() { return static_cast<int>(m_refWindow->tabFit()); },
-        [this](QVariant value) { m_refWindow->setTabFit(variantToEnum<ReferenceWindow::TabFit>(value)); });
+        layout->addRow(groupBox);
+    }
+
+    // ReferenceImage settings
+    {
+        auto *groupBox = new QGroupBox("Image", m_settingsArea);
+        auto *groupLayout = new QFormLayout(groupBox);
+
+        createSlider(
+            this, groupLayout, "Saturation:", [this]() { return m_refImage->saturation(); },
+            [this](qreal value) { m_refImage->setSaturation(value); });
+
+        createCheckbox(
+            this, groupLayout, "Smooth Filtering", [this]() { return m_refImage->smoothFiltering(); },
+            [this](bool value) { m_refImage->setSmoothFiltering(value); });
+
+        layout->addRow(groupBox);
+    }
 
     createLinkSettings(this, layout);
 }
