@@ -63,7 +63,7 @@ namespace
     ReferenceEntry::ReferenceEntry(const ReferenceImageSP &refItem)
         : m_refImage(refItem)
     {
-        m_json = refItem->toJson();
+        if (refItem) { m_json = refItem->toJson(); }
     }
 
     bool ReferenceEntry::undo()
@@ -116,12 +116,18 @@ namespace
     }
 
     ImageDataEntry::ImageDataEntry(const ReferenceImageSP &refImage)
-        : m_refImage(refImage),
-          m_imageData(refImage->baseImage())
-    {}
+        : m_refImage(refImage)
+    {
+        if (refImage) 
+        {
+            m_imageData = refImage->baseImage(); 
+        }
+    }
 
     bool ImageDataEntry::undo()
     {
+        if (!m_refImage) { return false; }
+
         m_refImage->setBaseImage(m_imageData);
         return true;
     }
@@ -233,6 +239,8 @@ void UndoStack::pushGlobalUndo()
 
 void UndoStack::pushImageData(const ReferenceImageSP &refImage)
 {
+    if (!refImage) { return; }
+
     UndoStep undoStep;
     undoStep.addEntry(std::make_unique<ImageDataEntry>(refImage));
     addUndoStep(std::move(undoStep));
@@ -240,6 +248,8 @@ void UndoStack::pushImageData(const ReferenceImageSP &refImage)
 
 void UndoStack::pushRefItem(const ReferenceImageSP &refItem, bool imageData)
 {
+    if (!refItem) { return; }
+    
     UndoStep undoStep;
     undoStep.addEntry(std::make_unique<ReferenceEntry>(refItem));
     if (imageData)
@@ -271,11 +281,16 @@ void UndoStack::pushRefWindow(ReferenceWindow *refWindow, bool refItems)
 
 void UndoStack::pushWindowAndRefItem(ReferenceWindow *refWindow, const ReferenceImageSP &refItem, bool imageData)
 {
+    if (!refWindow && !refItem) { return; }
+
     UndoStep undoStep;
-    undoStep.addEntry(std::make_unique<ReferenceEntry>(refItem));
-    if (imageData)
+    if (refItem)
     {
-        undoStep.addEntry(std::make_unique<ImageDataEntry>(refItem));
+        undoStep.addEntry(std::make_unique<ReferenceEntry>(refItem));
+        if (imageData)
+        {
+            undoStep.addEntry(std::make_unique<ImageDataEntry>(refItem));
+        }
     }
 
     undoStep.addEntry(std::make_unique<WindowEntry>(refWindow));
