@@ -187,8 +187,11 @@ namespace
 
         QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, comboBox,
                          [comboBox, getter](const ReferenceImageSP &refImage) {
-                             const int idx = refImage ? comboBox->findData(static_cast<int>(getter())) : 0;
-                             comboBox->setCurrentIndex(idx);
+                             if (refImage)
+                             {
+                                 const int idx = comboBox->findData(static_cast<int>(getter()));
+                                 comboBox->setCurrentIndex(idx);
+                             }
                          });
 
         layout->addRow(label, comboBox);
@@ -205,7 +208,9 @@ namespace
 
         QObject::connect(checkBox, &QCheckBox::toggled, [=]() { setter(checkBox->isChecked()); });
         QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, checkBox,
-                         [=](const ReferenceImageSP &refImage) { checkBox->setChecked(refImage ? getter() : false); });
+                         [=](const ReferenceImageSP &refImage) {
+                             if (refImage) { checkBox->setChecked(getter()); };
+                         });
 
         layout->addRow("", checkBox);
         return checkBox;
@@ -222,9 +227,10 @@ namespace
             // will be set by the onRefNameChanged slot.
         });
 
-        QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, lineEdit, [=]() {
-            lineEdit->setText(settingsPanel->referenceImage() ? settingsPanel->referenceImage()->name() : "");
-        });
+        QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, lineEdit,
+                         [=](const ReferenceImageSP &refImage) {
+                             if (refImage){ lineEdit->setText(refImage->name()); };
+                         });
 
         layout->addRow(lineEdit);
 
@@ -329,7 +335,7 @@ namespace
         {
             for (ReferenceWindow *refWin : App::ghostRefInstance()->referenceWindows())
             {
-                if (refWin->isAncestorOf(widget))
+                if (refWin && refWin->isAncestorOf(widget))
                 {
                     return refWin;
                 }
@@ -352,7 +358,10 @@ SettingsPanel::SettingsPanel(ReferenceWindow *refWindow, QWidget *parent) : QFra
     buildUI();
     setRefWindow(refWindow);
 
-    QObject::connect(App::ghostRefInstance(), &App::focusObjectChanged, this, &SettingsPanel::onAppFocusChanged);
+    // Connecting directly to onAppFocusChanged may sometimes cause an assert to fail in Qt so connect
+    // to a lambda instead.
+    QObject::connect(App::ghostRefInstance(), &App::focusObjectChanged, this, 
+                     [this](QObject* obj){onAppFocusChanged(obj);});
 }
 
 void SettingsPanel::setRefWindow(ReferenceWindow *refWindow)
