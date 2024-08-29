@@ -117,7 +117,6 @@ void PictureWidget::paintEvent(QPaintEvent *event)
     }
 
     ReferenceImage &refImage = *m_imageSP;
-    const QPixmap &dispImage = refImage.displayImage();
 
     // Draw a checkered background for images with alpha
     if (refImage.baseImage().hasAlphaChannel() && referenceWindow()->windowMode() != GhostMode)
@@ -129,6 +128,9 @@ void PictureWidget::paintEvent(QPaintEvent *event)
         }
         drawCheckerBoard(painter, event->rect());
     }
+
+    const auto lock = refImage.lockDisplayImage();
+    const QPixmap &dispImage = refImage.displayImage();
 
     // dispImage should be the same size as this->rect()
     if (destRect.size() != dispImage.size())
@@ -188,7 +190,7 @@ void PictureWidget::setImage(const ReferenceImageSP &image)
         QObject::connect(image.get(), &ReferenceImage::zoomChanged,
                          this, &PictureWidget::updateGeometry);
 
-        QObject::connect(image.get(), &ReferenceImage::displayImageUpdate, this, [this]() { update(); });
+        QObject::connect(image.get(), &ReferenceImage::displayImageUpdated, this, [this]() { update(); });
         QObject::connect(image.get(), &ReferenceImage::settingsChanged, this, [this]() { update(); });
 
         QObject::connect(image.get(), &ReferenceImage::baseImageChanged, this,

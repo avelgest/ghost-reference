@@ -14,12 +14,16 @@
 #include "reference_loading.h"
 #include "types.h"
 
+// Defined in reference_image.cpp
+class ReferenceImageRedrawManager;
+
 class ReferenceImage : public QObject
 {
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(ReferenceImage)
 
     friend class ReferenceCollection;
+    friend class ReferenceImageRedrawManager;
 
     using LoaderWatcher = QFutureWatcher<QVariant>;
 
@@ -29,7 +33,13 @@ class ReferenceImage : public QObject
     QByteArray m_compressedImage;
     QImage m_baseImage;
     QPixmap m_displayImage;
-    bool m_displayImageUpdate = true;
+
+
+    QMutex m_baseImageMutex;
+    QMutex m_displayImageMutex;
+    std::unique_ptr<ReferenceImageRedrawManager> m_redrawManager;
+    
+    std::atomic_flag m_displayImageUpdate; // Flag set if the display image needs redrawing.
 
     QString m_filepath;
     QString m_name;
@@ -42,7 +52,7 @@ class ReferenceImage : public QObject
     bool m_smoothFiltering = true;
 
 public:
-    ~ReferenceImage() override = default;
+    ~ReferenceImage() override;
 
     void setLoader(RefImageLoaderUP &&RefLoader);
 
@@ -68,6 +78,7 @@ public:
     void setCompressedImage(QByteArray &&value);
 
     const QPixmap &displayImage();
+    QMutexLocker<QMutex> lockDisplayImage();
 
     const QString &name() const;
     void setName(const QString &newName);
@@ -84,12 +95,11 @@ public:
     bool isValid() const;
     const QString &errorMessage() const;
 
-    /*The size (in px) this image should be displayed at.*/
+    /*The size (in px) this image should be displayed at (after cropping).*/
     QSize displaySize() const;
     /*Sets the zoom to give the specified display size. If value has a different aspect ratio from
     this image then it will be expanded to the same aspect ratio.*/
     void setDisplaySize(QSize value);
-    // QSizeF displaySizeF() const;
     void setDisplaySizeF(QSizeF value);
 
     bool isLocalFile() const;
@@ -117,7 +127,7 @@ public:
 signals:
     void baseImageChanged(QImage &baseImage);
     void cropChanged(QRect newCrop);
-    void displayImageUpdate();
+    void displayImageUpdated();
     void filepathChanged(const QString &newValue);
     void nameChanged(const QString &newValue);
     void settingsChanged();
@@ -135,15 +145,6 @@ private:
 };
 
 // inline definitions
-inline void ReferenceImage::updateDisplayImage()
-{
-    if (!m_displayImageUpdate)
-    {
-        m_displayImageUpdate = true;
-        emit displayImageUpdate();
-    }
-}
-
 inline const QString &ReferenceImage::filepath() const { return m_filepath; }
 
 inline void ReferenceImage::setFilepath(const QString &filepath)
@@ -154,11 +155,12 @@ inline void ReferenceImage::setFilepath(const QString &filepath)
 
 inline const QPixmap &ReferenceImage::displayImage()
 {
-    if (m_displayImageUpdate)
-    {
-        redrawImage();
-    }
     return m_displayImage;
+}
+
+inline QMutexLocker<QMutex> ReferenceImage::lockDisplayImage()
+{
+    return QMutexLocker(&m_displayImageMutex);
 }
 
 inline const QImage &ReferenceImage::baseImage() const

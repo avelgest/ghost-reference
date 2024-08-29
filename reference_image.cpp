@@ -4,6 +4,7 @@
 #include <QtCore/QDebug>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
+#include <QtCore/QThreadPool>
 
 #include <QtGui/QImage>
 #include <QtGui/QPainter>
@@ -55,8 +56,91 @@ namespace
 
 } // namespace
 
+/*
+Class in charge of scheduling redraws of a ReferenceImage's displayImage.
+Redraws can be requested using requestRedraw and may be dropped if multiple redraws are
+requested in quick succession. Redraws are performed asynchronously in a thread from the  
+application thread pool.
+*/
+class ReferenceImageRedrawManager
+{
+    Q_DISABLE_COPY_MOVE(ReferenceImageRedrawManager);
+
+public:
+    class RedrawTask : public QRunnable
+    {
+        ReferenceImageWP m_refImage;
+    public:
+        explicit RedrawTask(ReferenceImageWP refImage) : m_refImage(std::move(refImage)) {}
+        explicit RedrawTask(const ReferenceImageSP& refImage) : RedrawTask(refImage.toWeakRef()) {}
+
+        void run() override
+        {
+            const ReferenceImageSP refImageSP = m_refImage.toStrongRef();
+            refImageSP->m_redrawManager->doRedraw();
+        }
+    };
+
+private:
+
+    QPointer<ReferenceImage> m_refImage;
+    std::atomic_flag m_redrawInProgress;
+    std::atomic_flag m_pendingRedraw;
+
+    // Perform the redraw. Called by RedrawTask.
+    void doRedraw()
+    {
+        if (m_redrawInProgress.test_and_set())
+        {
+            return;
+        }
+
+        const ReferenceImageSP refImage = refImageSP();
+        if (refImage)
+        {
+            refImage->redrawImage();
+        }
+        m_redrawInProgress.clear();
+
+        // If another redraw was requested while this redraw was in progress
+        // then start another redraw task now.
+        if (m_pendingRedraw.test() && refImage)
+        {
+            m_pendingRedraw.clear();
+            QThreadPool::globalInstance()->start(new RedrawTask(refImage));
+        }
+    }
+
+public:
+    explicit ReferenceImageRedrawManager(ReferenceImage* refImage)
+        : m_refImage(refImage) {}
+    ~ReferenceImageRedrawManager() = default;
+
+    ReferenceImageSP refImageSP() const 
+    {
+        return m_refImage ? App::ghostRefInstance()->referenceItems().getReferenceImage(m_refImage->name()) : nullptr;
+    }
+
+    void requestRedraw()
+    {
+        if (m_refImage.isNull()) { return; }
+
+        // If a redraw is already in progress then the redraw task should only be started
+        // after that redraw has finished.
+        if (m_redrawInProgress.test())
+        {
+            m_pendingRedraw.test_and_set();
+        }
+        else
+        {
+            QThreadPool::globalInstance()->start(new RedrawTask(refImageSP()));
+        }
+    }
+};
+
 ReferenceImage::ReferenceImage()
     : m_loader(new RefImageLoader()),
+      m_redrawManager(new ReferenceImageRedrawManager(this)),
       m_savedAsLink(appPrefs()->getBool(Preferences::LocalFilesLink))
 {
     QObject::connect(this, &ReferenceImage::settingsChanged, this, &ReferenceImage::updateDisplayImage);
@@ -67,6 +151,8 @@ ReferenceImage::ReferenceImage(RefImageLoaderUP &&loader)
 {
     setLoader(std::move(loader));
 }
+
+ReferenceImage::~ReferenceImage() = default;
 
 void ReferenceImage::fromJson(const QJsonObject &json, RefImageLoaderUP &&loader)
 {
@@ -126,6 +212,14 @@ void ReferenceImage::applyRenderHints(QPainter &painter) const
     renderHints.setFlag(QPainter::SmoothPixmapTransform, smooth);
 
     painter.setRenderHints(renderHints);
+}
+
+void ReferenceImage::updateDisplayImage()
+{
+    if (!m_displayImageUpdate.test_and_set())
+    {
+        m_redrawManager->requestRedraw();
+    }
 }
 
 qreal ReferenceImage::hoverOpacity() const
@@ -250,11 +344,14 @@ void ReferenceImage::setBaseImage(const QImage &baseImage)
 {
     const QSize oldDisplaySize = m_crop.isValid() ? displaySize() : QSize();
 
-    m_baseImage = baseImage;
+    {
+        const QMutexLocker lock(&m_baseImageMutex);
+        m_baseImage = baseImage;
+        setCrop(baseImage.rect());
+        setDisplaySize(oldDisplaySize.isValid() ? baseImage.size().scaled(oldDisplaySize, Qt::KeepAspectRatio)
+                                                : baseImage.size());
+    }
 
-    setCrop(baseImage.rect());
-    setDisplaySize(oldDisplaySize.isValid() ? baseImage.size().scaled(oldDisplaySize, Qt::KeepAspectRatio)
-                                            : baseImage.size());
     updateDisplayImage();
     emit baseImageChanged(m_baseImage);
 }
@@ -324,13 +421,21 @@ QTransform ReferenceImage::srcTransfrom() const
 
 void ReferenceImage::redrawImage()
 {
-    m_displayImageUpdate = false;
-    if (m_baseImage.isNull())
+    m_displayImageUpdate.clear();
+
+    // Copy the base image here in case it changes during the redraw.
+    // Should be cheap due to implicit data sharing.
+    QMutexLocker baseImageLock(&m_baseImageMutex);
+
+    const QImage baseImageCopy = baseImage();
+    if (baseImageCopy.isNull())
     {
         return;
     }
+    const QRect baseImageCrop = crop();
+    const QSize dispImgSize = smallestSize(displaySize(), baseImageCrop.size());
 
-    const QSize dispImgSize = smallestSize(displaySize(), crop().size());
+    baseImageLock.unlock();
 
     QImage redrawTarget(dispImgSize, QImage::Format_ARGB32_Premultiplied);
 
@@ -339,7 +444,8 @@ void ReferenceImage::redrawImage()
         painter.setCompositionMode(QPainter::CompositionMode_Source);
         painter.setTransform(srcTransfrom());
         painter.setRenderHint(QPainter::SmoothPixmapTransform);
-        painter.drawImage(redrawTarget.rect(), m_baseImage, crop());
+
+        painter.drawImage(redrawTarget.rect(), baseImageCopy, baseImageCrop);
     }
 
     if (!nearlyEqual(saturation(), 1.0))
@@ -354,7 +460,10 @@ void ReferenceImage::redrawImage()
                                                                    : Qt::FastTransformation;
         redrawTarget = redrawTarget.scaled(displaySize(), Qt::IgnoreAspectRatio, filtering);
     }
+
+    const QMutexLocker displayImageLock(&m_displayImageMutex);
     m_displayImage = QPixmap::fromImage(redrawTarget);
+    emit displayImageUpdated();
 }
 
 void ReferenceImage::setName(const QString &newName)
