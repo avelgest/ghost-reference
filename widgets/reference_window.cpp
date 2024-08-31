@@ -444,10 +444,13 @@ void ReferenceWindow::setActiveImage(const ReferenceImageSP &image)
             QObject::disconnect(activeImage().get(), &ReferenceImage::baseImageChanged, this,
                                 &ReferenceWindow::adjustSize);
         }
+
+        // Fit the new image to the active image (depending on m_tabFit). Safe to call if image is null.
+        fitToCurrentTab(this, image);
+
         m_activeImage = image;
         if (!image.isNull())
         {
-            fitToCurrentTab(this, image);
             QObject::connect(image.get(), &ReferenceImage::baseImageChanged, this, &ReferenceWindow::adjustSize);
         }
         emit activeImageChanged(m_activeImage);
