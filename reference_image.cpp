@@ -340,6 +340,19 @@ void ReferenceImage::shiftCropF(QPointF shiftBy)
     emit cropChanged(crop());
 }
 
+QRect ReferenceImage::displayImageCrop() const
+{
+    if (m_displayImage.size() == m_baseImage.size())
+    {
+        return crop();
+    }
+    const qreal dispW = static_cast<qreal>(m_displayImage.size().width());
+    const qreal baseW = static_cast<qreal>(m_baseImage.size().width());
+    const qreal fac = dispW / baseW;
+    const QRectF srcCrop = crop().toRectF();
+    return {{qRound(fac * srcCrop.left()), qRound(fac * srcCrop.top())}, displaySize()};
+}
+
 void ReferenceImage::setBaseImage(const QImage &baseImage)
 {
     const QSize oldDisplaySize = m_crop.isValid() ? displaySize() : QSize();
@@ -371,7 +384,18 @@ const QByteArray &ReferenceImage::ensureCompressedImage()
 
 QSize ReferenceImage::displaySize() const
 {
-    return (crop().size().toSizeF() * zoom()).toSize();
+    return displaySizeF().toSize();
+}
+
+QSizeF ReferenceImage::displaySizeF() const
+{
+    return crop().size().toSizeF() * zoom();
+}
+
+QSize ReferenceImage::displaySizeFull() const
+{
+    const QSizeF dispSize = m_baseImage.size().toSizeF() * zoom();
+    return {qCeil(dispSize.width()), qCeil(dispSize.height())};
 }
 
 void ReferenceImage::setDisplaySizeF(QSizeF value)
@@ -432,33 +456,26 @@ void ReferenceImage::redrawImage()
     {
         return;
     }
-    const QRect baseImageCrop = crop();
-    const QSize dispImgSize = smallestSize(displaySize(), baseImageCrop.size());
+
+    const QSize dispImgSize = smallestSize(displaySizeFull(), baseImageCopy.size());
 
     baseImageLock.unlock();
 
-    QImage redrawTarget(dispImgSize, QImage::Format_ARGB32_Premultiplied);
+    QImage redrawTarget;
 
+    if (dispImgSize == baseImageCopy.size())
     {
-        QPainter painter(&redrawTarget);
-        painter.setCompositionMode(QPainter::CompositionMode_Source);
-        painter.setTransform(srcTransfrom());
-        painter.setRenderHint(QPainter::SmoothPixmapTransform);
-
-        painter.drawImage(redrawTarget.rect(), baseImageCopy, baseImageCrop);
+        redrawTarget = baseImageCopy;
     }
+    else
+    {
+        redrawTarget = baseImageCopy.scaled(dispImgSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    }
+    redrawTarget.mirror(flipHorizontal(), flipVertical());
 
     if (!nearlyEqual(saturation(), 1.0))
     {
         adjustSaturation(redrawTarget, saturation());
-    }
-
-    // Scale the image to displaySize
-    if (dispImgSize != displaySize())
-    {
-        const Qt::TransformationMode filtering = smoothFiltering() ? Qt::SmoothTransformation
-                                                                   : Qt::FastTransformation;
-        redrawTarget = redrawTarget.scaled(displaySize(), Qt::IgnoreAspectRatio, filtering);
     }
 
     const QMutexLocker displayImageLock(&m_displayImageMutex);

@@ -90,6 +90,8 @@ public:
     void setCropF(QRectF value);
     void shiftCropF(QPointF shiftBy);
 
+    QRect displayImageCrop() const;
+
     bool isLoaded() const;
     // Returns true if this item is loaded or in the process of loading
     bool isValid() const;
@@ -97,6 +99,9 @@ public:
 
     /*The size (in px) this image should be displayed at (after cropping).*/
     QSize displaySize() const;
+    QSizeF displaySizeF() const;
+    /*The size (in px) this image should be displayed at (before cropping).*/
+    QSize displaySizeFull() const;
     /*Sets the zoom to give the specified display size. If value has a different aspect ratio from
     this image then it will be expanded to the same aspect ratio.*/
     void setDisplaySize(QSize value);
@@ -182,7 +187,6 @@ inline const QString &ReferenceImage::name() const
 inline QRect ReferenceImage::crop() const
 {
     const qreal epsilon = 1e-6;
-    // return m_crop.toRect();
     return {qFloor(m_crop.left() + epsilon),
             qFloor(m_crop.top() + epsilon),
             qCeil(m_crop.width() - epsilon),

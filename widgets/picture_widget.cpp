@@ -132,15 +132,11 @@ void PictureWidget::paintEvent(QPaintEvent *event)
     const auto lock = refImage.lockDisplayImage();
     const QPixmap &dispImage = refImage.displayImage();
 
-    // dispImage should be the same size as this->rect()
-    if (destRect.size() != dispImage.size())
-    {
-        qWarning() << "Size mismatch when drawing image" << refImage.name();
-    }
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, refImage.smoothFiltering());
 
     const qreal opacity = m_referenceWindow ? m_referenceWindow->opacity() : 1.0;
     painter.setOpacity(std::max(minOpacity, opacity) * opacityMultiplier());
-    painter.drawPixmap(destRect, dispImage, dispImage.rect());
+    painter.drawPixmap(destRect, dispImage, refImage.displayImageCrop());
 }
 
 void PictureWidget::onReferenceCursorChanged(const std::optional<QCursor> &cursor, std::optional<RefType> refType)
