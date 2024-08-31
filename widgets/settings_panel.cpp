@@ -209,7 +209,7 @@ namespace
         QObject::connect(checkBox, &QCheckBox::toggled, [=]() { setter(checkBox->isChecked()); });
         QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, checkBox,
                          [=](const ReferenceImageSP &refImage) {
-                             if (refImage) { checkBox->setChecked(getter()); };
+                             if (refImage) checkBox->setChecked(getter());
                          });
 
         layout->addRow("", checkBox);
@@ -229,7 +229,7 @@ namespace
 
         QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, lineEdit,
                          [=](const ReferenceImageSP &refImage) {
-                             if (refImage){ lineEdit->setText(refImage->name()); };
+                             if (refImage) lineEdit->setText(refImage->name());
                          });
 
         layout->addRow(lineEdit);
