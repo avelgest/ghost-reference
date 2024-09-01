@@ -159,9 +159,26 @@ void PictureWidget::onWindowModeChanged(WindowMode newMode)
     }
 }
 
-QPointF PictureWidget::localToImage(const QPointF &localPos) const
+QPointF PictureWidget::localToBaseImage(const QPointF &localPos) const
 {
-    return localPos;
+    if (!m_imageSP) return localPos;
+    const QRect crop = m_imageSP->crop();
+    const qreal sizeRatio = crop.width() / static_cast<qreal>(width());
+
+    QPointF pos = localPos;
+    if (m_imageSP->flipHorizontal()) pos.setX(width() - localPos.x());
+    if (m_imageSP->flipVertical()) pos.setY(height() - localPos.y());
+
+    return pos * sizeRatio + crop.topLeft().toPointF();
+}
+
+QPointF PictureWidget::localToDisplayImage(const QPointF &localPos) const
+{
+    if (!m_imageSP) return localPos;
+    const QRect dispCrop = m_imageSP->displayImageCrop();
+    const qreal sizeRatio = dispCrop.width() / static_cast<qreal>(width());
+
+    return localPos * sizeRatio + dispCrop.topLeft().toPointF();
 }
 
 QSize PictureWidget::sizeHint() const

@@ -22,8 +22,10 @@ public:
 
     QSize sizeHint() const override;
 
-    // Map a point from local widget coordinates to reference image coordinates
-    QPointF localToImage(const QPointF &localPos) const;
+    // Map a point from local widget coordinates to the reference image's baseImage coordinates
+    QPointF localToBaseImage(const QPointF &localPos) const;
+    // Map a point from local widget coordinates to the reference image's displayImage coordinates
+    QPointF localToDisplayImage(const QPointF &localPos) const;
 
     const ReferenceImageSP &image() const;
     void setImage(const ReferenceImageSP &image);

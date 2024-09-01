@@ -5,6 +5,7 @@
 #include <QtGui/QPalette>
 
 #include <QtWidgets/QApplication>
+#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QFrame>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
@@ -17,6 +18,10 @@
 #include "widgets/back_window.h"
 #include "widgets/picture_widget.h"
 #include "widgets/reference_window.h"
+
+// Use static members to save options between activations until a save/load state function
+// is implemented in Tool
+bool ColorPicker::s_useOriginal = false;
 
 namespace
 {
@@ -87,8 +92,11 @@ namespace
     protected:
         void setColor(const QColor &color);
 
+        void closeEvent(QCloseEvent *event) override;
+
     private:
         QPushButton *createCopyButton(QLineEdit *target);
+        QCheckBox *createOriginalCheck();
         QLineEdit *createValuesTextBox();
     };
 
@@ -128,6 +136,10 @@ namespace
 
         layout->addWidget(createCopyButton(m_rgbText), 0, 3);
 
+        QCheckBox *originalCheck = createOriginalCheck();
+        layout->addWidget(originalCheck, 1, 3);
+        layout->setAlignment(originalCheck, Qt::AlignRight);
+
         setColor(Qt::black);
 
         QObject::connect(m_colorPicker, &ColorPicker::colorPicked, this, &ColorPickerWindow::setColor);
@@ -145,6 +157,12 @@ namespace
         m_colorPatch->update();
     }
 
+    void ColorPickerWindow::closeEvent(QCloseEvent *event)
+    {
+        QFrame::closeEvent(event);
+        m_colorPicker->deactivate();
+    }
+
     QPushButton *ColorPickerWindow::createCopyButton(QLineEdit *target)
     {
         auto *copyBtn = new QPushButton("Copy", this);
@@ -154,6 +172,17 @@ namespace
         return copyBtn;
     }
 
+    QCheckBox *ColorPickerWindow::createOriginalCheck()
+    {
+        auto *btn = new QCheckBox("Original", this);
+        btn->setToolTip("Use the unmodified image without effects such as saturation applied.");
+
+        btn->setDown(ColorPicker::useOriginal());
+        QObject::connect(btn, &QCheckBox::toggled, this,
+                         [this, btn](bool checked) { ColorPicker::setUseOriginal(checked); });
+        return btn;
+    }
+
     QLineEdit *ColorPickerWindow::createValuesTextBox()
     {
         auto *widget = new QLineEdit(this);
@@ -161,17 +190,38 @@ namespace
         return widget;
     }
 
-    QColor pickColor(PictureWidget *widget, QPointF localPos)
+    // Pick a color from ReferenceImage::baseImage of widget's ReferenceImage
+    QColor pickColorOrig(PictureWidget *widget, QPointF localPos)
     {
         if (const ReferenceImageSP &refImage = widget->image(); refImage)
         {
+            const QImage baseImage = refImage->baseImage();
+            const QPointF imgPos = widget->localToBaseImage(localPos);
+
+            if (baseImage.rect().toRectF().contains(imgPos))
+            {
+                return baseImage.pixelColor(imgPos.toPoint());
+            }
+        }
+        return {};
+    }
+
+    QColor pickColor(PictureWidget *widget, QPointF localPos, bool useOriginal = false)
+    {
+        if (useOriginal)
+        {
+            return pickColorOrig(widget, localPos);
+        }
+        if (const ReferenceImageSP &refImage = widget->image(); refImage)
+        {
+            auto lock = refImage->lockDisplayImage();
             const QPixmap &pixmap = refImage->displayImage();
-            const QPointF imgPos = widget->localToImage(localPos);
+            const QPointF imgPos = widget->localToDisplayImage(localPos);
 
             if (pixmap.rect().toRectF().contains(imgPos))
             {
-                QImage pick = pixmap.copy(qFloor(imgPos.x()), qFloor(imgPos.y()), 1, 1).toImage();
-                return pick.isNull() ? QColor() : pick.pixel(0, 0);
+                const QImage pick = pixmap.copy(qFloor(imgPos.x()), qFloor(imgPos.y()), 1, 1).toImage();
+                return pick.isNull() ? QColor() : pick.pixelColor(0, 0);
             }
         }
         return {};
@@ -215,7 +265,7 @@ void ColorPicker::mouseMoveEvent(QWidget *widget, QMouseEvent *event)
         auto *picWidget = qobject_cast<PictureWidget *>(widget);
         if (picWidget != nullptr)
         {
-            const QColor color = pickColor(picWidget, event->position());
+            const QColor color = pickColor(picWidget, event->position(), useOriginal());
             emit colorPicked(color);
             event->accept();
         }
@@ -234,7 +284,7 @@ void ColorPicker::mouseReleaseEvent(QWidget *widget, QMouseEvent *event)
 
     if (event->button() == Qt::LeftButton)
     {
-        const QColor color = pickColor(picWidget, event->position());
+        const QColor color = pickColor(picWidget, event->position(), useOriginal());
         emit colorPicked(color);
 
         m_toolWindow->show();
