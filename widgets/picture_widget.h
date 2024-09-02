@@ -4,6 +4,8 @@
 
 #include <QtWidgets/QWidget>
 
+#include <QtGui/QPixmap>
+
 #include "../types.h"
 
 class PictureWidget : public QWidget
@@ -15,6 +17,9 @@ class PictureWidget : public QWidget
     ReferenceWindow *m_referenceWindow = nullptr;
     ResizeFrame *m_resizeFrame = nullptr;
     qreal m_opacityMultiplier = 1.0;
+
+    QPixmap m_cachedImage;
+    bool m_cacheInvalidated = true;
 
 public:
     explicit PictureWidget(QWidget *parent = nullptr);
@@ -40,7 +45,12 @@ public:
 
     WindowMode windowMode() const;
 
+    // Invalidates the cached image causing it to be redrawn. Also calls update().
+    void invalidateCache();
+
 protected:
+    bool isCacheInvalidated() const;
+
     void enterEvent(QEnterEvent *event) override;
     void leaveEvent(QEvent *event) override;
     void paintEvent(QPaintEvent *event) override;

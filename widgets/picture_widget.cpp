@@ -85,6 +85,11 @@ PictureWidget::PictureWidget(QWidget *parent)
     QObject::connect(app, &App::referenceCursorChanged, this, &PictureWidget::onReferenceCursorChanged);
 }
 
+bool PictureWidget::isCacheInvalidated() const
+{
+    return m_cacheInvalidated || m_cachedImage.isNull() || m_cachedImage.size() != size();
+}
+
 void PictureWidget::enterEvent([[maybe_unused]] QEnterEvent *event)
 {
     if (windowMode() == TransformMode)
@@ -104,6 +109,9 @@ void PictureWidget::paintEvent(QPaintEvent *event)
     painter.setClipRegion(event->region());
     const QRectF destRect(0., 0., width(), height());
 
+    const qreal opacity = m_referenceWindow ? m_referenceWindow->opacity() : 1.0;
+    painter.setOpacity(std::max(minOpacity, opacity) * opacityMultiplier());
+
     // If there is no vaild reference image loaded just draw a message on a solid color
     if (m_imageSP.isNull() || !m_imageSP->isLoaded())
     {
@@ -116,10 +124,10 @@ void PictureWidget::paintEvent(QPaintEvent *event)
         return;
     }
 
-    ReferenceImage &refImage = *m_imageSP;
+    const bool imageHasAlpha = m_imageSP->baseImage().hasAlphaChannel();
 
     // Draw a checkered background for images with alpha
-    if (refImage.baseImage().hasAlphaChannel() && referenceWindow()->windowMode() != GhostMode)
+    if (imageHasAlpha && referenceWindow()->windowMode() != GhostMode)
     {
         if (referenceWindow())
         {
@@ -129,14 +137,30 @@ void PictureWidget::paintEvent(QPaintEvent *event)
         drawCheckerBoard(painter, event->rect());
     }
 
-    const auto lock = refImage.lockDisplayImage();
-    const QPixmap &dispImage = refImage.displayImage();
+    // Redraw m_cachedImage if necessary
+    if (isCacheInvalidated())
+    {
+        ReferenceImage &refImage = *m_imageSP;
 
-    painter.setRenderHint(QPainter::SmoothPixmapTransform, refImage.smoothFiltering());
+        if (m_cachedImage.size() != size()) m_cachedImage = QPixmap(size());
 
-    const qreal opacity = m_referenceWindow ? m_referenceWindow->opacity() : 1.0;
-    painter.setOpacity(std::max(minOpacity, opacity) * opacityMultiplier());
-    painter.drawPixmap(destRect, dispImage, refImage.displayImageCrop());
+        if (imageHasAlpha) m_cachedImage.fill(Qt::transparent);
+
+        QPainter cachePainter(&m_cachedImage);
+        cachePainter.setCompositionMode(imageHasAlpha ? QPainter::CompositionMode_SourceOver
+                                                      : QPainter::CompositionMode_Source);
+
+        const auto lock = refImage.lockDisplayImage();
+        const QPixmap &dispImage = refImage.displayImage();
+
+        cachePainter.setRenderHint(QPainter::SmoothPixmapTransform, refImage.smoothFiltering());
+
+        cachePainter.drawPixmap(destRect, dispImage, refImage.displayImageCrop());
+        m_cacheInvalidated = false;
+    }
+
+    // Draw m_cachedImage to the screen
+    painter.drawPixmap(0, 0, m_cachedImage);
 }
 
 void PictureWidget::onReferenceCursorChanged(const std::optional<QCursor> &cursor, std::optional<RefType> refType)
@@ -198,19 +222,22 @@ void PictureWidget::setImage(const ReferenceImageSP &image)
     {
         setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-        QObject::connect(image.get(), &ReferenceImage::cropChanged,
-                         this, &PictureWidget::updateGeometry);
+        QObject::connect(image.get(), &ReferenceImage::cropChanged, this, [this]() {
+            updateGeometry();
+            invalidateCache();
+        });
         QObject::connect(image.get(), &ReferenceImage::zoomChanged,
                          this, &PictureWidget::updateGeometry);
 
-        QObject::connect(image.get(), &ReferenceImage::displayImageUpdated, this, [this]() { update(); });
-        QObject::connect(image.get(), &ReferenceImage::settingsChanged, this, [this]() { update(); });
+        QObject::connect(image.get(), &ReferenceImage::displayImageUpdated, this, [this]() { invalidateCache(); });
+        QObject::connect(image.get(), &ReferenceImage::settingsChanged, this, [this]() { invalidateCache(); });
 
         QObject::connect(image.get(), &ReferenceImage::baseImageChanged, this,
                          [this]() { m_resizeFrame->showOnlyMoveControl(!m_imageSP || !m_imageSP->isLoaded()); });
     }
     m_resizeFrame->showOnlyMoveControl(!m_imageSP || !m_imageSP->isLoaded());
 
+    invalidateCache();
     updateGeometry();
     update();
 }
@@ -224,7 +251,7 @@ void PictureWidget::setReferenceWindow(ReferenceWindow *refWindow)
     m_referenceWindow = refWindow;
     setImage(refWindow->activeImage());
     QObject::connect(m_referenceWindow, &ReferenceWindow::activeImageChanged, this, &PictureWidget::setImage);
-    QObject::connect(m_referenceWindow, &ReferenceWindow::windowModeChanged, this, [this]() { update(); });
+    QObject::connect(m_referenceWindow, &ReferenceWindow::windowModeChanged, this, [this]() { invalidateCache(); });
 }
 
 WindowMode PictureWidget::windowMode() const
@@ -234,4 +261,10 @@ WindowMode PictureWidget::windowMode() const
         return m_referenceWindow->windowMode();
     }
     return TransformMode;
+}
+
+void PictureWidget::invalidateCache()
+{
+    m_cacheInvalidated = true;
+    update();
 }

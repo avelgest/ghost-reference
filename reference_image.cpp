@@ -303,7 +303,6 @@ void ReferenceImage::setCropF(QRectF value)
 
     m_crop = value;
 
-    updateDisplayImage();
     emit cropChanged(crop());
 }
 
@@ -336,7 +335,6 @@ void ReferenceImage::shiftCropF(QPointF shiftBy)
     newCrop.translate(adjustX, adjustY);
     setCropF(newCrop);
 
-    updateDisplayImage();
     emit cropChanged(crop());
 }
 
