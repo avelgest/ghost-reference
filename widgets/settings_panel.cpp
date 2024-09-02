@@ -24,6 +24,7 @@
 #include "../app.h"
 #include "../color_picker.h"
 #include "../reference_image.h"
+#include "../undo_stack.h"
 #include "reference_window.h"
 
 namespace
@@ -309,6 +310,9 @@ namespace
         QObject::connect(action, &QAction::triggered, settingsPanel,
                          [settingsPanel]() { Tool::activateTool<ColorPicker>(); });
 
+        action = toolBar->addAction(toolBar->style()->standardIcon(QStyle::SP_TrashIcon), "Remove Reference");
+        QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::removeRefItemFromWindow);
+
         return toolBar;
     }
 
@@ -434,6 +438,20 @@ void SettingsPanel::flipImageHorizontally() const
 void SettingsPanel::flipImageVertically() const
 {
     m_refImage->setFlipVertical(!m_refImage->flipVertical());
+}
+
+void SettingsPanel::removeRefItemFromWindow()
+{
+    if (!m_refWindow || !m_refImage) return;
+
+    App::ghostRefInstance()->undoStack()->pushWindowAndRefItem(m_refWindow, m_refImage);
+
+    m_refWindow->removeReference(m_refImage);
+
+    if (m_refWindow->referenceImages().isEmpty())
+    {
+        m_refWindow->close();
+    }
 }
 
 void SettingsPanel::toggleRefWindowVisible() const

@@ -49,6 +49,7 @@ public slots:
     void flipImageHorizontally() const;
     void flipImageVertically() const;
 
+    void removeRefItemFromWindow();
     void toggleRefWindowVisible() const;
 
 private:
