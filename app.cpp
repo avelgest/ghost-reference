@@ -6,8 +6,10 @@
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QMimeDatabase>
+#include <QtCore/QRunnable>
 #include <QtCore/QTextStream>
 #include <QtCore/QThread>
+#include <QtCore/QThreadPool>
 
 #include <QtGui/QCursor>
 #include <QtGui/QScreen>
@@ -145,25 +147,19 @@ namespace
 
     // QMimeDatabase may take a long time to load.
     // Use this function to load it in a separate thread so that the application doesn't hang.
-    void preloadMimeDatabase(App *app)
+    void preloadMimeDatabase()
     {
-        class LoadingThread : public QThread
+        class PreloadMimeDatabase : public QRunnable
         {
+        public:
             void run() override
             {
                 const QMimeDatabase database;
                 database.mimeTypesForFileName("dummy.jpg");
             }
-
-        public:
-            explicit LoadingThread(QObject *parent)
-                : QThread(parent)
-            {}
         };
-        auto *thread = new LoadingThread(app);
-        QObject::connect(thread, &LoadingThread::finished, &LoadingThread::deleteLater);
 
-        thread->start();
+        QThreadPool::globalInstance()->start(new PreloadMimeDatabase(), QThread::LowPriority);
     }
 
     RefWindowId createRefWindowId()
@@ -497,7 +493,7 @@ App::App(int &argc, char **argv, int flags)
 
     refreshWindowName();
     loadStyleSheetFor(this);
-    preloadMimeDatabase(this);
+    preloadMimeDatabase();
 
     m_backWindow->setMainToolbarActions(m_mainToolbar->mainToolbarActions());
     m_backWindow->show();
