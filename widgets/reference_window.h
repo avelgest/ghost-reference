@@ -55,6 +55,8 @@ public:
     void clearReferences();
     ReferenceWindow *detachReference(ReferenceImageSP refItem);
 
+    void setVisible(bool visible) override;
+
     PictureWidget *pictureWidget() const;
 
     void fromJson(const QJsonObject &json);
@@ -124,6 +126,7 @@ signals:
     void ghostStateChanged(bool newValue);
     void referenceAdded(const ReferenceImageSP &refItem);
     void referenceRemoved(const ReferenceImageSP &refItem);
+    void visibilityChanged(bool visibility);
     void windowModeChanged(WindowMode newMode);
 
     // Another window has requested to merge with this window
@@ -164,4 +167,14 @@ inline qreal ReferenceWindow::opacity() const
 inline const QList<ReferenceImageSP> &ReferenceWindow::referenceImages() const
 {
     return m_refImages;
+}
+
+inline void ReferenceWindow::setVisible(bool visible)
+{
+    const bool oldHidden = isHidden();
+    QWidget::setVisible(visible);
+    if (oldHidden != isHidden())
+    {
+        emit visibilityChanged(visible);
+    }
 }

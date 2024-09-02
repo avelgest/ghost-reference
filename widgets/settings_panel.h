@@ -42,9 +42,14 @@ signals:
     // Emitted whenever referenceImage is set (even if set to the same value).
     void refImageChanged(const ReferenceImageSP &image);
 
+    // Emitted when refWindow emits ReferenceWindow::visibiltyChanged
+    void refWindowVisibilityChanged(bool visibility);
+
 public slots:
     void flipImageHorizontally() const;
     void flipImageVertically() const;
+
+    void toggleRefWindowVisible() const;
 
 private:
     void initNoRefWidget();

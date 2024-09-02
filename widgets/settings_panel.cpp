@@ -287,6 +287,12 @@ namespace
         auto *toolBar = new QToolBar(settingsPanel);
         QAction *action = nullptr;
 
+        action = toolBar->addAction(QIcon(":/visible.png"), "Hide Window");
+        QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::toggleRefWindowVisible);
+        QObject::connect(settingsPanel, &SettingsPanel::refWindowVisibilityChanged, action, [action](bool visible) {
+            action->setIcon(visible ? QIcon(":/visible.png") : QIcon(":/hidden.png"));
+        });
+
         action = toolBar->addAction(toolBar->style()->standardIcon(QStyle::SP_BrowserReload), "Reload");
         QObject::connect(action, &QAction::triggered, settingsPanel,
                          [=]() { settingsPanel->referenceImage()->reload(); });
@@ -384,6 +390,9 @@ void SettingsPanel::setRefWindow(ReferenceWindow *refWindow)
         QObject::connect(refWindow, &ReferenceWindow::activeImageChanged,
                          this, &SettingsPanel::setReferenceImage);
         QObject::connect(refWindow, &ReferenceWindow::destroyed, this, [this]() { setRefWindow(nullptr); });
+        QObject::connect(refWindow, &ReferenceWindow::visibilityChanged, this,
+                         [this](bool visible) { emit refWindowVisibilityChanged(visible); });
+        emit refWindowVisibilityChanged(!m_refWindow->isHidden());
     }
     else
     {
@@ -425,6 +434,12 @@ void SettingsPanel::flipImageHorizontally() const
 void SettingsPanel::flipImageVertically() const
 {
     m_refImage->setFlipVertical(!m_refImage->flipVertical());
+}
+
+void SettingsPanel::toggleRefWindowVisible() const
+{
+    if (!m_refWindow) return;
+    m_refWindow->setVisible(m_refWindow->isHidden());
 }
 
 void SettingsPanel::initNoRefWidget()
