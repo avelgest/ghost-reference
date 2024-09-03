@@ -1,5 +1,6 @@
 target_sources(GhostReference
 PRIVATE
+    image.cpp
     network_download.cpp
     window_utils.cpp
     zip_file.cpp

@@ -21,22 +21,6 @@ namespace
     // Minimum size of the image on screen (px)
     const qreal minDisplaySize = 96.;
 
-    void adjustSaturation(QImage &image, qreal saturation)
-    {
-        const auto saturationF = static_cast<float>(saturation);
-        for (int y = 0; y < image.height(); y++)
-        {
-            QRgb *line = reinterpret_cast<QRgb *>(image.scanLine(y));
-            for (int x = 0; x < image.width(); x++)
-            {
-                const QColor color(line[x]);
-                QColor hsv = color.toHsv();
-                hsv.setHsvF(hsv.hueF(), saturationF * hsv.saturationF(), hsv.valueF(), hsv.alphaF());
-                line[x] = hsv.rgba();
-            }
-        }
-    }
-
     ReferenceCollection &refCollection()
     {
         return App::ghostRefInstance()->referenceItems();
@@ -473,7 +457,7 @@ void ReferenceImage::redrawImage()
 
     if (!nearlyEqual(saturation(), 1.0))
     {
-        adjustSaturation(redrawTarget, saturation());
+        utils::reduceSaturation(redrawTarget, saturation());
     }
 
     const QMutexLocker displayImageLock(&m_displayImageMutex);
