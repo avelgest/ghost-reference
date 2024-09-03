@@ -42,7 +42,7 @@ void utils::reduceSaturation(QImage &image, qreal saturation)
 
 bool utils::hasTransparentPixels(const QImage &image)
 {
-    if (!image.hasAlphaChannel()) return false;
+    if (image.isNull() || !image.hasAlphaChannel()) return false;
 
     switch (image.format())
     {

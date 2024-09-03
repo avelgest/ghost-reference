@@ -124,10 +124,8 @@ void PictureWidget::paintEvent(QPaintEvent *event)
         return;
     }
 
-    const bool imageHasAlpha = m_imageSP->baseImage().hasAlphaChannel();
-
     // Draw a checkered background for images with alpha
-    if (imageHasAlpha && referenceWindow()->windowMode() != GhostMode)
+    if (m_imageSP->hasAlpha() && referenceWindow()->windowMode() != GhostMode)
     {
         if (referenceWindow())
         {
@@ -144,11 +142,11 @@ void PictureWidget::paintEvent(QPaintEvent *event)
 
         if (m_cachedImage.size() != size()) m_cachedImage = QPixmap(size());
 
-        if (imageHasAlpha) m_cachedImage.fill(Qt::transparent);
+        if (refImage.hasAlpha()) m_cachedImage.fill(Qt::transparent);
 
         QPainter cachePainter(&m_cachedImage);
-        cachePainter.setCompositionMode(imageHasAlpha ? QPainter::CompositionMode_SourceOver
-                                                      : QPainter::CompositionMode_Source);
+        cachePainter.setCompositionMode(refImage.hasAlpha() ? QPainter::CompositionMode_SourceOver
+                                                            : QPainter::CompositionMode_Source);
 
         const auto lock = refImage.lockDisplayImage();
         const QPixmap &dispImage = refImage.displayImage();

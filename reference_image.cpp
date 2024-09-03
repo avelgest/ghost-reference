@@ -14,6 +14,8 @@
 #include "reference_collection.h"
 #include "reference_loading.h"
 
+#include "utils/image.h"
+
 namespace
 {
     // Minimum width or height for ReferenceImage::crop (px)
@@ -239,6 +241,11 @@ void ReferenceImage::reload()
     setLoader(std::make_unique<RefImageLoader>(QUrl::fromLocalFile(filepath())));
 }
 
+void ReferenceImage::checkHasAlpha()
+{
+    m_hasAlpha = utils::hasTransparentPixels(m_baseImage);
+}
+
 QSizeF ReferenceImage::minCropSize() const
 {
     return {minDisplaySize / zoom(), minDisplaySize / zoom()};
@@ -347,6 +354,7 @@ void ReferenceImage::setBaseImage(const QImage &baseImage)
                                                 : baseImage.size());
     }
 
+    checkHasAlpha();
     updateDisplayImage();
     emit baseImageChanged(m_baseImage);
 }

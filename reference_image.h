@@ -34,6 +34,7 @@ class ReferenceImage : public QObject
     QImage m_baseImage;
     QPixmap m_displayImage;
 
+    bool m_hasAlpha = false;
 
     QMutex m_baseImageMutex;
     QMutex m_displayImageMutex;
@@ -112,6 +113,9 @@ public:
     bool savedAsLink() const;
     void setSavedAsLink(bool value);
 
+    // True if baseImage contains any transparent pixels
+    bool hasAlpha() const;
+
     bool flipHorizontal() const;
     void setFlipHorizontal(bool value);
 
@@ -143,10 +147,13 @@ private:
     ReferenceImage();
     explicit ReferenceImage(RefImageLoaderUP &&loader);
 
+    // Update the value of hasAlpha
+    void checkHasAlpha();
+
     QSizeF minCropSize() const;
     void onLoaderFinished();
-    QTransform srcTransfrom() const;
     void redrawImage();
+    QTransform srcTransfrom() const;
 };
 
 // inline definitions
@@ -208,6 +215,11 @@ inline bool ReferenceImage::savedAsLink() const
 inline void ReferenceImage::setSavedAsLink(bool value)
 {
     m_savedAsLink = value;
+}
+
+inline bool ReferenceImage::hasAlpha() const
+{
+    return m_hasAlpha;
 }
 
 inline QRectF ReferenceImage::cropF() const { return m_crop; }
