@@ -286,6 +286,8 @@ namespace
         Q_ASSERT(settingsPanel != nullptr);
 
         auto *toolBar = new QToolBar(settingsPanel);
+        toolBar->setToolButtonStyle(Qt::ToolButtonIconOnly);
+
         QAction *action = nullptr;
 
         action = toolBar->addAction(QIcon(":/visible.png"), "Hide Window");
@@ -310,7 +312,7 @@ namespace
         QObject::connect(action, &QAction::triggered, settingsPanel,
                          [settingsPanel]() { Tool::activateTool<ColorPicker>(); });
 
-        action = toolBar->addAction(toolBar->style()->standardIcon(QStyle::SP_TrashIcon), "Remove Reference");
+        action = toolBar->addAction(toolBar->style()->standardIcon(QStyle::SP_DialogDiscardButton), "Remove Reference");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::removeRefItemFromWindow);
 
         return toolBar;
