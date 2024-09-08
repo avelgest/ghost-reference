@@ -140,13 +140,48 @@ ReferenceImage::ReferenceImage(RefImageLoaderUP &&loader)
 
 ReferenceImage::~ReferenceImage() = default;
 
+ReferenceImageSP ReferenceImage::getSharedPtr() const
+{
+    ReferenceCollection &refCollection = App::ghostRefInstance()->referenceItems();
+
+    ReferenceImageSP refImageSP = refCollection.getReferenceImage(name());
+    if (refImageSP != this)
+    {
+        qCritical() << "Unable to get shared pointer for'" << name() << (refImageSP ? "' Name collision" : "Not found");
+        return nullptr;
+    }
+    return refImageSP;
+}
+
+ReferenceImageSP ReferenceImage::duplicate(bool linked) const
+{
+    ReferenceCollection &refCollection = App::ghostRefInstance()->referenceItems();
+    ReferenceImageSP dup = refCollection.newReferenceImage(name());
+
+    RefImageLoaderUP loader = std::make_unique<RefImageLoader>(m_baseImage);
+    dup->fromJson(toJson(), std::move(loader));
+
+    if (linked)
+    {
+        dup->setLinkedCopyOf(getSharedPtr());
+    }
+
+    return dup;
+}
+
 void ReferenceImage::fromJson(const QJsonObject &json, RefImageLoaderUP &&loader)
 {
     setName(json["name"].toString());
     setFilepath(json["filepath"].toString());
+    const QString linkedCopyOfName = json["linkedCopyOf"].toString();
+
     if (loader && !loader->isError())
     {
         setLoader(std::move(loader));
+    }
+    else if (!linkedCopyOfName.isEmpty())
+    {
+        setLinkedCopyOf(App::ghostRefInstance()->referenceItems().getReferenceImage(linkedCopyOfName));
     }
     else if (!m_loader && !filepath().isEmpty())
     {
@@ -173,6 +208,7 @@ void ReferenceImage::fromJson(const QJsonObject &json, RefImageLoaderUP &&loader
 QJsonObject ReferenceImage::toJson() const
 {
     const QJsonArray cropArray({m_crop.left(), m_crop.top(), m_crop.width(), m_crop.height()});
+    const ReferenceImageSP linkedCopyOfSP = linkedCopyOf();
 
     return {{"type", "Image"},
             {"filepath", filepath()},
@@ -183,7 +219,8 @@ QJsonObject ReferenceImage::toJson() const
             {"savedAsLink", savedAsLink()},
             {"flipHorizontal", flipHorizontal()},
             {"flipVertical", flipVertical()},
-            {"smoothFiltering", smoothFiltering()}};
+            {"smoothFiltering", smoothFiltering()},
+            {"linkedCopyOf", linkedCopyOfSP ? linkedCopyOfSP->name() : ""}};
 }
 
 const RefImageLoaderUP &ReferenceImage::loader() const
@@ -269,6 +306,7 @@ bool ReferenceImage::isValid() const
 const QString &ReferenceImage::errorMessage() const
 {
     static const QString empty;
+    if (m_linkedCopyOf) return m_linkedCopyOf.toStrongRef()->errorMessage();
     return m_loader ? m_loader->errorMessage() : empty;
 }
 
@@ -477,4 +515,40 @@ void ReferenceImage::setName(const QString &newName)
 {
     App::ghostRefInstance()->referenceItems().renameReference(*this, newName);
     emit nameChanged(name());
+}
+
+void ReferenceImage::setLinkedCopyOf(const ReferenceImageSP &refImage)
+{
+    if (refImage == this)
+    {
+        qCritical() << "Cannot link a ReferenceImage with itself";
+        return;
+    }
+
+    // Check for circular dependencies.
+    {
+        ReferenceImage *linkedImage = refImage.get();
+        while (linkedImage)
+        {
+            if (linkedImage = linkedImage->m_linkedCopyOf.toStrongRef().get(); linkedImage == this)
+            {
+                qCritical() << "Cannot have circular dependencies in ReferenceImage linking";
+                return;
+            }
+        }
+    }
+
+    if (m_linkedCopyOf)
+    {
+        if (m_linkedCopyOf == refImage) return;
+        QObject::disconnect(m_linkedCopyOf.toStrongRef().get(), nullptr, this, nullptr);
+    }
+
+    m_linkedCopyOf = refImage.toWeakRef();
+    if (refImage)
+    {
+        setBaseImage(refImage->baseImage());
+        QObject::connect(refImage.get(), &ReferenceImage::baseImageChanged, this,
+                         [this](QImage &baseImage) { setBaseImage(baseImage); });
+    }
 }

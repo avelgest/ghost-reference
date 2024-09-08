@@ -52,6 +52,11 @@ namespace
     // Returns true if refItem should be stored as a file in the session ZIP when saving.
     bool shouldStoreRefItem(const ReferenceImageSP &refItem)
     {
+        // Don't store refItems that are linked copies of other refItems
+        if (refItem->linkedCopyOf())
+        {
+            return false;
+        }
         const qint64 maxSizeBytes = appPrefs()->getInt(Preferences::LocalFilesStoreMaxMB) * 1000000LL;
 
         // Only link the item instead of storing it if it is a local file with a size less than maxSizeBytes

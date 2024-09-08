@@ -30,6 +30,9 @@ class ReferenceImage : public QObject
     std::unique_ptr<RefImageLoader> m_loader;
     LoaderWatcher m_loaderWatcher;
 
+    // Image to take image data from. Usually null.
+    ReferenceImageWP m_linkedCopyOf;
+
     QByteArray m_compressedImage;
     QImage m_baseImage;
     QPixmap m_displayImage;
@@ -54,6 +57,11 @@ class ReferenceImage : public QObject
 
 public:
     ~ReferenceImage() override;
+
+    // Returns this reference image's shared pointer in the app's ReferenceCollection instance
+    ReferenceImageSP getSharedPtr() const;
+
+    ReferenceImageSP duplicate(bool linked = false) const;
 
     void setLoader(RefImageLoaderUP &&RefLoader);
 
@@ -97,6 +105,11 @@ public:
     // Returns true if this item is loaded or in the process of loading
     bool isValid() const;
     const QString &errorMessage() const;
+
+    // The ReferenceImage that this ReferenceImage takes it's data from or a null shared pointer
+    // if this uses it's own image data.
+    ReferenceImageSP linkedCopyOf() const;
+    void setLinkedCopyOf(const ReferenceImageSP &refImage);
 
     /*The size (in px) this image should be displayed at (after cropping).*/
     QSize displaySize() const;
@@ -223,6 +236,11 @@ inline bool ReferenceImage::hasAlpha() const
 }
 
 inline QRectF ReferenceImage::cropF() const { return m_crop; }
+
+inline ReferenceImageSP ReferenceImage::linkedCopyOf() const
+{
+    return m_linkedCopyOf.toStrongRef();
+}
 
 inline bool ReferenceImage::flipHorizontal() const { return m_filpHorizontal; }
 

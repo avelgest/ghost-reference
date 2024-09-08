@@ -176,6 +176,9 @@ namespace
         action = refWindow->addAction("Paste", QKeySequence::Paste);
         QObject::connect(action, &QAction::triggered, refWindow, [=]() { pasteRefsFromClipboard(refWindow); });
 
+        action = refWindow->addAction("Duplicate", Qt::CTRL | Qt::Key_D);
+        QObject::connect(action, &QAction::triggered, refWindow, [=]() { refWindow->duplicateActive(true); });
+
         for (QAction *action : refWindow->actions())
         {
             action->setShortcutContext(Qt::WidgetWithChildrenShortcut);
@@ -323,19 +326,42 @@ ReferenceWindow *ReferenceWindow::detachReference(const ReferenceImageSP refItem
         return nullptr;
     }
 
+    // TODO Check whether the window contains refItem before adding the undo step
+    App *app = App::ghostRefInstance();
+    app->undoStack()->pushGlobalUndo();
+
     if (!removeReference(refItem))
     {
         qWarning() << "Unable to detach reference item:" << refItem->name() << "not found in window";
         return nullptr;
     }
 
-    ReferenceWindow *newWindow = App::ghostRefInstance()->newReferenceWindow();
+    ReferenceWindow *newWindow = app->newReferenceWindow();
     newWindow->addReference(refItem, false);
     newWindow->move(pos() + windowOffset);
     newWindow->show();
 
     markAppUnsavedChanges();
 
+    return newWindow;
+}
+
+ReferenceWindow *ReferenceWindow::duplicateActive(bool linked) const
+{
+    const QPoint windowOffset = QPoint(100, 100);
+
+    if (!activeImage()) return nullptr;
+
+    App *app = App::ghostRefInstance();
+    app->undoStack()->pushGlobalUndo();
+
+    ReferenceWindow *newWindow = app->newReferenceWindow();
+    const ReferenceImageSP newRef = activeImage()->duplicate(linked);
+    newWindow->addReference(newRef, false);
+    newWindow->move(pos() + windowOffset);
+    newWindow->show();
+
+    markAppUnsavedChanges();
     return newWindow;
 }
 

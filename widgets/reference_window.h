@@ -54,6 +54,7 @@ public:
     bool removeReference(const ReferenceImageSP &refItem);
     void clearReferences();
     ReferenceWindow *detachReference(ReferenceImageSP refItem);
+    ReferenceWindow *duplicateActive(bool linked = true) const;
 
     void setVisible(bool visible) override;
 
