@@ -16,6 +16,7 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtWidgets/QMessageBox>
 
+#include "global_hotkeys.h"
 #include "preferences.h"
 #include "reference_image.h"
 #include "reference_loading.h"
@@ -488,6 +489,7 @@ App::App(int &argc, char **argv, int flags)
     // as member initailizers.
     m_preferences.reset(Preferences::loadFromDisk(this));
     m_backWindow = new BackWindow();
+    m_globalHotkeys = new GlobalHotkeys(this);
     m_mainToolbar = new MainToolbar(m_backWindow);
     m_undoStack = new UndoStack(this);
 

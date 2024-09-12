@@ -43,6 +43,24 @@ FetchContent_MakeAvailable(minizip-ng)
 include_directories(${minizip-ng_SOURCE_DIR})
 link_directories(${minizip-ng_BINARY_DIR})
 
+# QHotkey
+# The current version adds sets cpack params that causes configuring to fail.
+# So use an older version for now. 
+FetchContent_Declare(
+    qhotkey
+    GIT_REPOSITORY https://github.com/Skycoder42/QHotkey.git
+    GIT_TAG 94efd5f
+    EXCLUDE_FROM_ALL
+)
+
+set(QHOTKEY_EXAMPLES OFF)
+set(QHOTKEY_INSTALL ON)
+
+FetchContent_MakeAvailable(qhotkey)
+
+include_directories(${qhotkey_SOURCE_DIR})
+link_directories(${qhotkey_BINARY_DIR})
+
 set(CMAKE_AUTORCC ON)
 
 qt_standard_project_setup()
@@ -52,6 +70,7 @@ qt_add_executable(GhostReference
                   main.cpp
                   app.cpp
                   color_picker.cpp
+                  global_hotkeys.cpp
                   preferences.cpp
                   reference_collection.cpp
                   reference_image.cpp
@@ -67,6 +86,7 @@ add_subdirectory(widgets)
 target_link_libraries(GhostReference PRIVATE Qt6::Widgets
                                      PRIVATE Qt6::Network
                                      PRIVATE MINIZIP::minizip
+                                     PRIVATE qhotkey
 )
 
 if (NOT SHOW_WINDOWS_CONSOLE)

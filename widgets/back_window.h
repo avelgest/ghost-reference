@@ -12,6 +12,7 @@ class BackWindow : public QWidget
 
     WindowMode m_windowMode = TransformMode;
     QPointer<SettingsPanel> m_settingsPanel = nullptr;
+    MainToolbarActions *m_mainToolbarActions = nullptr;
 
 public:
     explicit BackWindow(QWidget *parent = nullptr);
@@ -24,6 +25,7 @@ public:
     inline WindowMode windowMode() const;
     void setWindowMode(WindowMode value);
 
+    MainToolbarActions *mainToolbarActions() const;
     // Add actions from the main toolbar to the back window so they are always accessible
     // via keyboard shortcuts.
     void setMainToolbarActions(MainToolbarActions *actions);
@@ -40,4 +42,9 @@ signals:
 inline WindowMode BackWindow::windowMode() const
 {
     return m_windowMode;
+}
+
+inline MainToolbarActions *BackWindow::mainToolbarActions() const
+{
+    return m_mainToolbarActions;
 }

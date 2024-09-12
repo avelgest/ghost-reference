@@ -41,6 +41,7 @@ public:
         AnimateToolbarCollapse,
         AskSaveBeforeClosing,
         GhostModeOpacity,
+        GlobalHotkeysEnabled,
         LocalFilesLink,
         LocalFilesStoreMaxMB,
         UndoMaxSteps,
@@ -89,6 +90,19 @@ public:
     PREFS_SET(setInt, int)
     PREFS_SET(setString, const QString &)
 #undef PREFS_SET
+
+    using HotkeyMap = QMap<QString, QKeySequence>;
+
+    HotkeyMap &hotkeys();
+    const HotkeyMap &hotkeys() const;
+    HotkeyMap &globalHotkeys();
+    const HotkeyMap &globalHotkeys() const;
+
+    static const HotkeyMap &defaultHotkeys();
+    static const HotkeyMap &defaultGlobalHotkeys();
+
+    // Restore a hotkey to its default value
+    void resetHotkey(const QString &hotkeyName, bool globalHotkey);
 
 private:
     QScopedPointer<PreferencesPrivate> p;

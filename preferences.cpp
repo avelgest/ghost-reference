@@ -13,6 +13,7 @@
 #include <utility>
 
 #include "app.h"
+#include "global_hotkeys.h"
 
 namespace
 {
@@ -62,7 +63,12 @@ namespace
         {
         }
 
-        // Constructor for float Props
+        // Constructor for bool properties
+        PrefProp(QString name, bool defaultValue, QString displayName, QString description)
+            : PrefProp(std::move(name), BoolType, defaultValue, std::move(displayName), std::move(description))
+        {}
+
+        // Constructor for float properties
         PrefProp(QString name, qreal defaultValue, QString displayName, QString description, PrefFloatRange range)
             : PrefProp(std::move(name), FloatType, defaultValue, std::move(displayName), std::move(description))
         {
@@ -78,6 +84,7 @@ namespace
             m_enumValues = enumValues;
         }
 
+        // Constructor for int properties
         PrefProp(QString name, qint32 defaultValue, QString displayName, QString description, PrefIntRange range)
             : PrefProp(std::move(name), IntType, defaultValue, std::move(displayName), std::move(description))
         {
@@ -126,6 +133,9 @@ namespace
              {"askSaveBeforeClosing", BoolType, true, "Ask to save when exiting",
               "Ask to save any unsaved changes when closing the application."}},
             {GhostModeOpacity, {"ghostModeOpacity", 0.5, "Ghost Mode Opacity", "", {0., 1.}}},
+            {GlobalHotkeysEnabled,
+             {"globalHotkeysEnabled", true, "Global Hotkeys",
+              "Enable global hotkeys (hotkeys that work event when another application is focused)."}},
             {LocalFilesLink,
              {"localFilesLink", BoolType, false, "Link Local Files by Default",
               "Default to storing local files as links when saving the session instead of creating copies."}},
@@ -155,25 +165,78 @@ namespace
         return nameMap[name];
     }
 
+    QJsonObject hotkeyMapToJson(const Preferences::HotkeyMap &hotkeys)
+    {
+        QJsonObject obj;
+        for (const auto [key, value] : hotkeys.asKeyValueRange())
+        {
+            if (!value.isEmpty())
+            {
+                obj[key] = value.toString(QKeySequence::PortableText);
+            }
+        }
+
+        return obj;
+    }
+
+    Preferences::HotkeyMap jsonToHotkeyMap(const QJsonValue &jsonValue, bool isGlobalHotkeys)
+    {
+        using HotkeyMap = Preferences::HotkeyMap;
+
+        HotkeyMap hotkeys = isGlobalHotkeys ? Preferences::defaultGlobalHotkeys() : Preferences::defaultHotkeys();
+
+        if (jsonValue.isObject())
+        {
+            const QJsonObject obj = jsonValue.toObject();
+            for (auto it = obj.constBegin(); it < obj.constEnd(); it++)
+            {
+                hotkeys[it.key()] = QKeySequence::fromString(it.value().toString(), QKeySequence::PortableText);
+            }
+
+            return hotkeys;
+        }
+
+        return hotkeys;
+    }
+
 } // namespace
 
 struct PreferencesPrivate
 {
     QHash<Preferences::Keys, QVariant> m_properties;
+    Preferences::HotkeyMap m_hotkeys;
+    Preferences::HotkeyMap m_globalHotkeys;
 };
 
 Preferences::Preferences(QObject *parent)
     : QObject(parent),
       p(new PreferencesPrivate())
-{
-}
+{}
 
 Preferences::~Preferences() = default;
+
+const Preferences::HotkeyMap &Preferences::defaultHotkeys()
+{
+    static const HotkeyMap hotkeys{};
+    return hotkeys;
+}
+
+const Preferences::HotkeyMap &Preferences::defaultGlobalHotkeys()
+{
+    using enum GlobalHotkeys::Builtin;
+
+    const auto builtin = GlobalHotkeys::builtinName;
+
+    static const HotkeyMap globalHotkeys{{builtin(HideAllWindows), {Qt::CTRL | Qt::ALT | Qt::Key_H}}};
+    return globalHotkeys;
+}
 
 Preferences *Preferences::duplicate(QObject *parent) const
 {
     auto *newPrefs = new Preferences(parent);
     newPrefs->p->m_properties = p->m_properties;
+    newPrefs->p->m_hotkeys = p->m_hotkeys;
+    newPrefs->p->m_globalHotkeys = p->m_globalHotkeys;
     return newPrefs;
 }
 
@@ -208,7 +271,7 @@ void Preferences::set(Keys key, const QVariant &value)
     {
         return;
     }
-    const PrefProp propData = prefProperties()[key];
+    const PrefProp &propData = prefProperties()[key];
     if (!propData.isValid())
     {
         qCritical() << "Attempted to set nonexistent preference:" << key;
@@ -220,6 +283,33 @@ void Preferences::set(Keys key, const QVariant &value)
         return;
     }
     p->m_properties[key] = value;
+}
+
+Preferences::HotkeyMap &Preferences::hotkeys()
+{
+    return p->m_hotkeys;
+}
+
+const Preferences::HotkeyMap &Preferences::hotkeys() const
+{
+    return p->m_hotkeys;
+}
+
+Preferences::HotkeyMap &Preferences::globalHotkeys()
+{
+    return p->m_globalHotkeys;
+}
+
+const Preferences::HotkeyMap &Preferences::globalHotkeys() const
+{
+    return p->m_globalHotkeys;
+}
+
+void Preferences::resetHotkey(const QString &hotkeyName, bool globalHotkey)
+{
+    const HotkeyMap &defaults = globalHotkey ? defaultGlobalHotkeys() : defaultHotkeys();
+    HotkeyMap &hotkeys = globalHotkey ? p->m_globalHotkeys : p->m_hotkeys;
+    hotkeys[hotkeyName] = defaults[hotkeyName];
 }
 
 Preferences *Preferences::loadFromDisk(QObject *parent)
@@ -264,8 +354,15 @@ Preferences *Preferences::loadFromJson(const QJsonDocument &json, QObject *paren
     const QJsonObject obj = json.object();
     for (auto it = obj.constBegin(); it < obj.constEnd(); it++)
     {
-        prefs->set(nameToKey(it.key()), it.value().toVariant());
+        if (it.key() != "hotkeys" && it.key() != "globalHotkeys")
+        {
+            prefs->set(nameToKey(it.key()), it.value().toVariant());
+        }
     }
+
+    // Load hotkeys / global hotkeys
+    prefs->p->m_hotkeys = jsonToHotkeyMap(obj["hotkeys"], false);
+    prefs->p->m_globalHotkeys = jsonToHotkeyMap(obj["globalHotkeys"], true);
 
     return prefs.take();
 }
@@ -286,6 +383,10 @@ QJsonDocument Preferences::toJsonDocument() const
             obj[propData.name()] = jsonValue;
         }
     }
+
+    obj["hotkeys"] = hotkeyMapToJson(p->m_hotkeys);
+    obj["globalHotkeys"] = hotkeyMapToJson(p->m_globalHotkeys);
+
     return QJsonDocument(obj);
 }
 

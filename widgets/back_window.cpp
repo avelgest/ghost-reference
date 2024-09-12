@@ -78,6 +78,7 @@ void BackWindow::setMainToolbarActions(MainToolbarActions *actions)
     const QList<QAction *> to_add{&actions->openSession(), &actions->paste(),         &actions->redo(),
                                   &actions->saveSession(), &actions->saveSessionAs(), &actions->undo()};
     addActions(to_add);
+    m_mainToolbarActions = actions;
 }
 
 void BackWindow::keyPressEvent(QKeyEvent *event)

@@ -34,6 +34,7 @@ private:
     std::optional<WindowMode> m_globalModeOverride;
 
     int m_timer = 0;
+    GlobalHotkeys *m_globalHotkeys = nullptr;
     QNetworkAccessManager *m_networkManager = nullptr;
     UndoStack *m_undoStack;
 
@@ -67,6 +68,8 @@ public:
     Preferences *preferences();
     // Replace the applications preferences with prefs. The ownership of prefs will be transferred.
     void setPreferences(Preferences *prefs);
+
+    GlobalHotkeys *globalHotkeys() const;
 
     UndoStack *undoStack() const;
 
@@ -138,6 +141,11 @@ inline WindowMode App::globalMode() const { return m_globalMode; }
 inline const Preferences *App::preferences() const { return m_preferences.get(); }
 
 inline Preferences *App::preferences() { return m_preferences.get(); }
+
+inline GlobalHotkeys *App::globalHotkeys() const
+{
+    return m_globalHotkeys;
+}
 
 inline UndoStack *App::undoStack() const
 {
