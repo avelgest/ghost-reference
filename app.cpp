@@ -247,7 +247,7 @@ void App::setPreferences(Preferences *prefs)
     }
 
     prefs->setParent(this);
-    m_preferences.reset(prefs);
+    m_preferences = prefs;
     emit preferencesReplaced(prefs);
 }
 
@@ -478,16 +478,17 @@ void App::refreshWindowName()
     }
 }
 
-App::App(int &argc, char **argv, int flags)
+App::App(int &argc, char **argv, int flags, const Preferences *prefs)
     : QApplication(argc, argv, flags),
       m_globalMode(defaultWindowMode)
 {
     setApplicationName("Ghost Reference");
     setApplicationDisplayName("Ghost Reference");
 
-    // Loading preferences requires applicationName to be set first. So initialize here instead of
-    // as member initailizers.
-    m_preferences.reset(Preferences::loadFromDisk(this));
+    // Loading preferences from disk requires applicationName to be set first. So initialize everything here
+    // instead of as member initailizers.
+    m_preferences = prefs ? prefs->duplicate(this) : Preferences::loadFromDisk(this);
+
     m_backWindow = new BackWindow();
     m_globalHotkeys = new GlobalHotkeys(this);
     m_mainToolbar = new MainToolbar(m_backWindow);

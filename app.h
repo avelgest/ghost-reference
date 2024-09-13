@@ -23,8 +23,8 @@ public:
     typedef QList<QPointer<ReferenceWindow>> RefWindowList;
 
 private:
-    QScopedPointer<Preferences> m_preferences;
-    QPointer<BackWindow> m_backWindow = nullptr;
+    Preferences *m_preferences = nullptr;
+    BackWindow *m_backWindow = nullptr;
     MainToolbar *m_mainToolbar = nullptr;
 
     RefWindowList m_refWindows;
@@ -53,7 +53,7 @@ private:
 public:
     static App *ghostRefInstance();
 
-    App(int &argc, char **argv, int flags = ApplicationFlags);
+    App(int &argc, char **argv, int flags = ApplicationFlags, const Preferences *prefs = nullptr);
     ~App() override;
 
     BackWindow *backWindow() const;
@@ -126,9 +126,6 @@ protected:
     void timerEvent(QTimerEvent *event) override;
 
 private:
-    typedef QMap<QString, ReferenceImageWP> ReferenceMap;
-    static ReferenceMap &references();
-
     void cleanWindowList();
     void processCommandLineArgs();
     void refreshWindowName();
@@ -138,9 +135,15 @@ inline App *App::ghostRefInstance() { return qobject_cast<App *>(App::instance()
 
 inline WindowMode App::globalMode() const { return m_globalMode; }
 
-inline const Preferences *App::preferences() const { return m_preferences.get(); }
+inline const Preferences *App::preferences() const
+{
+    return m_preferences;
+}
 
-inline Preferences *App::preferences() { return m_preferences.get(); }
+inline Preferences *App::preferences()
+{
+    return m_preferences;
+}
 
 inline GlobalHotkeys *App::globalHotkeys() const
 {
