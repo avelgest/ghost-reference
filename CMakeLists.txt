@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.28)
 
 project(ghost-reference VERSION 0.1)
 
+option(BUILD_TESTS "Build tests [ON/OFF].")
 option(QT_ROOT_DIR "The directory that Qt is installed to (contains bin, include, lib etc).")
 option(SHOW_WINDOWS_CONSOLE "Show a console on Windows [ON/OFF].")
 
@@ -16,7 +17,9 @@ if (QT_ROOT_DIR)
     list(APPEND CMAKE_PREFIX_PATH "${QT_ROOT_DIR}")
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Network Widgets)
+set(REQUIRED_QT_COMPONENTS Core Gui Network Widgets)
+
+find_package(Qt6 REQUIRED COMPONENTS ${REQUIRED_QT_COMPONENTS})
 
 
 # minizip-ng
@@ -61,38 +64,71 @@ FetchContent_MakeAvailable(qhotkey)
 include_directories(${qhotkey_SOURCE_DIR})
 link_directories(${qhotkey_BINARY_DIR})
 
+# GoogleTest
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG b514bdc
+    EXCLUDE_FROM_ALL
+)
+
 set(CMAKE_AUTORCC ON)
 
 qt_standard_project_setup()
 
-qt_add_executable(GhostReference 
+qt_add_library(GhostReferenceLib STATIC
+                app.cpp
+                color_picker.cpp
+                global_hotkeys.cpp
+                preferences.cpp
+                reference_collection.cpp
+                reference_image.cpp
+                reference_loading.cpp
+                saving.cpp
+                tool.cpp
+                undo_stack.cpp
+)
+
+qt_add_executable(GhostReference
                   resources/resources.qrc
                   main.cpp
-                  app.cpp
-                  color_picker.cpp
-                  global_hotkeys.cpp
-                  preferences.cpp
-                  reference_collection.cpp
-                  reference_image.cpp
-                  reference_loading.cpp
-                  saving.cpp
-                  tool.cpp
-                  undo_stack.cpp
                   )
 
 add_subdirectory(utils)
 add_subdirectory(widgets)
 
-target_link_libraries(GhostReference PRIVATE Qt6::Widgets
-                                     PRIVATE Qt6::Network
-                                     PRIVATE MINIZIP::minizip
-                                     PRIVATE qhotkey
+target_link_libraries(GhostReferenceLib PRIVATE Qt6::Core
+                                        PRIVATE Qt6::Gui
+                                        PRIVATE Qt6::Widgets
+                                        PRIVATE Qt6::Network
+                                        PRIVATE MINIZIP::minizip
+                                        PRIVATE qhotkey
 )
+
+target_link_libraries(GhostReference PRIVATE GhostReferenceLib)
 
 if (NOT SHOW_WINDOWS_CONSOLE)
     set_target_properties(GhostReference PROPERTIES
                           WIN32_EXECUTABLE ON
     )
+endif()
+
+if (BUILD_TESTS)
+    qt_add_executable(tests tests/tests_main.cpp)
+
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+
+    add_subdirectory(tests)
+    target_link_libraries(tests PRIVATE Qt6::Core
+                                PRIVATE Qt6::Gui
+                                PRIVATE Qt6::Widgets
+                                PRIVATE GTest::gtest
+                                PRIVATE GhostReferenceLib
+    )
+    include(GoogleTest)
+    gtest_discover_tests(tests 
+                         DISCOVERY_MODE PRE_TEST)
 endif()
 
 install(TARGETS GhostReference)

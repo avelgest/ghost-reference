@@ -1,4 +1,4 @@
-target_sources(GhostReference
+target_sources(GhostReferenceLib
 PRIVATE
     back_window.cpp
     main_toolbar_actions.cpp
@@ -11,4 +11,4 @@ PRIVATE
     tab_bar.cpp
 )
 
-target_include_directories(GhostReference PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(GhostReferenceLib PUBLIC ${CMAKE_CURRENT_LIST_DIR})
