@@ -113,6 +113,7 @@ namespace
         {
             return QMetaType::canConvert(QMetaType(m_type), value.metaType());
         }
+        bool isCompatible(const QMetaType &type) const { return QMetaType::canConvert(QMetaType(m_type), type); }
         bool isEnum() const { return m_enumValues != nullptr; }
         bool isValid() const
         {
@@ -240,16 +241,23 @@ Preferences *Preferences::duplicate(QObject *parent) const
     return newPrefs;
 }
 
-void Preferences::copyFromOther(Preferences *other)
+void Preferences::copyFromOther(const Preferences *other)
 {
     if (other)
     {
         p->m_properties = other->p->m_properties;
+        p->m_hotkeys = other->p->m_hotkeys;
+        p->m_globalHotkeys = other->p->m_globalHotkeys;
     }
 }
 
 template <typename T>
 T Preferences::get(Keys key) const
+{
+    return getVariant(key).value<T>();
+}
+
+QVariant Preferences::getVariant(Keys key) const
 {
     const QVariant prop = p->m_properties[key];
     if (!prop.isValid())
@@ -260,9 +268,9 @@ T Preferences::get(Keys key) const
             qCritical() << "Attempted to get nonexistent preference:" << key;
             return {};
         }
-        return propData.defaultValue().value<T>();
+        return propData.defaultValue();
     }
-    return prop.value<T>();
+    return prop;
 }
 
 void Preferences::set(Keys key, const QVariant &value)
@@ -283,6 +291,27 @@ void Preferences::set(Keys key, const QVariant &value)
         return;
     }
     p->m_properties[key] = value;
+}
+
+void Preferences::setFloat(Keys key, qreal value)
+{
+    if (key == InvalidPreference) return;
+
+    // TODO Avoid double lookup from prefProperties here and in Preferences::set
+    const PrefProp &propData = prefProperties()[key];
+
+    value = std::clamp(value, propData.range().min, propData.range().max);
+    set(key, value);
+}
+
+void Preferences::setInt(Keys key, int value)
+{
+    if (key == InvalidPreference) return;
+
+    const PrefProp &propData = prefProperties()[key];
+
+    value = std::clamp(value, propData.intRange().min, propData.intRange().max);
+    set(key, value);
 }
 
 Preferences::HotkeyMap &Preferences::hotkeys()
@@ -409,7 +438,7 @@ void Preferences::saveToDisk() const
     qInfo() << "Preferences written to" << configFile.fileName();
 }
 
-bool Preferences::checkAllEqual(Preferences *other)
+bool Preferences::checkAllEqual(const Preferences *other) const
 {
     if (other == this)
     {
@@ -421,10 +450,13 @@ bool Preferences::checkAllEqual(Preferences *other)
     }
     static const auto keys = prefProperties().keys();
 
-    auto &props = p->m_properties;
-    auto &otherProps = other->p->m_properties;
+    if (std::ranges::any_of(keys.cbegin(), keys.cend(),
+                            [&](auto key) { return getVariant(key) != other->getVariant(key); }))
+    {
+        return false;
+    }
 
-    return std::ranges::all_of(keys.cbegin(), keys.cend(), [=](auto key) { return props[key] == otherProps[key]; });
+    return (p->m_hotkeys == other->p->m_hotkeys && p->m_globalHotkeys == other->p->m_globalHotkeys);
 }
 
 const QString &Preferences::getName(Keys key)

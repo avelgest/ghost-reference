@@ -51,14 +51,14 @@ public:
     ~Preferences() override;
 
     Preferences *duplicate(QObject *parent = nullptr) const;
-    void copyFromOther(Preferences *other);
+    void copyFromOther(const Preferences *other);
 
     static Preferences *loadFromDisk(QObject *parent = nullptr);
     static Preferences *loadFromJson(const QJsonDocument &json, QObject *parent);
     QJsonDocument toJsonDocument() const;
     void saveToDisk() const;
 
-    bool checkAllEqual(Preferences *other);
+    bool checkAllEqual(const Preferences *other) const;
 
     static const QString &getName(Keys key);
     static const QString &getDisplayName(Keys key);
@@ -70,6 +70,8 @@ public:
 
     template <typename T>
     T get(Keys key) const;
+
+    QVariant getVariant(Keys key) const;
 
     void set(Keys key, const QVariant &value);
 
@@ -86,10 +88,11 @@ public:
     void name(Keys key, type value) { set(key, value); }
 
     PREFS_SET(setBool, bool)
-    PREFS_SET(setFloat, qreal)
-    PREFS_SET(setInt, int)
     PREFS_SET(setString, const QString &)
 #undef PREFS_SET
+
+    void setFloat(Keys key, qreal value);
+    void setInt(Keys key, int value);
 
     using HotkeyMap = QMap<QString, QKeySequence>;
 
