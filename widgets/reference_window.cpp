@@ -117,6 +117,12 @@ namespace
         const QSizeF newImgSize = refImage->displaySize().toSizeF();
         QSizeF fitSize;
 
+        if (newImgSize.isEmpty())
+        {
+            refImage->setDisplaySizeF(oldImgSize);
+            return;
+        }
+
         switch (refWindow->tabFit())
         {
         case ReferenceWindow::TabFit::FitToHeight:

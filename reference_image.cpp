@@ -382,14 +382,14 @@ QRect ReferenceImage::displayImageCrop() const
 
 void ReferenceImage::setBaseImage(const QImage &baseImage)
 {
-    const QSize oldDisplaySize = m_crop.isValid() ? displaySize() : QSize();
+    const QSize oldDisplaySize = displaySize();
 
     {
         const QMutexLocker lock(&m_baseImageMutex);
         m_baseImage = baseImage;
-        setCrop(baseImage.rect());
-        setDisplaySize(oldDisplaySize.isValid() ? baseImage.size().scaled(oldDisplaySize, Qt::KeepAspectRatio)
-                                                : baseImage.size());
+        m_crop = baseImage.rect();
+        setDisplaySize(oldDisplaySize.isEmpty() ? baseImage.size()
+                                                : baseImage.size().scaled(oldDisplaySize, Qt::KeepAspectRatio));
     }
 
     checkHasAlpha();
@@ -429,7 +429,7 @@ QSize ReferenceImage::displaySizeFull() const
 void ReferenceImage::setDisplaySizeF(QSizeF value)
 {
     value = value.expandedTo({minDisplaySize, minDisplaySize});
-    const QSizeF &cropSize = cropF().size();
+    const QSizeF cropSize = cropF().size();
     const QSizeF newSize = cropSize.scaled(value, Qt::KeepAspectRatioByExpanding);
     const qreal newZoom = cropSize.isNull() ? 1.0 : newSize.width() / cropSize.width();
     setZoom(newZoom);
@@ -454,21 +454,6 @@ void ReferenceImage::setZoom(qreal value)
     m_zoom = value;
     updateDisplayImage();
     emit zoomChanged(value);
-}
-
-QTransform ReferenceImage::srcTransfrom() const
-{
-    QTransform transform;
-    if (flipHorizontal() || flipVertical())
-    {
-        const QSize &destSize = m_displayImage.size();
-        // Flip by scaling by -1 then translating back to the original position
-        transform.scale(flipHorizontal() ? -1. : 1.,
-                        flipVertical() ? -1. : 1.);
-        transform.translate(flipHorizontal() ? -destSize.width() : 0.,
-                            flipVertical() ? -destSize.height() : 0.);
-    }
-    return transform;
 }
 
 void ReferenceImage::redrawImage()

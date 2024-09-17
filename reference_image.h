@@ -166,7 +166,6 @@ private:
     QSizeF minCropSize() const;
     void onLoaderFinished();
     void redrawImage();
-    QTransform srcTransfrom() const;
 };
 
 // inline definitions
