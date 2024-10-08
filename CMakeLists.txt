@@ -91,6 +91,7 @@ qt_add_library(GhostReferenceLib STATIC
 
 qt_add_executable(GhostReference
                   resources/resources.qrc
+                  ghost_reference.rc
                   main.cpp
                   )
 

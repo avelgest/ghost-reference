@@ -29,6 +29,10 @@ BackWindow::BackWindow(QWidget *parent)
     setAttribute(Qt::WA_TranslucentBackground);
 
     setGeometry(screen()->virtualGeometry());
+
+#ifndef Q_OS_WIN32 // Windows uses the icon in ghost_reference.rc
+    setWindowIcon(QIcon(":/appicon.ico"));
+#endif // !WIN32
 }
 
 SettingsPanel *BackWindow::settingsWindow()
