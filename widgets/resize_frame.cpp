@@ -121,6 +121,19 @@ QSize ResizeFrameButton::sizeHint() const
     return {boxWidth, boxWidth};
 }
 
+void ResizeFrameButton::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    // Allow left double clicks through the widget
+    if (event->buttons() & Qt::LeftButton)
+    {
+        event->ignore();
+    }
+    else
+    {
+        QAbstractButton::mouseDoubleClickEvent(event);
+    }
+}
+
 void ResizeFrameButton::mousePressEvent(QMouseEvent *event)
 {
     QAbstractButton::mousePressEvent(event);

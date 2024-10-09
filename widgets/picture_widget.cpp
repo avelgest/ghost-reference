@@ -61,6 +61,28 @@ namespace
         painter.drawText(rect.marginsRemoved(margins), Qt::AlignCenter | Qt::TextWordWrap, msg);
     }
 
+    void toggleGlobalGhostMode()
+    {
+        App *app = App::ghostRefInstance();
+        switch (app->globalMode())
+        {
+        case WindowMode::GhostMode:
+            app->setGlobalMode(WindowMode::TransformMode);
+            break;
+        case WindowMode::TransformMode:
+            app->setGlobalMode(WindowMode::GhostMode);
+            break;
+        default:
+            break;
+        }
+    }
+
+    // Check if a widget is under the mouse. Like QWidget::underMouse but works in more situations.
+    bool isUnderMouse(const QWidget *widget)
+    {
+        return widget->rect().contains(widget->mapFromGlobal(QCursor::pos()));
+    }
+
 } // namespace
 
 PictureWidget::PictureWidget(QWidget *parent)
@@ -101,6 +123,18 @@ void PictureWidget::enterEvent([[maybe_unused]] QEnterEvent *event)
 void PictureWidget::leaveEvent([[maybe_unused]] QEvent *event)
 {
     m_resizeFrame->setVisible(false);
+}
+
+void PictureWidget::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    if (event->buttons() & Qt::LeftButton)
+    {
+        toggleGlobalGhostMode();
+    }
+    else
+    {
+        QWidget::mouseDoubleClickEvent(event);
+    }
 }
 
 void PictureWidget::paintEvent(QPaintEvent *event)
@@ -173,7 +207,7 @@ void PictureWidget::onWindowModeChanged(WindowMode newMode)
 {
     if (newMode == TransformMode)
     {
-        m_resizeFrame->setVisible(underMouse());
+        m_resizeFrame->setVisible(isUnderMouse(this));
     }
     else
     {
