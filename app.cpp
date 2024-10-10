@@ -34,6 +34,8 @@ namespace
     const WindowMode defaultWindowMode = TransformMode;
     const char *const styleSheetPath = ":/stylesheet.qss";
 
+    const int timerIntervalMs = static_cast<int>(1000.0 / timerCallsPerSecond);
+
     const Qt::WindowFlags msgBoxWindowFlags = Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint;
 
     struct CmdParseResult
@@ -190,7 +192,8 @@ void App::checkModifierKeyStates()
 
 void App::checkGhostStates()
 {
-    const QPoint cursor_pos = QCursor::pos();
+    // N.B. QCursor::pos is relative to the primary screen
+    const QPoint cursor_pos = m_backWindow->mapFromGlobal(QCursor::pos());
 
     for (auto &refWindow : m_refWindows)
     {
@@ -227,6 +230,20 @@ void App::setGlobalMode(WindowMode mode)
     {
         m_backWindow->setWindowMode(mode);
         emit globalModeChanged(mode);
+    }
+
+    // Start/stop the checkGhostStates timer
+    if (mode == WindowMode::GhostMode)
+    {
+        if (m_timer == 0)
+        {
+            m_timer = startTimer(timerIntervalMs);
+        }
+    }
+    else if (m_timer != 0)
+    {
+        killTimer(m_timer);
+        m_timer = 0;
     }
 }
 
@@ -516,9 +533,6 @@ App::App(int &argc, char **argv, int flags, const Preferences *prefs)
 
     positionToolBarDefault(m_mainToolbar);
     m_mainToolbar->show();
-
-    const int timerIntervalMs = static_cast<int>(1000.0 / timerCallsPerSecond);
-    m_timer = startTimer(timerIntervalMs);
 }
 
 App::~App() = default;
