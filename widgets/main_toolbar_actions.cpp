@@ -2,6 +2,7 @@
 
 #include <QtGui/QClipboard>
 #include <QtWidgets/QStyle>
+#include <QtWidgets/QSystemTrayIcon>
 
 #include "../app.h"
 #include "../reference_loading.h"
@@ -23,9 +24,14 @@ namespace
         App::quit();
     }
 
-    void minimizeAllWindows()
+    void hideToolbarFnc()
     {
-        App::ghostRefInstance()->backWindow()->showMinimized();
+        if (QSystemTrayIcon::isSystemTrayAvailable())
+        {
+            App *app = App::ghostRefInstance();
+            app->mainToolbar()->hide();
+            app->setSystemTrayIconVisible(true);
+        }
     }
 
     void openSessionFnc()
@@ -126,21 +132,21 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
                      { toggleGhostMode().setChecked(mode == GhostMode); });
     QObject::connect(&toggleGhostMode(), &QAction::triggered, toggleGhostModeFnc);
 
-    // Minimize Application
-    minimizeApplication().setIcon(style->standardIcon(QStyle::SP_TitleBarMinButton));
-    minimizeApplication().setText("Minimize All");
-    QObject::connect(&minimizeApplication(), &QAction::triggered, &minimizeAllWindows);
+    // Minimize Toolbar
+    minimizeToolbar().setIcon(style->standardIcon(QStyle::SP_TitleBarMinButton));
+    minimizeToolbar().setText("Minimize Toolbar to System Tray");
+    QObject::connect(&minimizeToolbar(), &QAction::triggered, hideToolbarFnc);
 
     // Open
     openSession().setIcon(style->standardIcon(QStyle::SP_DialogOpenButton));
-    openSession().setText("Open");
     openSession().setShortcut(QKeySequence::Open);
+    openSession().setText(appendShortcut("Open", openSession()));
     QObject::connect(&openSession(), &QAction::triggered, &openSessionFnc);
 
     // Save
     saveSession().setIcon(style->standardIcon(QStyle::SP_DialogSaveButton));
-    saveSession().setText(appendShortcut("Save", saveSession()));
     saveSession().setShortcut(QKeySequence::Save);
+    saveSession().setText(appendShortcut("Save", saveSession()));
     QObject::connect(&saveSession(), &QAction::triggered, &saveSessionFnc);
 
     // SaveAs

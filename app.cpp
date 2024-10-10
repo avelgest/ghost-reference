@@ -21,6 +21,7 @@
 #include "reference_image.h"
 #include "reference_loading.h"
 #include "saving.h"
+#include "system_tray_icon.h"
 #include "undo_stack.h"
 
 #include "widgets/back_window.h"
@@ -397,6 +398,18 @@ void App::closeAllReferenceWindows()
         refWindow->deleteLater();
     }
     m_refWindows.clear();
+}
+
+void App::setSystemTrayIconVisible(bool value)
+{
+    if (value && !m_systemTrayIcon)
+    {
+        m_systemTrayIcon = new SystemTrayIcon(this);
+    }
+    if (m_systemTrayIcon)
+    {
+        m_systemTrayIcon->setVisible(value);
+    }
 }
 
 void App::onStartUp()

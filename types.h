@@ -8,6 +8,7 @@ class ReferenceCollection;
 class ReferenceImage;
 class RefLoader;
 class RefImageLoader;
+class SystemTrayIcon;
 class UndoStack;
 class Tool;
 

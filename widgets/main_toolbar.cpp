@@ -18,6 +18,7 @@
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QStyle>
 #include <QtWidgets/QStyleOption>
+#include <QtWidgets/QSystemTrayIcon>
 #include <QtWidgets/QToolButton>
 
 #include "../app.h"
@@ -353,7 +354,10 @@ MainToolbar::MainToolbar(QWidget *parent)
     addAction(&m_windowActions->showHelp());
     addSeparator();
 
-    addAction(&m_windowActions->minimizeApplication());
+    if (QSystemTrayIcon::isSystemTrayAvailable())
+    {
+        addAction(&m_windowActions->minimizeToolbar());
+    }
     addAction(&m_windowActions->closeApplication());
 }
 

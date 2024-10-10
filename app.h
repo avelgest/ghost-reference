@@ -26,6 +26,7 @@ private:
     Preferences *m_preferences = nullptr;
     BackWindow *m_backWindow = nullptr;
     MainToolbar *m_mainToolbar = nullptr;
+    SystemTrayIcon *m_systemTrayIcon = nullptr;
 
     RefWindowList m_refWindows;
     ReferenceCollection m_referenceItems;
@@ -101,6 +102,9 @@ public:
     void setAllRefWindowsVisible(bool value);
 
     void closeAllReferenceWindows();
+
+    SystemTrayIcon *systemTrayIcon() const;
+    void setSystemTrayIconVisible(bool value);
 
     void onStartUp();
 
@@ -179,3 +183,8 @@ inline bool App::allRefWindowsVisible() const
 inline bool App::inOverrideMode() const { return m_globalModeOverride.has_value(); }
 inline BackWindow *App::backWindow() const { return m_backWindow; }
 inline MainToolbar *App::mainToolbar() const { return m_mainToolbar; }
+
+inline SystemTrayIcon *App::systemTrayIcon() const
+{
+    return m_systemTrayIcon;
+}

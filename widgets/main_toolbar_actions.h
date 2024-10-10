@@ -19,7 +19,7 @@ class MainToolbarActions : public QObject
     Q_DISABLE_COPY_MOVE(MainToolbarActions)
 
     ACTION_DECL(closeApplication);
-    ACTION_DECL(minimizeApplication);
+    ACTION_DECL(minimizeToolbar);
     ACTION_DECL(openSession);
     ACTION_DECL(paste);
     ACTION_DECL(toggleAllRefsHidden);

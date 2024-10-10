@@ -85,6 +85,7 @@ qt_add_library(GhostReferenceLib STATIC
                 reference_image.cpp
                 reference_loading.cpp
                 saving.cpp
+                system_tray_icon.cpp
                 tool.cpp
                 undo_stack.cpp
 )
