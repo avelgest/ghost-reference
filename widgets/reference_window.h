@@ -56,6 +56,10 @@ public:
     ReferenceWindow *detachReference(ReferenceImageSP refItem);
     ReferenceWindow *duplicateActive(bool linked = true) const;
 
+    // Set the crop of the reference image keeping the window's top-left the same.
+    void setCrop(const QRect &crop);
+    void setCrop(const QRectF &crop);
+
     void setVisible(bool visible) override;
 
     PictureWidget *pictureWidget() const;
@@ -144,6 +148,11 @@ inline RefWindowId ReferenceWindow::identifier() const
 inline void ReferenceWindow::setIdentifier(RefWindowId id)
 {
     m_identifier = id;
+}
+
+inline void ReferenceWindow::setCrop(const QRect &crop)
+{
+    setCrop(crop.toRectF());
 }
 
 inline PictureWidget *ReferenceWindow::pictureWidget() const

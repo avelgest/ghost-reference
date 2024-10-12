@@ -371,6 +371,26 @@ ReferenceWindow *ReferenceWindow::duplicateActive(bool linked) const
     return newWindow;
 }
 
+void ReferenceWindow::setCrop(const QRectF &crop)
+{
+    const ReferenceImageSP &refImage = activeImage();
+    const QRectF oldCrop = refImage->cropF();
+
+    refImage->setCropF(crop);
+
+    const QRectF newCrop = refImage->cropF();
+    const QRect oldGeo = geometry();
+
+    adjustSize();
+
+    // Move the window so that the left or top edges appear to move when cropped from
+    if (newCrop.topLeft() != oldCrop.topLeft())
+    {
+        const QPoint moveBy = oldGeo.bottomRight() - geometry().bottomRight();
+        move(pos() + moveBy);
+    }
+}
+
 void ReferenceWindow::fromJson(const QJsonObject &json)
 {
     // Prevent reference images from being deleted after clear
@@ -601,29 +621,14 @@ void ReferenceWindow::onFrameCrop(QMargins cropBy)
     {
         return;
     }
-    ReferenceImage &refImage = *m_activeImage;
+    const ReferenceImage &refImage = *m_activeImage;
 
     QMarginsF cropByF = cropBy.toMarginsF() / refImage.zoom();
 
     // Switch the crop direction if the image is flipped
     cropByF = flipMargins(cropByF, refImage.flipHorizontal(), refImage.flipVertical());
 
-    const QRectF oldCrop = refImage.cropF();
-
-    QRectF newCrop = oldCrop.marginsRemoved(cropByF);
-    refImage.setCropF(newCrop);
-
-    newCrop = refImage.cropF();
-    const QRect oldGeo = geometry();
-
-    adjustSize();
-
-    // Move the window so that the left or top edges appear to move when cropped from
-    if (cropBy.left() || cropBy.top())
-    {
-        const QPoint moveBy = oldGeo.bottomRight() - geometry().bottomRight();
-        move(pos() + moveBy);
-    }
+    setCrop(refImage.cropF().marginsRemoved(cropByF));
 }
 
 void ReferenceWindow::onFrameMove(QPoint diff)

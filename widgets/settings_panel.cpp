@@ -30,7 +30,7 @@
 namespace
 {
     const Qt::WindowFlags defaultWindowFlags = Qt::Tool;
-    const QSize defaultSizeHint(280, 392);
+    const QSize defaultSizeHint(296, 420);
 
     const int sliderScale = 100;
     const qreal sliderScaleF = static_cast<qreal>(sliderScale);
@@ -236,6 +236,81 @@ namespace
         layout->addRow(lineEdit);
 
         return lineEdit;
+    }
+
+    void createCropSettings(SettingsPanel *settingsPanel, QFormLayout *layout)
+    {
+        auto *const parent = settingsPanel;
+        const int minInputWidth = 10;
+
+        auto *hbox = new QHBoxLayout();
+        hbox->setSpacing(0);
+
+        auto *xInput = new QLineEdit(parent);
+        auto *yInput = new QLineEdit(parent);
+        auto *widthInput = new QLineEdit(parent);
+        auto *heightInput = new QLineEdit(parent);
+
+        xInput->setToolTip("Left");
+        yInput->setToolTip("Top");
+        widthInput->setToolTip("Width");
+        heightInput->setToolTip("Height");
+
+        auto updateCrop = [=]() {
+            const ReferenceImageSP &refImage = settingsPanel->referenceImage();
+            if (refImage.isNull())
+            {
+                return;
+            }
+            const QRect oldCrop = refImage->crop();
+
+            bool ok_x = false;
+            bool ok_y = false;
+            const QRect newCrop(xInput->text().toInt(&ok_x), yInput->text().toInt(&ok_y), widthInput->text().toInt(),
+                                heightInput->text().toInt());
+            if (newCrop != oldCrop && !newCrop.isEmpty())
+            {
+                UndoStack::get()->pushWindowAndRefItem(settingsPanel->refWindow(), refImage);
+                settingsPanel->refWindow()->setCrop(newCrop);
+            }
+        };
+
+        for (auto *input : {xInput, yInput, widthInput, heightInput})
+        {
+            input->setMinimumWidth(minInputWidth);
+            QObject::connect(input, &QLineEdit::editingFinished, settingsPanel, updateCrop);
+            hbox->addWidget(input);
+        }
+
+        auto updateInputs = [=]() {
+            const ReferenceImageSP &refImage = settingsPanel->referenceImage();
+            const QRect crop = refImage.isNull() ? QRect() : refImage->crop();
+            xInput->setText(QString::number(crop.left()));
+            yInput->setText(QString::number(crop.top()));
+            widthInput->setText(QString::number(crop.width()));
+            heightInput->setText(QString::number(crop.height()));
+        };
+
+        QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, parent, [=](const ReferenceImageSP &refImage) {
+            if (refImage)
+            {
+                // This should be disconnected by SettingsPanel::setReferenceImage
+                QObject::connect(refImage.get(), &ReferenceImage::cropChanged, settingsPanel, updateInputs);
+            }
+            updateInputs();
+        });
+
+        auto *resetBtn = new QPushButton(parent->style()->standardIcon(QStyle::SP_BrowserReload), "", parent);
+        resetBtn->setToolTip("Reset crop");
+        QObject::connect(resetBtn, &QPushButton::clicked, settingsPanel, [=]() {
+            if (const ReferenceImageSP &refImage = settingsPanel->referenceImage(); refImage)
+            {
+                settingsPanel->refWindow()->setCrop(refImage->baseImage().rect());
+            }
+        });
+        hbox->addWidget(resetBtn);
+
+        layout->addRow("Crop:", hbox);
     }
 
     void createLinkSettings(SettingsPanel *settingsPanel, QFormLayout *layout)
@@ -532,6 +607,8 @@ void SettingsPanel::initSettingsArea()
         createCheckbox(
             this, groupLayout, "Smooth Filtering", [this]() { return m_refImage->smoothFiltering(); },
             [this](bool value) { m_refImage->setSmoothFiltering(value); });
+
+        createCropSettings(this, groupLayout);
 
         layout->addRow(groupBox);
     }
