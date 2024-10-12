@@ -5,9 +5,9 @@
 #include <QtGui/QKeyEvent>
 #include <QtGui/QMouseEvent>
 
-#include "app.h"
-#include "widgets/picture_widget.h"
-#include "widgets/reference_window.h"
+#include "../app.h"
+#include "../widgets/picture_widget.h"
+#include "../widgets/reference_window.h"
 
 namespace
 {

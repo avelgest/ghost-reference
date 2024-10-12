@@ -13,11 +13,11 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QStyle>
 
-#include "app.h"
-#include "reference_image.h"
-#include "widgets/back_window.h"
-#include "widgets/picture_widget.h"
-#include "widgets/reference_window.h"
+#include "../app.h"
+#include "../reference_image.h"
+#include "../widgets/back_window.h"
+#include "../widgets/picture_widget.h"
+#include "../widgets/reference_window.h"
 
 // Use static members to save options between activations until a save/load state function
 // is implemented in Tool

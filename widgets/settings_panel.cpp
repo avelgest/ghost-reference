@@ -22,8 +22,8 @@
 #include <QtWidgets/QToolButton>
 
 #include "../app.h"
-#include "../color_picker.h"
 #include "../reference_image.h"
+#include "../tools/color_picker.h"
 #include "../undo_stack.h"
 #include "reference_window.h"
 

@@ -78,7 +78,6 @@ qt_standard_project_setup()
 
 qt_add_library(GhostReferenceLib STATIC
                 app.cpp
-                color_picker.cpp
                 global_hotkeys.cpp
                 preferences.cpp
                 reference_collection.cpp
@@ -86,7 +85,6 @@ qt_add_library(GhostReferenceLib STATIC
                 reference_loading.cpp
                 saving.cpp
                 system_tray_icon.cpp
-                tool.cpp
                 undo_stack.cpp
 )
 
@@ -96,6 +94,7 @@ qt_add_executable(GhostReference
                   main.cpp
                   )
 
+add_subdirectory(tools)
 add_subdirectory(utils)
 add_subdirectory(widgets)
 

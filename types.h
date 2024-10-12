@@ -1,7 +1,6 @@
 #pragma once
 
 class App;
-class ColorPicker;
 class GlobalHotkeys;
 class Preferences;
 class ReferenceCollection;
@@ -10,7 +9,10 @@ class RefLoader;
 class RefImageLoader;
 class SystemTrayIcon;
 class UndoStack;
+
+// tools
 class Tool;
+class ColorPicker;
 
 // TODO Separate into widgets/types.h
 // widgets
