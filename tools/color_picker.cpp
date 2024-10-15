@@ -275,31 +275,18 @@ void ColorPicker::mouseMoveEvent(QWidget *widget, QMouseEvent *event)
 void ColorPicker::mouseReleaseEvent(QWidget *widget, QMouseEvent *event)
 {
     auto *picWidget = qobject_cast<PictureWidget *>(widget);
-    if (picWidget == nullptr)
-    {
-        return;
-    }
 
-    event->accept();
-
-    if (event->button() == Qt::LeftButton)
+    if (picWidget && event->button() == Qt::LeftButton)
     {
         const QColor color = pickColor(picWidget, event->position(), useOriginal());
         emit colorPicked(color);
 
         m_toolWindow->show();
+        event->accept();
     }
-    else if (event->button() == Qt::RightButton)
+    else
     {
-        deactivate();
-    }
-}
-
-void ColorPicker::keyReleaseEvent([[maybe_unused]] QWidget *widget, QKeyEvent *event)
-{
-    if (event->key() == Qt::Key_Escape)
-    {
-        deactivate();
+        Tool::mouseReleaseEvent(widget, event);
     }
 }
 

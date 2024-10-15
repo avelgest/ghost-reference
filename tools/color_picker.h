@@ -27,7 +27,6 @@ public:
 
     void mouseMoveEvent(QWidget *widget, QMouseEvent *event) override;
     void mouseReleaseEvent(QWidget *widget, QMouseEvent *event) override;
-    void keyReleaseEvent(QWidget *widget, QKeyEvent *event) override;
 
 protected:
     void onActivate() override;

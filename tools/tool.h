@@ -94,8 +94,4 @@ inline void Tool::mouseMoveEvent(QWidget *widget, QMouseEvent *event) {}
 
 inline void Tool::mousePressEvent(QWidget *widget, QMouseEvent *event) {}
 
-inline void Tool::mouseReleaseEvent(QWidget *widget, QMouseEvent *event) {}
-
 inline void Tool::keyPressEvent(QWidget *widget, QKeyEvent *event) {}
-
-inline void Tool::keyReleaseEvent(QWidget *widget, QKeyEvent *event) {}

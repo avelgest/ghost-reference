@@ -31,6 +31,8 @@ bool Tool::eventFilter(QObject *watched, QEvent *event)
     auto *widget = qobject_cast<QWidget *>(watched);
     Q_ASSERT(widget != nullptr);
 
+    event->setAccepted(false);
+
     switch (event->type())
     {
     case QEvent::MouseButtonPress:
@@ -135,5 +137,23 @@ void Tool::onDeactivatePrivate()
     for (auto *widget : findReferenceWidgets())
     {
         removeEventFilterLater(widget, this);
+    }
+}
+
+void Tool::mouseReleaseEvent([[maybe_unused]] QWidget *widget, QMouseEvent *event)
+{
+    if (!event->isAccepted() && event->button() == Qt::RightButton)
+    {
+        deactivate();
+        event->accept();
+    }
+}
+
+void Tool::keyReleaseEvent([[maybe_unused]] QWidget *widget, QKeyEvent *event)
+{
+    if (!event->isAccepted() && event->key() == Qt::Key_Escape)
+    {
+        deactivate();
+        event->accept();
     }
 }
