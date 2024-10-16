@@ -63,6 +63,7 @@ public:
     void setVisible(bool visible) override;
 
     PictureWidget *pictureWidget() const;
+    QWidget *overlay() const;
 
     void fromJson(const QJsonObject &json);
     QJsonObject toJson() const;
@@ -158,6 +159,11 @@ inline void ReferenceWindow::setCrop(const QRect &crop)
 inline PictureWidget *ReferenceWindow::pictureWidget() const
 {
     return m_pictureWidget;
+}
+
+inline QWidget *ReferenceWindow::overlay() const
+{
+    return m_overlay;
 }
 
 inline ReferenceImageSP &ReferenceWindow::activeImage() { return m_activeImage; }

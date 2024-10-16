@@ -21,6 +21,8 @@
 #include "../reference_loading.h"
 #include "../undo_stack.h"
 
+#include "../tools/tool.h"
+
 #include "back_window.h"
 #include "main_toolbar.h"
 #include "picture_widget.h"
@@ -44,10 +46,12 @@ namespace
         Q_DISABLE_COPY_MOVE(Overlay)
     private:
         bool m_mergeRequested = false;
+        ReferenceWindow *m_refWindow = nullptr;
 
     public:
         explicit Overlay(ReferenceWindow *parent)
-            : QWidget(parent)
+            : QWidget(parent),
+              m_refWindow(parent)
         {
             setAttribute(Qt::WA_TransparentForMouseEvents);
             setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
@@ -64,6 +68,10 @@ namespace
             {
                 const QColor mergeColor(0, 0, 255, 96);
                 painter.fillRect(event->rect(), mergeColor);
+            }
+            if (Tool::activeTool())
+            {
+                Tool::activeTool()->drawOverlay(m_refWindow, painter);
             }
         };
 
@@ -486,6 +494,7 @@ void ReferenceWindow::onGlobalModeChanged(WindowMode mode)
     {
         setGhostState(false);
     }
+    // m_tabBar->setVisible(mode != GhostMode);
     update();
     emit windowModeChanged(mode);
 }

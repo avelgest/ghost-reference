@@ -96,6 +96,19 @@ QWidgetList Tool::findReferenceWidgets()
     return list;
 }
 
+void Tool::updateOverlay(QWidget *widget) const
+{
+    while (widget->parent() && widget->parent()->isWidgetType())
+    {
+        if (auto *refWindow = qobject_cast<ReferenceWindow *>(widget->parentWidget()); refWindow)
+        {
+            refWindow->overlay()->update();
+            return;
+        }
+        widget = widget->parentWidget();
+    }
+}
+
 void Tool::contextMenuEvent([[maybe_unused]] QWidget *widget, QContextMenuEvent *event)
 {
     event->accept();

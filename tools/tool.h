@@ -6,6 +6,8 @@
 #include <QtGui/QCursor>
 
 class App;
+class ReferenceWindow;
+
 class QContextMenuEvent;
 class QKeyEvent;
 class QMouseEvent;
@@ -34,6 +36,8 @@ public:
 
     std::optional<QCursor> cursor();
 
+    virtual void drawOverlay(ReferenceWindow *refWindow, QPainter &painter);
+
 protected:
     void setCursor(const std::optional<QCursor> &cursor);
 
@@ -50,6 +54,8 @@ protected:
 
     virtual void keyPressEvent(QWidget *widget, QKeyEvent *event);
     virtual void keyReleaseEvent(QWidget *widget, QKeyEvent *event);
+
+    void updateOverlay(QWidget *widget) const;
 
 private:
     void onActivatePrivate();
@@ -89,6 +95,8 @@ inline Tool *Tool::activeTool()
 inline void Tool::onActivate() {}
 
 inline void Tool::onDeactivate() {}
+
+inline void Tool::drawOverlay(ReferenceWindow *refWindow, QPainter &painter) {}
 
 inline void Tool::mouseMoveEvent(QWidget *widget, QMouseEvent *event) {}
 
