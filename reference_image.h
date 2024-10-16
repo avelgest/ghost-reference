@@ -163,7 +163,6 @@ private:
     // Update the value of hasAlpha
     void checkHasAlpha();
 
-    QSizeF minCropSize() const;
     void onLoaderFinished();
     void redrawImage();
 };

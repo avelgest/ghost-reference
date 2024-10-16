@@ -35,6 +35,9 @@ namespace
 
     const int marginSize = 10;
 
+    // Minimum size of a reference window on screen (px)
+    const int minWindowSize = 128;
+
     class Overlay : public QWidget
     {
         Q_OBJECT
@@ -621,6 +624,18 @@ void ReferenceWindow::onFrameCrop(QMargins cropBy)
     {
         return;
     }
+
+    // Ensure window is still larger than minWindowSize when shrinking
+    const QSize newSize = size().shrunkBy(cropBy);
+    if (newSize.width() < minWindowSize && newSize.width() < width())
+    {
+        cropBy = QMargins(0, cropBy.top(), 0, cropBy.bottom());
+    }
+    if (newSize.height() < minWindowSize && newSize.height() < height())
+    {
+        cropBy = QMargins(cropBy.left(), 0, cropBy.right(), 0);
+    }
+
     const ReferenceImage &refImage = *m_activeImage;
 
     QMarginsF cropByF = cropBy.toMarginsF() / refImage.zoom();
@@ -645,7 +660,8 @@ void ReferenceWindow::onFrameResize(Qt::Edges fromEdges, QSize sizeChange)
         return;
     }
 
-    const QSize newImgSize = m_activeImage->displaySize() + sizeChange;
+    const QSize minSize(minWindowSize, minWindowSize);
+    const QSize newImgSize = (m_activeImage->displaySize() + sizeChange).expandedTo(minSize);
 
     m_activeImage->setDisplaySize(newImgSize);
 

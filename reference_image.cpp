@@ -18,10 +18,6 @@
 
 namespace
 {
-    // Minimum width or height for ReferenceImage::crop (px)
-    const qreal minCropAbs = 4.;
-    // Minimum size of the image on screen (px)
-    const qreal minDisplaySize = 96.;
 
     ReferenceCollection &refCollection()
     {
@@ -283,11 +279,6 @@ void ReferenceImage::checkHasAlpha()
     m_hasAlpha = utils::hasTransparentPixels(m_baseImage);
 }
 
-QSizeF ReferenceImage::minCropSize() const
-{
-    return {minDisplaySize / zoom(), minDisplaySize / zoom()};
-}
-
 void ReferenceImage::onLoaderFinished()
 {
     const QImage image = m_loader->image();
@@ -317,18 +308,14 @@ void ReferenceImage::setCropF(QRectF value)
     {
         m_crop = m_baseImage.rect().toRectF();
     }
+    if (!value.isValid())
+    {
+        qWarning() << "Invalid QRectF passed to setCropF";
+        return;
+    }
 
     // Clamp the crop to the base image
     value = value.intersected(m_baseImage.rect());
-    // Clamp the crop's width/height to minimum values
-    if (value.width() < minCropAbs || value.width() < minCropSize().width())
-    {
-        value.setCoords(cropF().left(), value.top(), cropF().right(), value.bottom());
-    }
-    if (value.height() < minCropAbs || value.height() < minCropSize().height())
-    {
-        value.setCoords(value.left(), cropF().top(), value.right(), cropF().bottom());
-    }
 
     m_crop = value;
 
@@ -428,7 +415,11 @@ QSize ReferenceImage::displaySizeFull() const
 
 void ReferenceImage::setDisplaySizeF(QSizeF value)
 {
-    value = value.expandedTo({minDisplaySize, minDisplaySize});
+    if (!value.isValid())
+    {
+        qWarning() << "Invalid QSizeF passed to setDisplaySizeF";
+        return;
+    }
     const QSizeF cropSize = cropF().size();
     const QSizeF newSize = cropSize.scaled(value, Qt::KeepAspectRatioByExpanding);
     const qreal newZoom = cropSize.isNull() ? 1.0 : newSize.width() / cropSize.width();
