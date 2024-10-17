@@ -24,6 +24,7 @@
 #include "../app.h"
 #include "../reference_image.h"
 #include "../tools/color_picker.h"
+#include "../tools/extract_tool.h"
 #include "../undo_stack.h"
 #include "reference_window.h"
 
@@ -384,8 +385,11 @@ namespace
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::flipImageVertically);
 
         action = toolBar->addAction(QIcon(":/color_picker.png"), "Color Picker");
-        QObject::connect(action, &QAction::triggered, settingsPanel,
-                         [settingsPanel]() { Tool::activateTool<ColorPicker>(); });
+        QObject::connect(action, &QAction::triggered, settingsPanel, []() { Tool::activateTool<ColorPicker>(); });
+
+        action = toolBar->addAction(QIcon(":/extract_tool.png"), "Extract to New Window");
+        action->setToolTip("Select an area of a reference image with the mouse to open that area in a new window.");
+        QObject::connect(action, &QAction::triggered, settingsPanel, []() { Tool::activateTool<ExtractTool>(); });
 
         action = toolBar->addAction(toolBar->style()->standardIcon(QStyle::SP_DialogDiscardButton), "Remove Reference");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::removeRefItemFromWindow);

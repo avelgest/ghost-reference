@@ -367,6 +367,28 @@ QRect ReferenceImage::displayImageCrop() const
     return {{qRound(fac * srcCrop.left()), qRound(fac * srcCrop.top())}, displaySize()};
 }
 
+QPointF ReferenceImage::displayToBaseCoords(QPointF coords) const
+{
+    if (m_baseImage.isNull() || m_displayImage.isNull())
+    {
+        return coords;
+    }
+    const QSizeF baseSize = m_baseImage.size().toSizeF();
+    const QSizeF dispSize = m_displayImage.size().toSizeF();
+    return {coords.x() * baseSize.width() / dispSize.width(), coords.y() * baseSize.height() / dispSize.height()};
+}
+
+QPointF ReferenceImage::baseToDisplayCoords(QPointF coords) const
+{
+    if (m_baseImage.isNull() || m_displayImage.isNull())
+    {
+        return coords;
+    }
+    const QSizeF baseSize = m_baseImage.size().toSizeF();
+    const QSizeF dispSize = m_displayImage.size().toSizeF();
+    return {coords.x() * dispSize.width() / baseSize.width(), coords.y() * dispSize.height() / baseSize.height()};
+}
+
 void ReferenceImage::setBaseImage(const QImage &baseImage)
 {
     const QSize oldDisplaySize = displaySize();

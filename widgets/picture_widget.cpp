@@ -237,6 +237,19 @@ QPointF PictureWidget::localToDisplayImage(const QPointF &localPos) const
     return localPos * sizeRatio + dispCrop.topLeft().toPointF();
 }
 
+QPointF PictureWidget::baseImageToLocal(const QPointF &basePos) const
+{
+    if (!m_imageSP) return basePos;
+    const QRect crop = m_imageSP->crop();
+    const qreal sizeRatio = width() / static_cast<qreal>(crop.width());
+
+    QPointF pos = basePos;
+    if (m_imageSP->flipHorizontal()) pos.setX(width() - basePos.x());
+    if (m_imageSP->flipVertical()) pos.setY(height() - basePos.y());
+
+    return pos * sizeRatio - crop.topLeft().toPointF();
+}
+
 QSize PictureWidget::sizeHint() const
 {
     return (m_imageSP && m_imageSP->isLoaded()) ? m_imageSP->displaySize() : defaultSizeHint;

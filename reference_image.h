@@ -101,6 +101,12 @@ public:
 
     QRect displayImageCrop() const;
 
+    // Converts display image coordinates to base image coordinates
+    QPointF displayToBaseCoords(QPointF coords) const;
+
+    // Converts base image coordinates to display image coordinates
+    QPointF baseToDisplayCoords(QPointF coords) const;
+
     bool isLoaded() const;
     // Returns true if this item is loaded or in the process of loading
     bool isValid() const;

@@ -1,6 +1,7 @@
 target_sources(GhostReferenceLib
 PRIVATE
     color_picker.cpp
+    extract_tool.cpp
     tool.cpp
 )
 

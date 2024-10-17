@@ -31,6 +31,8 @@ public:
     QPointF localToBaseImage(const QPointF &localPos) const;
     // Map a point from local widget coordinates to the reference image's displayImage coordinates
     QPointF localToDisplayImage(const QPointF &localPos) const;
+    // Map a point from the reference image's baseImage coordinates to local widget coordinates
+    QPointF baseImageToLocal(const QPointF &basePos) const;
 
     const ReferenceImageSP &image() const;
     void setImage(const ReferenceImageSP &image);
