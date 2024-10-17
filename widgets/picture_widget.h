@@ -49,6 +49,7 @@ public:
 
     // Invalidates the cached image causing it to be redrawn. Also calls update().
     void invalidateCache();
+    const QPixmap &cachedImage() const;
 
 protected:
     bool isCacheInvalidated() const;
@@ -76,3 +77,8 @@ inline void PictureWidget::setOpacityMultiplier(qreal value)
 inline ResizeFrame *PictureWidget::resizeFrame() const { return m_resizeFrame; }
 
 inline ReferenceWindow *PictureWidget::referenceWindow() const { return m_referenceWindow; }
+
+inline const QPixmap &PictureWidget::cachedImage() const
+{
+    return m_cachedImage;
+}

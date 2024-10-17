@@ -378,6 +378,9 @@ namespace
         QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, action,
                          [=](const ReferenceImageSP &image) { action->setEnabled(image && image->isLocalFile()); });
 
+        action = toolBar->addAction(QIcon::fromTheme(QIcon::ThemeIcon::EditCopy), "Copy to Clipboard");
+        QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::copyImageToClipboard);
+
         action = toolBar->addAction(QIcon(":/flip_btn_h.png"), "Flip Horizontally");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::flipImageHorizontally);
 
@@ -661,6 +664,14 @@ void SettingsPanel::refreshUI()
 
         m_settingsArea->show();
         m_noRefWidget->hide();
+    }
+}
+
+void SettingsPanel::copyImageToClipboard() const
+{
+    if (refWindow())
+    {
+        refWindow()->copyActiveToClipboard();
     }
 }
 

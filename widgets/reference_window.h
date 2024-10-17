@@ -60,6 +60,10 @@ public:
     void setCrop(const QRect &crop);
     void setCrop(const QRectF &crop);
 
+    // Copies the active reference image (after cropping / processing) to the clipboard as
+    // image data. The copied image may have reduced quality/resolution. Returns true on success.
+    bool copyActiveToClipboard() const;
+
     void setVisible(bool visible) override;
 
     PictureWidget *pictureWidget() const;

@@ -46,6 +46,8 @@ signals:
     void refWindowVisibilityChanged(bool visibility);
 
 public slots:
+    void copyImageToClipboard() const;
+
     void flipImageHorizontally() const;
     void flipImageVertically() const;
 

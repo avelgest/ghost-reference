@@ -5,6 +5,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
 
+#include <QtGui/QClipboard>
 #include <QtGui/QContextMenuEvent>
 #include <QtGui/QDragEnterEvent>
 #include <QtGui/QDropEvent>
@@ -189,6 +190,9 @@ namespace
             addUndoStep(refWindow, true);
             refWindow->close();
         });
+
+        action = refWindow->addAction("Copy", QKeySequence::Copy);
+        QObject::connect(action, &QAction::triggered, refWindow, &ReferenceWindow::copyActiveToClipboard);
 
         action = refWindow->addAction("Paste", QKeySequence::Paste);
         QObject::connect(action, &QAction::triggered, refWindow, [=]() { pasteRefsFromClipboard(refWindow); });
@@ -400,6 +404,35 @@ void ReferenceWindow::setCrop(const QRectF &crop)
         const QPoint moveBy = oldGeo.bottomRight() - geometry().bottomRight();
         move(pos() + moveBy);
     }
+}
+
+bool ReferenceWindow::copyActiveToClipboard() const
+{
+    // TODO Refactor reference image rendering to its own class and render the image here
+    // so that a full sized image is copied.
+    QImage imageData;
+    if (activeImage())
+    {
+        const ReferenceImageSP refImage = activeImage();
+        const QRect imgCrop = refImage->displayImageCrop();
+        imageData = QImage(imgCrop.size(), QImage::Format_RGB32);
+        imageData.fill(Qt::transparent);
+
+        QPainter painter(&imageData);
+        painter.setCompositionMode(QPainter::CompositionMode_Source);
+
+        const auto lock = refImage->lockDisplayImage();
+
+        painter.setRenderHint(QPainter::SmoothPixmapTransform, refImage->smoothFiltering());
+
+        painter.drawPixmap(imageData.rect(), refImage->displayImage(), imgCrop);
+    }
+    if (!imageData.isNull())
+    {
+        App::clipboard()->setImage(imageData);
+        return true;
+    }
+    return false;
 }
 
 void ReferenceWindow::fromJson(const QJsonObject &json)
