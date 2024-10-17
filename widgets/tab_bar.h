@@ -35,4 +35,5 @@ protected:
 
 private:
     void adjustParentSize();
+    void onWindowModeChanged(WindowMode windowMode);
 };

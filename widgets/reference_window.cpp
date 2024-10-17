@@ -527,7 +527,6 @@ void ReferenceWindow::onGlobalModeChanged(WindowMode mode)
     {
         setGhostState(false);
     }
-    // m_tabBar->setVisible(mode != GhostMode);
     update();
     emit windowModeChanged(mode);
 }

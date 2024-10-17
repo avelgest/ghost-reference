@@ -37,6 +37,7 @@ TabBar::TabBar(ReferenceWindow *parent)
     QObject::connect(parent, &ReferenceWindow::activeImageChanged, this, &TabBar::onActiveImageChanged);
     QObject::connect(parent, &ReferenceWindow::referenceAdded, this, &TabBar::onReferenceAdded);
     QObject::connect(parent, &ReferenceWindow::referenceRemoved, this, &TabBar::onReferenceRemoved);
+    QObject::connect(parent, &ReferenceWindow::windowModeChanged, this, &TabBar::onWindowModeChanged);
     QObject::connect(this, &TabBar::currentChanged, this, &TabBar::onCurrentChanged);
     QObject::connect(this, &TabBar::tabCloseRequested, this, &TabBar::onTabCloseRequested);
 }
@@ -215,5 +216,25 @@ void TabBar::adjustParentSize()
     if (m_parent)
     {
         m_parent->adjustSize();
+    }
+}
+
+void TabBar::onWindowModeChanged(WindowMode windowMode)
+{
+    // Hide this TabBar in GhostMode or when there are < 2 tabs
+    bool visible = isVisible();
+    if (windowMode == WindowMode::GhostMode)
+    {
+        visible = false;
+    }
+    else if (count() > 1)
+    {
+        visible = true;
+    }
+
+    if (visible != isVisible())
+    {
+        setVisible(visible);
+        adjustParentSize();
     }
 }

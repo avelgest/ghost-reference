@@ -226,9 +226,9 @@ bool App::isOverrideKeyHeld()
 void App::setGlobalMode(WindowMode mode)
 {
     m_globalMode = mode;
+
     if (!inOverrideMode())
     {
-        m_backWindow->setWindowMode(mode);
         emit globalModeChanged(mode);
     }
 
@@ -304,7 +304,6 @@ void App::startGlobalModeOverride(std::optional<WindowMode> windowMode)
     const WindowMode unwrapped = windowMode.value_or(m_globalMode);
 
     m_globalModeOverride = windowMode;
-    backWindow()->setWindowMode(unwrapped);
 
     emit globalModeChanged(unwrapped);
 }

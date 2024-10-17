@@ -60,6 +60,7 @@ public:
     BackWindow *backWindow() const;
     MainToolbar *mainToolbar() const;
 
+    // The global WindowMode not including any global mode override set by startGlobalModeOverride.
     WindowMode globalMode() const;
     void setGlobalMode(WindowMode mode);
 
@@ -110,6 +111,8 @@ public:
 
 signals:
     void allRefWindowsVisibleChanged(bool newValue);
+    // Called whenever the global WindowMode changes including when startGlobalModeOverride
+    // and endGlobalModeOverride are called.
     void globalModeChanged(WindowMode newValue);
     void preferencesReplaced(Preferences *prefs);
     void referenceCursorChanged(const std::optional<QCursor> &cursor, std::optional<RefType> refType);
