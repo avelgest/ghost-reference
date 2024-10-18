@@ -2,14 +2,33 @@
 
 #include <QtGui/QMouseEvent>
 
+#include <QtWidgets/QApplication>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QStyle>
+#include <QtWidgets/QStyleFactory>
 
 #include "../reference_image.h"
 #include "../undo_stack.h"
 
 #include "reference_window.h"
+
+namespace
+{
+    QStyle *tabBarStyle()
+    {
+        static QStyle *style = nullptr;
+        if (!style)
+        {
+            style = QStyleFactory::create("Fusion");
+            if (!style)
+            {
+                style = QApplication::style();
+            }
+        }
+        return style;
+    }
+} // namespace
 
 TabBar::TabBar(ReferenceWindow *parent)
     : QTabBar(parent),
@@ -22,6 +41,8 @@ TabBar::TabBar(ReferenceWindow *parent)
     setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     setTabsClosable(true);
     setUsesScrollButtons(false);
+
+    setStyle(tabBarStyle());
 
     if (!parent)
     {
