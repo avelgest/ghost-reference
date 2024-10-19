@@ -2,6 +2,20 @@ MainToolbar {
     border-radius: 20px;
 }
 
+MainToolbar #toggle-ghost-mode-btn {
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+MainToolbar #toggle-ghost-mode-btn:checked {
+    background-color: palette(Midlight);
+    border: 1px solid lightgray
+}
+
+MainToolbar #toggle-ghost-mode-btn:hover {
+    background-color: palette(Light);
+}
+
 TabBar #close-tab-btn {
     image: url(:/close_tab_btn.png);
 }

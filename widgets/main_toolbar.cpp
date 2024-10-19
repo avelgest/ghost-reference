@@ -38,6 +38,9 @@ namespace
     const qreal cornerRadius = 4.;
     const QMargins toolbarMargins(0, 2, 2, 2);
 
+    // Time to wait before the toolbar shrinks when in ghost mode
+    const int fadeTimerDelayMs = 1500;
+
     const int expandAnimMs = 500;
     const int fadeAnimMs = 1500;
     const qreal fadedOpacity = 0.5;
@@ -284,8 +287,6 @@ class MainToolbar::FadeStartTimer : protected QTimer
 {
     Q_DISABLE_COPY_MOVE(FadeStartTimer)
 
-    static const int fadeTimerIntervalMs = 3000;
-
     MainToolbar *m_mainToolbar;
 
 public:
@@ -301,7 +302,7 @@ public:
     {
         if (!isActive())
         {
-            start(fadeTimerIntervalMs);
+            start(fadeTimerDelayMs);
         }
     }
 
@@ -340,7 +341,13 @@ MainToolbar::MainToolbar(QWidget *parent)
 
     addSeparator();
 
-    addAction(&m_windowActions->toggleGhostMode());
+    // toggleGhostMode
+    {
+        auto *btn = qobject_cast<QToolButton *>(addWidgetFor(&m_windowActions->toggleGhostMode()));
+        Q_ASSERT(btn);
+        btn->setObjectName("toggle-ghost-mode-btn");
+    }
+
     addAction(&m_windowActions->toggleAllRefsHidden());
     addButtonMenu(this, createHideButtonMenu(this));
     addSeparator();
