@@ -344,17 +344,35 @@ namespace
         layout->addRow(frame);
     }
 
-    QToolButton *createFlipButton(SettingsPanel &parent, Qt::Orientation orientation)
+    QPushButton *createFlipButton(SettingsPanel *parent, Qt::Orientation orientation)
     {
-        const char *iconPath = (orientation == Qt::Vertical) ? ":/flip_btn_v.png" : ":/flip_btn_h.png";
-        auto *flipButton = new QToolButton(&parent);
-        flipButton->setAutoRaise(true);
-        flipButton->setIcon(QIcon(iconPath));
+        const QSize buttonSize(42, 42);
+        const QSize iconSize(36, 36);
+        const bool isVertical = orientation == Qt::Vertical;
+        const char *iconPath = isVertical ? ":/flip_btn_v.png" : ":/flip_btn_h.png";
+        auto *flipButton = new QPushButton(parent);
 
-        QObject::connect(flipButton, &QToolButton::clicked, &parent,
-                         (orientation == Qt::Vertical) ? &SettingsPanel::flipImageVertically
-                                                       : &SettingsPanel::flipImageHorizontally);
+        flipButton->setIcon(QIcon(iconPath));
+        flipButton->setIconSize(iconSize);
+        flipButton->setFixedSize(buttonSize);
+        flipButton->setObjectName(isVertical ? "flip-btn-v" : "flip-btn-h");
+
+        QObject::connect(flipButton, &QPushButton::clicked, parent,
+                         isVertical ? &SettingsPanel::flipImageVertically : &SettingsPanel::flipImageHorizontally);
         return flipButton;
+    }
+
+    void createFlipSettings(SettingsPanel *settingsPanel, QFormLayout *layout)
+    {
+        auto *hBox = new QHBoxLayout();
+
+        for (const auto &orientation : {Qt::Vertical, Qt::Horizontal})
+        {
+            auto *flipButton = createFlipButton(settingsPanel, orientation);
+            hBox->addWidget(flipButton);
+        }
+
+        layout->addRow("Flip", hBox);
     }
 
     QToolBar *createToolBar(SettingsPanel *settingsPanel)
@@ -380,12 +398,6 @@ namespace
 
         action = toolBar->addAction(QIcon::fromTheme(QIcon::ThemeIcon::EditCopy), "Copy to Clipboard");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::copyImageToClipboard);
-
-        action = toolBar->addAction(QIcon(":/flip_btn_h.png"), "Flip Horizontally");
-        QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::flipImageHorizontally);
-
-        action = toolBar->addAction(QIcon(":/flip_btn_v.png"), "Flip Vertically");
-        QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::flipImageVertically);
 
         action = toolBar->addAction(QIcon(":/color_picker.png"), "Color Picker");
         QObject::connect(action, &QAction::triggered, settingsPanel, []() { Tool::activateTool<ColorPicker>(); });
@@ -616,6 +628,8 @@ void SettingsPanel::initSettingsArea()
             [this](bool value) { m_refImage->setSmoothFiltering(value); });
 
         createCropSettings(this, groupLayout);
+
+        createFlipSettings(this, groupLayout);
 
         layout->addRow(groupBox);
     }
