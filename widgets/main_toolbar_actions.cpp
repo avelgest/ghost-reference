@@ -75,27 +75,6 @@ namespace
         return text + " (" + action.shortcut().toString() + ')';
     }
 
-    struct
-    {
-    private:
-        friend class ::MainToolbarActions;
-        bool m_initialized = false;
-
-        QIcon hidden, preferences, visible;
-
-        void init()
-        {
-            if (!m_initialized)
-            {
-                hidden = QIcon(":/hidden.png");
-                preferences = QIcon(":/preferences.png");
-                visible = QIcon(":/visible.png");
-            }
-            m_initialized = true;
-        }
-
-    } iconCache;
-
 } // namespace
 
 MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
@@ -105,21 +84,23 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
     const App *const app = App::ghostRefInstance();
     const QClipboard *clipboard = App::clipboard();
     QStyle *style = mainToolbar->style();
-    iconCache.init();
+
+    static const QIcon icon_hidden(":/hidden.png");
+    static const QIcon icon_visible(":/visible.png");
 
     // Close Application
-    closeApplication().setIcon(style->standardIcon(QStyle::SP_TitleBarCloseButton));
-    closeApplication().setText("Exit");
+    closeApplication().setIcon(QIcon(":/app_quit.png"));
+    closeApplication().setText("Quit");
     QObject::connect(&closeApplication(), &QAction::triggered, &quitApplication);
 
     // Toggle All Reference Windows Hidden
     toggleAllRefsHidden().setText("Hide/Show All");
     toggleAllRefsHidden().setCheckable(true);
     toggleAllRefsHidden().setChecked(!app->allRefWindowsVisible());
-    toggleAllRefsHidden().setIcon(iconCache.visible);
-    QObject::connect(app, &App::allRefWindowsVisibleChanged, this, [this](bool value) {
+    toggleAllRefsHidden().setIcon(icon_visible);
+    QObject::connect(app, &App::allRefWindowsVisibleChanged, this, [&](bool value) {
         toggleAllRefsHidden().setChecked(!value);
-        toggleAllRefsHidden().setIcon(value ? iconCache.visible : iconCache.hidden);
+        toggleAllRefsHidden().setIcon(value ? icon_visible : icon_hidden);
     });
     QObject::connect(&toggleAllRefsHidden(), &QAction::triggered, &toggleAllRefsHiddenFnc);
 
@@ -134,7 +115,7 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
     QObject::connect(&toggleGhostMode(), &QAction::triggered, toggleGhostModeFnc);
 
     // Minimize Toolbar
-    minimizeToolbar().setIcon(style->standardIcon(QStyle::SP_TitleBarMinButton));
+    minimizeToolbar().setIcon(QIcon(":/minimize_to_tray.png"));
     minimizeToolbar().setText("Minimize Toolbar to System Tray");
     QObject::connect(&minimizeToolbar(), &QAction::triggered, hideToolbarFnc);
 
@@ -170,7 +151,7 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
     QObject::connect(&showHelp(), &QAction::triggered, &showHelpFnc);
 
     // Show Preferences
-    showPreferences().setIcon(iconCache.preferences);
+    showPreferences().setIcon(QIcon(":/preferences.png"));
     showPreferences().setText("Preferences");
     QObject::connect(&showPreferences(), &QAction::triggered, &showPreferencesFnc);
 

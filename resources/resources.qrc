@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>appicon.ico</file>
+        <file>app_quit.png</file>
         <file>close_tab_btn.png</file>
         <file>color_picker.png</file>
         <file>detach_tab_btn.png</file>
@@ -9,6 +10,7 @@
         <file>flip_btn_v.png</file>
         <file>ghost_mode.png</file>
         <file>hidden.png</file>
+        <file>minimize_to_tray.png</file>
         <file>preferences.png</file>
         <file>stylesheet.qss</file>
         <file>visible.png</file>

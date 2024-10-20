@@ -391,6 +391,7 @@ namespace
         });
 
         action = toolBar->addAction(toolBar->style()->standardIcon(QStyle::SP_BrowserReload), "Reload");
+        action->setToolTip("Reload - Reload the reference from disk.");
         QObject::connect(action, &QAction::triggered, settingsPanel,
                          [=]() { settingsPanel->referenceImage()->reload(); });
         QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, action,
@@ -403,10 +404,11 @@ namespace
         QObject::connect(action, &QAction::triggered, settingsPanel, []() { Tool::activateTool<ColorPicker>(); });
 
         action = toolBar->addAction(QIcon(":/extract_tool.png"), "Extract to New Window");
-        action->setToolTip("Select an area of a reference image with the mouse to open that area in a new window.");
+        action->setToolTip(
+            "Extract - Select an area of a reference image with the mouse to open that area in a new window.");
         QObject::connect(action, &QAction::triggered, settingsPanel, []() { Tool::activateTool<ExtractTool>(); });
 
-        action = toolBar->addAction(toolBar->style()->standardIcon(QStyle::SP_DialogDiscardButton), "Remove Reference");
+        action = toolBar->addAction(toolBar->style()->standardIcon(QStyle::SP_DialogDiscardButton), "Delete Reference");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::removeRefItemFromWindow);
 
         return toolBar;
