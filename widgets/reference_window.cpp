@@ -268,7 +268,7 @@ ReferenceWindow::ReferenceWindow(QWidget *parent)
 
     App *app = App::ghostRefInstance();
     QObject::connect(app, &App::focusChanged, this, &ReferenceWindow::onAppFocusChanged);
-    QObject::connect(app, &App::globalModeChanged, this, &ReferenceWindow::onGlobalModeChanged);
+    QObject::connect(app, &App::windowModeChanged, this, &ReferenceWindow::onGlobalModeChanged);
 
     onGlobalModeChanged(app->globalMode());
 

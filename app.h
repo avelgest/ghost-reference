@@ -112,9 +112,12 @@ public:
 
 signals:
     void allRefWindowsVisibleChanged(bool newValue);
+    // Called when the globalMode property changes. Not emitted when startGlobalModeOverride or
+    // endGlobalModeOverride are called.
+    void globalModeChanged(WindowMode newValue);
     // Called whenever the global WindowMode changes including when startGlobalModeOverride
     // and endGlobalModeOverride are called.
-    void globalModeChanged(WindowMode newValue);
+    void windowModeChanged(WindowMode newValue);
     void preferencesReplaced(Preferences *prefs);
     void referenceCursorChanged(const std::optional<QCursor> &cursor, std::optional<RefType> refType);
     void referenceWindowAdded(ReferenceWindow *refWindow);

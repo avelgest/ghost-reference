@@ -245,10 +245,11 @@ bool App::isOverrideKeyHeld()
 void App::setGlobalMode(WindowMode mode)
 {
     m_globalMode = mode;
+    emit globalModeChanged(m_globalMode);
 
     if (!inOverrideMode())
     {
-        emit globalModeChanged(mode);
+        emit windowModeChanged(mode);
     }
 
     // Start/stop the checkGhostStates timer
@@ -324,7 +325,7 @@ void App::startGlobalModeOverride(std::optional<WindowMode> windowMode)
 
     m_globalModeOverride = windowMode;
 
-    emit globalModeChanged(unwrapped);
+    emit windowModeChanged(unwrapped);
 }
 
 void App::endGlobalModeOverride()

@@ -30,7 +30,7 @@ BackWindow::BackWindow(QWidget *parent)
 
     setGeometry(screen()->virtualGeometry());
 
-    QObject::connect(App::ghostRefInstance(), &App::globalModeChanged, this, &BackWindow::setWindowMode);
+    QObject::connect(App::ghostRefInstance(), &App::windowModeChanged, this, &BackWindow::setWindowMode);
 
 #ifndef Q_OS_WIN32 // Windows uses the icon in ghost_reference.rc
     setWindowIcon(QIcon(":/appicon.ico"));

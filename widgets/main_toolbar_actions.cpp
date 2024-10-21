@@ -110,9 +110,8 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
     toggleGhostMode().setCheckable(true);
     toggleGhostMode().setChecked(app->globalMode() == GhostMode);
     toggleGhostMode().setIcon(QIcon(":/ghost_mode.png"));
-    QObject::connect(app, &App::globalModeChanged,
-                     &toggleGhostMode(), [this](WindowMode mode)
-                     { toggleGhostMode().setChecked(mode == GhostMode); });
+    QObject::connect(app, &App::globalModeChanged, &toggleGhostMode(),
+                     [this]() { toggleGhostMode().setChecked(getApp()->globalMode() == GhostMode); });
     QObject::connect(&toggleGhostMode(), &QAction::triggered, toggleGhostModeFnc);
 
     // Minimize Toolbar
