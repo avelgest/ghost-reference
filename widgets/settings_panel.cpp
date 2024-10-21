@@ -349,8 +349,10 @@ namespace
         const QSize buttonSize(42, 42);
         const QSize iconSize(36, 36);
         const bool isVertical = orientation == Qt::Vertical;
-        const char *iconPath = isVertical ? ":/flip_btn_v.png" : ":/flip_btn_h.png";
         auto *flipButton = new QPushButton(parent);
+
+        const char *iconPath = App::isDarkMode() ? (isVertical ? ":/flip_btn_v_dark.png" : ":/flip_btn_h_dark.png")
+                                                 : (isVertical ? ":/flip_btn_v.png" : ":/flip_btn_h.png");
 
         flipButton->setIcon(QIcon(iconPath));
         flipButton->setIconSize(iconSize);
@@ -400,7 +402,8 @@ namespace
         action = toolBar->addAction(QIcon::fromTheme(QIcon::ThemeIcon::EditCopy), "Copy to Clipboard");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::copyImageToClipboard);
 
-        action = toolBar->addAction(QIcon(":/color_picker.png"), "Color Picker");
+        action = toolBar->addAction(QIcon(App::isDarkMode() ? ":/color_picker_dark.png" : ":/color_picker.png"),
+                                    "Color Picker");
         QObject::connect(action, &QAction::triggered, settingsPanel, []() { Tool::activateTool<ColorPicker>(); });
 
         action = toolBar->addAction(QIcon(":/extract_tool.png"), "Extract to New Window");

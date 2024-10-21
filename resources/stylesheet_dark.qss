@@ -1,0 +1,3 @@
+MainToolbar ToolbarSeparator {
+    background-color: white;
+}

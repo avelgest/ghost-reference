@@ -13,6 +13,7 @@
 
 #include <QtGui/QCursor>
 #include <QtGui/QScreen>
+#include <QtGui/QStyleHints>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtWidgets/QMessageBox>
 
@@ -33,6 +34,7 @@ namespace
     const qreal timerCallsPerSecond = 24.0;
     const WindowMode defaultWindowMode = TransformMode;
     const char *const styleSheetPath = ":/stylesheet.qss";
+    const char *const styleSheetDarkPath = ":/stylesheet_dark.qss";
 
     const int timerIntervalMs = static_cast<int>(1000.0 / timerCallsPerSecond);
 
@@ -67,24 +69,41 @@ namespace
         return result;
     }
 
-    void loadStyleSheetFor(QApplication *app, bool replace = false)
+    void loadStyleSheetFor(App *app, bool replace = false)
     {
-        if (!replace && !app->styleSheet().isEmpty())
-        {
-            return;
-        }
+        QString styleSheetString;
 
         QFile styleSheetFile(styleSheetPath);
 
         if (styleSheetFile.open(QFile::ReadOnly))
         {
-            QTextStream textStream(&styleSheetFile);
-            app->setStyleSheet(textStream.readAll());
+            styleSheetString.append(QTextStream(&styleSheetFile).readAll());
         }
         else
         {
-            qCritical() << "Unable to load style sheet" << styleSheetPath;
+            qWarning() << "Unable to load style sheet " << styleSheetPath;
         }
+
+        // Append the style sheet for dark mode
+        if (App::isDarkMode())
+        {
+            QFile styleSheetFileDark(styleSheetDarkPath);
+            if (styleSheetFileDark.open(QFile::ReadOnly))
+            {
+                styleSheetString.append(QTextStream(&styleSheetFileDark).readAll());
+            }
+            else
+            {
+                qWarning() << "Unable to load style sheet " << styleSheetDarkPath;
+            }
+        }
+
+        if (!replace)
+        {
+            styleSheetString.append(app->styleSheet());
+        }
+
+        app->setStyleSheet(styleSheetString);
     }
 
     void positionToolBarDefault(QWidget *toolbar)
@@ -439,6 +458,11 @@ void App::onStartUp()
         refWindow->show();
     }
     setGlobalMode(defaultWindowMode);
+}
+
+bool App::isDarkMode()
+{
+    return App::styleHints()->colorScheme() == Qt::ColorScheme::Dark;
 }
 
 bool App::event(QEvent *event)

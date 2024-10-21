@@ -2,17 +2,23 @@
     <qresource prefix="/">
         <file>appicon.ico</file>
         <file>app_quit.png</file>
+        <file>app_quit_dark.png</file>
         <file>close_tab_btn.png</file>
         <file>color_picker.png</file>
+        <file>color_picker_dark.png</file>
         <file>detach_tab_btn.png</file>
         <file>extract_tool.png</file>
         <file>flip_btn_h.png</file>
+        <file>flip_btn_h_dark.png</file>
         <file>flip_btn_v.png</file>
+        <file>flip_btn_v_dark.png</file>
         <file>ghost_mode.png</file>
         <file>hidden.png</file>
         <file>minimize_to_tray.png</file>
+        <file>minimize_to_tray_dark.png</file>
         <file>preferences.png</file>
         <file>stylesheet.qss</file>
+        <file>stylesheet_dark.qss</file>
         <file>visible.png</file>
     </qresource>
 </RCC>

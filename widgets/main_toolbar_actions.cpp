@@ -84,12 +84,13 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
     const App *const app = App::ghostRefInstance();
     const QClipboard *clipboard = App::clipboard();
     QStyle *style = mainToolbar->style();
+    const bool darkMode = App::isDarkMode();
 
     static const QIcon icon_hidden(":/hidden.png");
     static const QIcon icon_visible(":/visible.png");
 
     // Close Application
-    closeApplication().setIcon(QIcon(":/app_quit.png"));
+    closeApplication().setIcon(QIcon(darkMode ? ":/app_quit_dark.png" : ":/app_quit.png"));
     closeApplication().setText("Quit");
     QObject::connect(&closeApplication(), &QAction::triggered, &quitApplication);
 
@@ -115,7 +116,7 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
     QObject::connect(&toggleGhostMode(), &QAction::triggered, toggleGhostModeFnc);
 
     // Minimize Toolbar
-    minimizeToolbar().setIcon(QIcon(":/minimize_to_tray.png"));
+    minimizeToolbar().setIcon(QIcon(darkMode ? ":/minimize_to_tray_dark.png" : ":/minimize_to_tray.png"));
     minimizeToolbar().setText("Minimize Toolbar to System Tray");
     QObject::connect(&minimizeToolbar(), &QAction::triggered, hideToolbarFnc);
 
@@ -146,7 +147,7 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
                      { MainToolbar::newReferenceWindow(refLoad::fromClipboard()); });
 
     // Show Help
-    showHelp().setIcon(style->standardIcon(QStyle::SP_TitleBarContextHelpButton));
+    showHelp().setIcon(QIcon::fromTheme(QIcon::ThemeIcon::HelpFaq));
     showHelp().setText("Help");
     QObject::connect(&showHelp(), &QAction::triggered, &showHelpFnc);
 

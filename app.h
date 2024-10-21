@@ -53,6 +53,7 @@ private:
 
 public:
     static App *ghostRefInstance();
+    static bool isDarkMode();
 
     App(int &argc, char **argv, int flags = ApplicationFlags, const Preferences *prefs = nullptr);
     ~App() override;
