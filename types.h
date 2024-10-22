@@ -18,7 +18,7 @@ class ColorPicker;
 // widgets
 class BackWindow;
 class MainToolbar;
-class MainToolbarActions;
+class BackWindowActions;
 class PictureWidget;
 class PreferencesWindow;
 class ReferenceWindow;

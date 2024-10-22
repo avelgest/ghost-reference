@@ -9,7 +9,7 @@
 
 #include "../app.h"
 #include "../utils/window_utils.h"
-#include "main_toolbar_actions.h"
+#include "back_window_actions.h"
 #include "reference_window.h"
 #include "settings_panel.h"
 
@@ -21,14 +21,26 @@ namespace
                                                Qt::WindowMinimizeButtonHint | // For minimizing from the taskbar
                                                Qt::MaximizeUsingFullscreenGeometryHint;
 
+    void addBackWindowActions(BackWindowActions *actions, QWidget *to)
+    {
+        // Add all actions with shortcuts
+        const QList<QAction *> to_add{&actions->openSession(), &actions->paste(),         &actions->redo(),
+                                      &actions->saveSession(), &actions->saveSessionAs(), &actions->showHelp(),
+                                      &actions->undo()};
+        to->addActions(to_add);
+    }
+
 } // namespace
 
 BackWindow::BackWindow(QWidget *parent)
-    : QWidget(parent, defaultWindowFlags)
+    : QWidget(parent, defaultWindowFlags),
+      m_backWindowActions(new BackWindowActions(this))
 {
     setAttribute(Qt::WA_TranslucentBackground);
 
     setGeometry(screen()->virtualGeometry());
+
+    addBackWindowActions(m_backWindowActions, this);
 
     QObject::connect(App::ghostRefInstance(), &App::windowModeChanged, this, &BackWindow::setWindowMode);
 
@@ -76,15 +88,6 @@ void BackWindow::setWindowMode(WindowMode value)
     m_windowMode = value;
     hideSettingsWindow();
     utils::setTransparentForInput(this, value == GhostMode);
-}
-
-void BackWindow::setMainToolbarActions(MainToolbarActions *actions)
-{
-    // Add all actions with shortcuts
-    const QList<QAction *> to_add{&actions->openSession(), &actions->paste(),         &actions->redo(),
-                                  &actions->saveSession(), &actions->saveSessionAs(), &actions->undo()};
-    addActions(to_add);
-    m_mainToolbarActions = actions;
 }
 
 void BackWindow::keyPressEvent(QKeyEvent *event)

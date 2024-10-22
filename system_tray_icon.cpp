@@ -4,8 +4,8 @@
 
 #include "app.h"
 #include "widgets/back_window.h"
+#include "widgets/back_window_actions.h"
 #include "widgets/main_toolbar.h"
-#include "widgets/main_toolbar_actions.h"
 
 namespace
 {
@@ -20,15 +20,15 @@ namespace
         }
     }
 
-    MainToolbarActions *mainToolbarActions()
+    BackWindowActions *backWindowActions()
     {
         Q_ASSERT(App::ghostRefInstance()->backWindow());
-        return App::ghostRefInstance()->backWindow()->mainToolbarActions();
+        return App::ghostRefInstance()->backWindow()->backWindowActions();
     }
 
     void initContextMenu(QMenu *menu)
     {
-        MainToolbarActions *toolbarActions = mainToolbarActions();
+        BackWindowActions *toolbarActions = backWindowActions();
         QAction *action = nullptr;
 
         action = menu->addAction("Restore Toolbar");
@@ -36,17 +36,17 @@ namespace
 
         menu->addSeparator();
         action = menu->addAction("Open");
-        QObject::connect(action, &QAction::triggered, []() { mainToolbarActions()->openSession().trigger(); });
+        QObject::connect(action, &QAction::triggered, []() { backWindowActions()->openSession().trigger(); });
 
         action = menu->addAction("Save");
-        QObject::connect(action, &QAction::triggered, []() { mainToolbarActions()->saveSession().trigger(); });
+        QObject::connect(action, &QAction::triggered, []() { backWindowActions()->saveSession().trigger(); });
 
         action = menu->addAction(toolbarActions->showPreferences().text());
-        QObject::connect(action, &QAction::triggered, []() { mainToolbarActions()->showPreferences().trigger(); });
+        QObject::connect(action, &QAction::triggered, []() { backWindowActions()->showPreferences().trigger(); });
 
         menu->addSeparator();
         action = menu->addAction(toolbarActions->showHelp().text());
-        QObject::connect(action, &QAction::triggered, []() { mainToolbarActions()->showHelp().trigger(); });
+        QObject::connect(action, &QAction::triggered, []() { backWindowActions()->showHelp().trigger(); });
 
         menu->addSeparator();
         action = menu->addAction("Exit");

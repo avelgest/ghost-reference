@@ -6,7 +6,7 @@
 #include "preferences.h"
 
 #include "widgets/back_window.h"
-#include "widgets/main_toolbar_actions.h"
+#include "widgets/back_window_actions.h"
 
 namespace
 {
@@ -15,9 +15,9 @@ namespace
         return App::ghostRefInstance();
     }
 
-    MainToolbarActions *toolbarActions()
+    BackWindowActions *toolbarActions()
     {
-        return getApp()->backWindow()->mainToolbarActions();
+        return getApp()->backWindow()->backWindowActions();
     }
 
 } // namespace

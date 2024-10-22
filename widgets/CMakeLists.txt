@@ -1,7 +1,7 @@
 target_sources(GhostReferenceLib
 PRIVATE
     back_window.cpp
-    main_toolbar_actions.cpp
+    back_window_actions.cpp
     main_toolbar.cpp
     picture_widget.cpp
     preferences_window.cpp

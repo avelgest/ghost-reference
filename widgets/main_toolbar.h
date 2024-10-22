@@ -10,14 +10,14 @@
 class QGraphicsOpacityEffect;
 
 class BackWindow;
-class MainToolbarActions;
+class BackWindowActions;
 
 class MainToolbar : public QWidget
 {
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(MainToolbar)
 
-    friend class MainToolbarActions;
+    friend class BackWindowActions;
 
     class FadeStartTimer;
 
@@ -28,7 +28,6 @@ class MainToolbar : public QWidget
     QWidget *m_dragWidget = nullptr;
     bool m_expanded = true;
     FadeStartTimer *const m_fadeStartTimer;
-    QScopedPointer<MainToolbarActions> m_windowActions;
 
 public:
     explicit MainToolbar(QWidget *parent = nullptr);
@@ -36,7 +35,7 @@ public:
 
     static BackWindow *backWindow();
 
-    MainToolbarActions *mainToolbarActions();
+    BackWindowActions *backWindowActions();
 
     bool expanded() const;
     void setExpanded(bool value);

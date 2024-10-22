@@ -28,7 +28,7 @@
 #include "../saving.h"
 
 #include "back_window.h"
-#include "main_toolbar_actions.h"
+#include "back_window_actions.h"
 #include "reference_window.h"
 
 namespace
@@ -255,7 +255,7 @@ namespace
     QMenu *createSaveButtonMenu(MainToolbar *parent)
     {
         auto *menu = new QMenu(parent);
-        menu->addAction(&parent->mainToolbarActions()->saveSessionAs());
+        menu->addAction(&parent->backWindowActions()->saveSessionAs());
         return menu;
     }
 
@@ -324,12 +324,12 @@ MainToolbar::MainToolbar(QWidget *parent)
       m_fadeStartTimer(new FadeStartTimer(this)),
       m_graphicsEffect(new GraphicsEffect(this))
 {
-    m_windowActions.reset(new MainToolbarActions(this));
-
     setAcceptDrops(true);
     setAttribute(Qt::WA_TranslucentBackground, true);
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
     setWindowFlags(initialWindowFlags);
+
+    BackWindowActions *windowActions = backWindowActions();
 
     m_graphicsEffect->setOpacity(1.0);
     setGraphicsEffect(m_graphicsEffect);
@@ -343,29 +343,29 @@ MainToolbar::MainToolbar(QWidget *parent)
 
     // toggleGhostMode
     {
-        auto *btn = qobject_cast<QToolButton *>(addWidgetFor(&m_windowActions->toggleGhostMode()));
+        auto *btn = qobject_cast<QToolButton *>(addWidgetFor(&windowActions->toggleGhostMode()));
         Q_ASSERT(btn);
         btn->setObjectName("toggle-ghost-mode-btn");
     }
 
-    addAction(&m_windowActions->toggleAllRefsHidden());
+    addAction(&windowActions->toggleAllRefsHidden());
     addButtonMenu(this, createHideButtonMenu(this));
     addSeparator();
 
-    addAction(&m_windowActions->openSession());
-    addAction(&m_windowActions->saveSession());
+    addAction(&windowActions->openSession());
+    addAction(&windowActions->saveSession());
     addButtonMenu(this, createSaveButtonMenu(this));
     addSeparator();
 
-    addAction(&m_windowActions->showPreferences());
-    addAction(&m_windowActions->showHelp());
+    addAction(&windowActions->showPreferences());
+    addAction(&windowActions->showHelp());
     addSeparator();
 
     if (QSystemTrayIcon::isSystemTrayAvailable())
     {
-        addAction(&m_windowActions->minimizeToolbar());
+        addAction(&windowActions->minimizeToolbar());
     }
-    addAction(&m_windowActions->closeApplication());
+    addAction(&windowActions->closeApplication());
 }
 
 BackWindow *MainToolbar::backWindow()
@@ -373,9 +373,9 @@ BackWindow *MainToolbar::backWindow()
     return App::ghostRefInstance()->backWindow();
 }
 
-MainToolbarActions *MainToolbar::mainToolbarActions()
+BackWindowActions *MainToolbar::backWindowActions()
 {
-    return m_windowActions.get();
+    return backWindow()->backWindowActions();
 }
 
 void MainToolbar::setExpanded(bool value)
@@ -437,7 +437,7 @@ void MainToolbar::contextMenuEvent(QContextMenuEvent *event)
                      { setExpanded(!expanded()); });
 
     QMenu menu;
-    menu.addAction(&m_windowActions->paste());
+    menu.addAction(&backWindowActions()->paste());
     menu.addAction(&toggleExpanded);
     menu.exec(event->globalPos());
 }

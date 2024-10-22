@@ -552,7 +552,6 @@ App::App(int &argc, char **argv, int flags, const Preferences *prefs)
     loadStyleSheetFor(this);
     preloadMimeDatabase();
 
-    m_backWindow->setMainToolbarActions(m_mainToolbar->mainToolbarActions());
     m_backWindow->show();
 
     positionToolBarDefault(m_mainToolbar);

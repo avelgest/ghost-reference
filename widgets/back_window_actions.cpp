@@ -1,4 +1,4 @@
-#include "main_toolbar_actions.h"
+#include "back_window_actions.h"
 
 #include <QtGui/QClipboard>
 #include <QtWidgets/QStyle>
@@ -46,6 +46,7 @@ namespace
 
     void showHelpFnc()
     {
+
     }
 
     void showPreferencesFnc()
@@ -77,13 +78,13 @@ namespace
 
 } // namespace
 
-MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
-    : QObject(mainToolbar),
+BackWindowActions::BackWindowActions(BackWindow *backWindow)
+    : QObject(backWindow),
       m_windowModeGroup(nullptr)
 {
     const App *const app = App::ghostRefInstance();
     const QClipboard *clipboard = App::clipboard();
-    QStyle *style = mainToolbar->style();
+    QStyle *style = backWindow->style();
     const bool darkMode = App::isDarkMode();
 
     static const QIcon icon_hidden(":/hidden.png");
@@ -140,14 +141,15 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
     // Paste
     paste().setEnabled(refLoad::isSupportedClipboard());
     paste().setText("Paste");
-    QObject::connect(clipboard, &QClipboard::dataChanged, [this]()
-                     { paste().setEnabled(refLoad::isSupportedClipboard()); });
-    QObject::connect(&paste(), &QAction::triggered, [this]()
-                     { MainToolbar::newReferenceWindow(refLoad::fromClipboard()); });
+    QObject::connect(clipboard, &QClipboard::dataChanged,
+                     [this]() { paste().setEnabled(refLoad::isSupportedClipboard()); });
+    QObject::connect(&paste(), &QAction::triggered,
+                     [this]() { MainToolbar::newReferenceWindow(refLoad::fromClipboard()); });
 
     // Show Help
     showHelp().setIcon(QIcon::fromTheme(QIcon::ThemeIcon::HelpFaq));
     showHelp().setText("Help");
+    showHelp().setShortcut(QKeySequence::HelpContents);
     QObject::connect(&showHelp(), &QAction::triggered, &showHelpFnc);
 
     // Show Preferences
@@ -168,7 +170,7 @@ MainToolbarActions::MainToolbarActions(MainToolbar *mainToolbar)
     m_windowModeGroup.addAction(&toggleGhostMode());
 }
 
-MainToolbar *MainToolbarActions::mainToolbar() const
+BackWindow *BackWindowActions::backWindow() const
 {
-    return qobject_cast<MainToolbar *>(parent());
+    return qobject_cast<BackWindow *>(parent());
 }
