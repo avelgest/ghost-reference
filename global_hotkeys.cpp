@@ -22,16 +22,27 @@ namespace
 
 } // namespace
 
-const char *GlobalHotkeys::builtinName(Builtin enumValue)
+const QString &GlobalHotkeys::builtinName(BuiltIn enumValue)
 {
-    switch (enumValue)
+    if (auto it = std::ranges::find_if(builtIns(), [=](const BuiltInDefault x) { return x.builtIn == enumValue; });
+        it != builtIns().constEnd())
     {
-    case HideAllWindows:
-        return "Hide all windows";
+        return it->name;
     }
+
     qCritical() << "No name found for built-in global hotkey" << enumValue;
     Q_ASSERT_X(false, "GlobalHotkeys::builtinName", "Not all Builtin global hotkeys have a name");
-    return "Unknown";
+
+    static const QString unknownStr("Unknown");
+    return unknownStr;
+}
+
+const QList<GlobalHotkeys::BuiltInDefault> &GlobalHotkeys::builtIns()
+{
+    static const QList<BuiltInDefault> defaultsList(
+        {{HideAllWindows, "Hide all Windows", Qt::CTRL | Qt::ALT | Qt::Key_H},
+         {ToggleGhostMode, "Toggle ghost mode", Qt::CTRL | Qt::ALT | Qt::Key_G}});
+    return defaultsList;
 }
 
 QHotkey *GlobalHotkeys::addHotkey(const QKeySequence &keySequence)
@@ -55,12 +66,14 @@ void GlobalHotkeys::reloadAll()
 
     const Preferences::HotkeyMap &hotkeyMap = prefs->globalHotkeys();
 
-    auto addBuiltinHotkey = [&](Builtin builtin) { return addHotkey(hotkeyMap[builtinName(builtin)]); };
+    auto addBuiltinHotkey = [&](BuiltIn builtIn) { return addHotkey(hotkeyMap[builtinName(builtIn)]); };
 
     QHotkey *hotkey = nullptr;
 
     hotkey = addBuiltinHotkey(HideAllWindows);
     QObject::connect(hotkey, &QHotkey::activated, this, []() { toolbarActions()->toggleAllRefsHidden().trigger(); });
+    hotkey = addBuiltinHotkey(ToggleGhostMode);
+    QObject::connect(hotkey, &QHotkey::activated, this, []() { toolbarActions()->toggleGhostMode().trigger(); });
 }
 
 GlobalHotkeys::GlobalHotkeys(QObject *parent)

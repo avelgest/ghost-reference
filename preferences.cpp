@@ -224,12 +224,16 @@ const Preferences::HotkeyMap &Preferences::defaultHotkeys()
 
 const Preferences::HotkeyMap &Preferences::defaultGlobalHotkeys()
 {
-    using enum GlobalHotkeys::Builtin;
 
-    const auto builtin = GlobalHotkeys::builtinName;
-
-    static const HotkeyMap globalHotkeys{{builtin(HideAllWindows), {Qt::CTRL | Qt::ALT | Qt::Key_H}}};
-    return globalHotkeys;
+    static HotkeyMap globalHotkeyDefaults;
+    if (globalHotkeyDefaults.isEmpty())
+    {
+        for (const auto &hotkey : GlobalHotkeys::builtIns())
+        {
+            globalHotkeyDefaults[hotkey.name] = hotkey.key;
+        }
+    }
+    return globalHotkeyDefaults;
 }
 
 Preferences *Preferences::duplicate(QObject *parent) const

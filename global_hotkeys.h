@@ -2,7 +2,9 @@
 
 #include <memory>
 
+#include <QtCore/QList>
 #include <QtCore/QObject>
+#include <QtGui/QKeySequence>
 
 class App;
 class QHotkey;
@@ -12,12 +14,21 @@ class GlobalHotkeys : public QObject
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(GlobalHotkeys)
 public:
-    enum Builtin
+    enum BuiltIn
     {
-        HideAllWindows
+        HideAllWindows,
+        ToggleGhostMode
     };
 
-    static const char *builtinName(Builtin enumValue);
+    struct BuiltInDefault
+    {
+        BuiltIn builtIn;
+        QString name;
+        QKeySequence key;
+    };
+
+    static const QString &builtinName(BuiltIn enumValue);
+    static const QList<BuiltInDefault> &builtIns();
 
 private:
     bool m_enabled = false;

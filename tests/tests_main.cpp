@@ -76,7 +76,7 @@ TEST_F(PreferencesTests, CheckAllEqual)
     first.setBool(boolProp, second.getBool(boolProp));
     EXPECT_TRUE(first.checkAllEqual(&second));
 
-    const auto *globalHotkeyName = GlobalHotkeys::builtinName(GlobalHotkeys::HideAllWindows);
+    const auto globalHotkeyName = GlobalHotkeys::builtinName(GlobalHotkeys::HideAllWindows);
     first.globalHotkeys()[globalHotkeyName] = {Qt::Key_A};
     second.globalHotkeys()[globalHotkeyName] = {Qt::Key_B};
     EXPECT_FALSE(first.checkAllEqual(&second));
