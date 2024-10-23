@@ -86,6 +86,7 @@ SettingsPanel .QToolButton {
     border: 1px outset darkgray;
     height: 36px;
     width: 36px;
+    margin: 0px;
 }
 
 SettingsPanel .QToolButton:hover {

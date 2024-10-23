@@ -402,6 +402,9 @@ namespace
         action = toolBar->addAction(QIcon::fromTheme(QIcon::ThemeIcon::EditCopy), "Copy to Clipboard");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::copyImageToClipboard);
 
+        action = toolBar->addAction(QIcon(":/duplicate.png"), "Duplicate");
+        QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::duplicateActiveRef);
+
         action = toolBar->addAction(QIcon(App::isDarkMode() ? ":/color_picker_dark.png" : ":/color_picker.png"),
                                     "Color Picker");
         QObject::connect(action, &QAction::triggered, settingsPanel, []() { Tool::activateTool<ColorPicker>(); });
@@ -457,7 +460,8 @@ namespace
 
 } // namespace
 
-SettingsPanel::SettingsPanel(ReferenceWindow *refWindow, QWidget *parent) : QFrame(parent, {})
+SettingsPanel::SettingsPanel(ReferenceWindow *refWindow, QWidget *parent)
+    : QFrame(parent, {})
 {
     setAutoFillBackground(true);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -471,8 +475,8 @@ SettingsPanel::SettingsPanel(ReferenceWindow *refWindow, QWidget *parent) : QFra
 
     // Connecting directly to onAppFocusChanged may sometimes cause an assert to fail in Qt so connect
     // to a lambda instead.
-    QObject::connect(App::ghostRefInstance(), &App::focusObjectChanged, this, 
-                     [this](QObject* obj){onAppFocusChanged(obj);});
+    QObject::connect(App::ghostRefInstance(), &App::focusObjectChanged, this,
+                     [this](QObject *obj) { onAppFocusChanged(obj); });
 }
 
 void SettingsPanel::setRefWindow(ReferenceWindow *refWindow)
@@ -492,8 +496,7 @@ void SettingsPanel::setRefWindow(ReferenceWindow *refWindow)
     if (refWindow)
     {
         setReferenceImage(m_refWindow->activeImage());
-        QObject::connect(refWindow, &ReferenceWindow::activeImageChanged,
-                         this, &SettingsPanel::setReferenceImage);
+        QObject::connect(refWindow, &ReferenceWindow::activeImageChanged, this, &SettingsPanel::setReferenceImage);
         QObject::connect(refWindow, &ReferenceWindow::destroyed, this, [this]() { setRefWindow(nullptr); });
         QObject::connect(refWindow, &ReferenceWindow::visibilityChanged, this,
                          [this](bool visible) { emit refWindowVisibilityChanged(visible); });
@@ -529,6 +532,14 @@ void SettingsPanel::setReferenceImage(const ReferenceImageSP &image)
 QSize SettingsPanel::sizeHint() const
 {
     return defaultSizeHint;
+}
+
+void SettingsPanel::duplicateActiveRef() const
+{
+    if (m_refWindow)
+    {
+        m_refWindow->duplicateActive();
+    }
 }
 
 void SettingsPanel::flipImageHorizontally() const

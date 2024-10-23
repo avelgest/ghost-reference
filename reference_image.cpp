@@ -391,12 +391,16 @@ QPointF ReferenceImage::baseToDisplayCoords(QPointF coords) const
 
 void ReferenceImage::setBaseImage(const QImage &baseImage)
 {
+    const QSize oldBaseSize = m_baseImage.size();
     const QSize oldDisplaySize = displaySize();
 
     {
         const QMutexLocker lock(&m_baseImageMutex);
         m_baseImage = baseImage;
-        m_crop = baseImage.rect();
+        if (baseImage.size() != oldBaseSize)
+        {
+            m_crop = baseImage.rect();
+        }
         setDisplaySize(oldDisplaySize.isEmpty() ? baseImage.size()
                                                 : baseImage.size().scaled(oldDisplaySize, Qt::KeepAspectRatio));
     }

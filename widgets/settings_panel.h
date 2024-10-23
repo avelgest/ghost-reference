@@ -47,6 +47,7 @@ signals:
 
 public slots:
     void copyImageToClipboard() const;
+    void duplicateActiveRef() const;
 
     void flipImageHorizontally() const;
     void flipImageVertically() const;
