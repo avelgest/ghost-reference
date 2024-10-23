@@ -22,11 +22,11 @@ class BackWindowActions : public QObject
     Q_DISABLE_COPY_MOVE(BackWindowActions)
 
     ACTION_DECL(closeApplication);
-    ACTION_DECL(minimizeToolbar);
     ACTION_DECL(openSession);
     ACTION_DECL(paste);
     ACTION_DECL(toggleAllRefsHidden);
     ACTION_DECL(toggleGhostMode);
+    ACTION_DECL(toggleToolbar);
     ACTION_DECL(redo);
     ACTION_DECL(saveSession);
     ACTION_DECL(saveSessionAs);

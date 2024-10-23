@@ -363,7 +363,7 @@ MainToolbar::MainToolbar(QWidget *parent)
 
     if (QSystemTrayIcon::isSystemTrayAvailable())
     {
-        addAction(&windowActions->minimizeToolbar());
+        addAction(&windowActions->toggleToolbar());
     }
     addAction(&windowActions->closeApplication());
 }

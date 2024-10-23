@@ -24,9 +24,9 @@ namespace
     void addBackWindowActions(BackWindowActions *actions, QWidget *to)
     {
         // Add all actions with shortcuts
-        const QList<QAction *> to_add{&actions->openSession(), &actions->paste(),         &actions->redo(),
-                                      &actions->saveSession(), &actions->saveSessionAs(), &actions->showHelp(),
-                                      &actions->undo()};
+        const QList<QAction *> to_add{&actions->toggleToolbar(), &actions->openSession(), &actions->paste(),
+                                      &actions->redo(),          &actions->saveSession(), &actions->saveSessionAs(),
+                                      &actions->showHelp(),      &actions->undo()};
         to->addActions(to_add);
     }
 

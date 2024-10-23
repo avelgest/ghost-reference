@@ -10,20 +10,19 @@
 namespace
 {
 
-    void showToolbar()
-    {
-        App *app = App::ghostRefInstance();
-        if (app->mainToolbar())
-        {
-            app->mainToolbar()->show();
-            app->setSystemTrayIconVisible(false);
-        }
-    }
-
     BackWindowActions *backWindowActions()
     {
         Q_ASSERT(App::ghostRefInstance()->backWindow());
         return App::ghostRefInstance()->backWindow()->backWindowActions();
+    }
+
+    void showToolbar()
+    {
+        App *app = App::ghostRefInstance();
+        if (app->mainToolbar() && !app->mainToolbar()->isVisible())
+        {
+            backWindowActions()->toggleToolbar().trigger();
+        }
     }
 
     void initContextMenu(QMenu *menu)

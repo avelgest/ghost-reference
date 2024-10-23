@@ -24,13 +24,16 @@ namespace
         App::quit();
     }
 
-    void hideToolbarFnc()
+    void toggleToolbarFnc()
     {
         if (QSystemTrayIcon::isSystemTrayAvailable())
         {
-            App *app = App::ghostRefInstance();
-            app->mainToolbar()->hide();
-            app->setSystemTrayIconVisible(true);
+            App *app = getApp();
+            if (MainToolbar *toolbar = app->mainToolbar(); toolbar)
+            {
+                toolbar->setVisible(!toolbar->isVisible());
+                app->setSystemTrayIconVisible(!toolbar->isVisible());
+            }
         }
     }
 
@@ -116,9 +119,10 @@ BackWindowActions::BackWindowActions(BackWindow *backWindow)
     QObject::connect(&toggleGhostMode(), &QAction::triggered, toggleGhostModeFnc);
 
     // Minimize Toolbar
-    minimizeToolbar().setIcon(QIcon(darkMode ? ":/minimize_to_tray_dark.png" : ":/minimize_to_tray.png"));
-    minimizeToolbar().setText("Minimize Toolbar to System Tray");
-    QObject::connect(&minimizeToolbar(), &QAction::triggered, hideToolbarFnc);
+    toggleToolbar().setIcon(QIcon(darkMode ? ":/minimize_to_tray_dark.png" : ":/minimize_to_tray.png"));
+    toggleToolbar().setText("Minimize Toolbar to System Tray");
+    toggleToolbar().setShortcut(Qt::CTRL | Qt::Key_M);
+    QObject::connect(&toggleToolbar(), &QAction::triggered, toggleToolbarFnc);
 
     // Open
     openSession().setIcon(style->standardIcon(QStyle::SP_DialogOpenButton));
