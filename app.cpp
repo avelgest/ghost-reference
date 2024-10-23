@@ -25,6 +25,8 @@
 #include "system_tray_icon.h"
 #include "undo_stack.h"
 
+#include "tools/tool.h"
+
 #include "widgets/back_window.h"
 #include "widgets/main_toolbar.h"
 #include "widgets/reference_window.h"
@@ -250,6 +252,11 @@ void App::setGlobalMode(WindowMode mode)
     if (!inOverrideMode())
     {
         emit windowModeChanged(mode);
+    }
+
+    if (mode == WindowMode::GhostMode && Tool::activeTool())
+    {
+        Tool::activeTool()->deactivate();
     }
 
     // Start/stop the checkGhostStates timer
