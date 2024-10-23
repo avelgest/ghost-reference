@@ -9,6 +9,9 @@
 #include "../saving.h"
 #include "../undo_stack.h"
 
+#include "../tools/color_picker.h"
+#include "../tools/extract_tool.h"
+
 #include "main_toolbar.h"
 #include "preferences_window.h"
 
@@ -81,6 +84,13 @@ namespace
 
 } // namespace
 
+QList<QAction *> BackWindowActions::allActions()
+{
+    return {&closeApplication(),    &colorPicker(),     &extractTool(),     &openSession(), &paste(),
+            &toggleAllRefsHidden(), &toggleGhostMode(), &toggleToolbar(),   &redo(),        &saveSession(),
+            &saveSessionAs(),       &showHelp(),        &showPreferences(), &undo()};
+}
+
 BackWindowActions::BackWindowActions(BackWindow *backWindow)
     : QObject(backWindow),
       m_windowModeGroup(nullptr)
@@ -97,6 +107,20 @@ BackWindowActions::BackWindowActions(BackWindow *backWindow)
     closeApplication().setIcon(QIcon(darkMode ? ":/app_quit_dark.png" : ":/app_quit.png"));
     closeApplication().setText("Quit");
     QObject::connect(&closeApplication(), &QAction::triggered, &quitApplication);
+
+    // Color Picker
+    colorPicker().setIcon(QIcon(darkMode ? ":/color_picker_dark.png" : ":/color_picker.png"));
+    colorPicker().setText("Color Picker");
+    colorPicker().setShortcut(Qt::Key_C);
+    QObject::connect(&colorPicker(), &QAction::triggered, []() { Tool::activateTool<ColorPicker>(); });
+
+    // Extract Tool
+    extractTool().setIcon(QIcon(":/extract_tool.png"));
+    extractTool().setText("Extract to New Window");
+    extractTool().setShortcut(Qt::Key_E);
+    extractTool().setToolTip(
+        "Extract - Select an area of a reference image with the mouse to open that area in a new window.");
+    QObject::connect(&extractTool(), &QAction::triggered, []() { Tool::activateTool<ExtractTool>(); });
 
     // Toggle All Reference Windows Hidden
     toggleAllRefsHidden().setText("Hide/Show All");

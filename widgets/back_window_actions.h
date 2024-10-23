@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtGui/QAction>
 #include <QtGui/QActionGroup>
@@ -22,6 +23,8 @@ class BackWindowActions : public QObject
     Q_DISABLE_COPY_MOVE(BackWindowActions)
 
     ACTION_DECL(closeApplication);
+    ACTION_DECL(colorPicker);
+    ACTION_DECL(extractTool);
     ACTION_DECL(openSession);
     ACTION_DECL(paste);
     ACTION_DECL(toggleAllRefsHidden);
@@ -42,6 +45,7 @@ public:
     ~BackWindowActions() override = default;
 
     BackWindow *backWindow() const;
+    QList<QAction *> allActions();
 };
 
 #undef ACTION_DECL

@@ -26,6 +26,8 @@
 #include "../tools/color_picker.h"
 #include "../tools/extract_tool.h"
 #include "../undo_stack.h"
+
+#include "back_window_actions.h"
 #include "reference_window.h"
 
 namespace
@@ -381,6 +383,9 @@ namespace
     {
         Q_ASSERT(settingsPanel != nullptr);
 
+        Q_ASSERT(App::ghostRefInstance()->backWindow());
+        BackWindowActions *windowActions = App::ghostRefInstance()->backWindow()->backWindowActions();
+
         auto *toolBar = new QToolBar(settingsPanel);
         toolBar->setToolButtonStyle(Qt::ToolButtonIconOnly);
 
@@ -405,14 +410,9 @@ namespace
         action = toolBar->addAction(QIcon(":/duplicate.png"), "Duplicate");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::duplicateActiveRef);
 
-        action = toolBar->addAction(QIcon(App::isDarkMode() ? ":/color_picker_dark.png" : ":/color_picker.png"),
-                                    "Color Picker");
-        QObject::connect(action, &QAction::triggered, settingsPanel, []() { Tool::activateTool<ColorPicker>(); });
+        toolBar->addAction(&windowActions->colorPicker());
 
-        action = toolBar->addAction(QIcon(":/extract_tool.png"), "Extract to New Window");
-        action->setToolTip(
-            "Extract - Select an area of a reference image with the mouse to open that area in a new window.");
-        QObject::connect(action, &QAction::triggered, settingsPanel, []() { Tool::activateTool<ExtractTool>(); });
+        toolBar->addAction(&windowActions->extractTool());
 
         action = toolBar->addAction(toolBar->style()->standardIcon(QStyle::SP_DialogDiscardButton), "Delete Reference");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::removeRefItemFromWindow);
