@@ -44,6 +44,9 @@ public:
         GlobalHotkeysEnabled,
         LocalFilesLink,
         LocalFilesStoreMaxMB,
+        OverrideKeyAlt,
+        OverrideKeyCtrl,
+        OverrideKeyShift,
         UndoMaxSteps,
     };
 
@@ -106,6 +109,9 @@ public:
 
     // Restore a hotkey to its default value
     void resetHotkey(const QString &hotkeyName, bool globalHotkey);
+
+    // Returns the modifer keys used to enter override (unghost) mode.
+    Qt::KeyboardModifiers overrideKeys() const;
 
 private:
     QScopedPointer<PreferencesPrivate> p;

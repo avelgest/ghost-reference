@@ -241,7 +241,7 @@ void App::checkGhostStates()
 
 bool App::isOverrideKeyHeld()
 {
-    return queryKeyboardModifiers() & Qt::AltModifier;
+    return m_overrideKeys != Qt::NoModifier && queryKeyboardModifiers().testFlags(m_overrideKeys);
 }
 
 void App::setGlobalMode(WindowMode mode)
@@ -293,6 +293,7 @@ void App::setPreferences(Preferences *prefs)
 
     prefs->setParent(this);
     m_preferences = prefs;
+    m_overrideKeys = prefs->overrideKeys();
     emit preferencesReplaced(prefs);
 }
 
@@ -548,7 +549,7 @@ App::App(int &argc, char **argv, int flags, const Preferences *prefs)
 
     // Loading preferences from disk requires applicationName to be set first. So initialize everything here
     // instead of as member initailizers.
-    m_preferences = prefs ? prefs->duplicate(this) : Preferences::loadFromDisk(this);
+    setPreferences(prefs ? prefs->duplicate(this) : Preferences::loadFromDisk(this));
 
     m_backWindow = new BackWindow();
     m_globalHotkeys = new GlobalHotkeys(this);

@@ -188,7 +188,7 @@ namespace
     class PrefWidgetMaker
     {
     private:
-        PrefLayoutType *m_layout;
+        QBoxLayout *m_layout;
         Preferences *m_prefs;
 
         Preferences::Keys m_key = Preferences::InvalidPreference;
@@ -205,7 +205,7 @@ namespace
         QWidget *parentWidget() { return m_layout ? m_layout->parentWidget() : nullptr; }
 
     public:
-        explicit PrefWidgetMaker(PrefLayoutType *layout, Preferences *prefs);
+        explicit PrefWidgetMaker(QBoxLayout *layout, Preferences *prefs);
 
         QWidget *createWidget(Preferences::Keys key, PrefSubType subType = PrefSubType::None);
         QWidget *createHotkeyWidget(const QString &hotkeyName, bool globalHotkey = false);
@@ -281,7 +281,7 @@ namespace
         return spinBox;
     }
 
-    PrefWidgetMaker::PrefWidgetMaker(PrefLayoutType *layout, Preferences *prefs)
+    PrefWidgetMaker::PrefWidgetMaker(QBoxLayout *layout, Preferences *prefs)
         : m_layout(layout),
           m_prefs(prefs)
     {
@@ -363,6 +363,29 @@ namespace
 
         m_layout->addLayout(hbox.take());
         return hotkeyBtn;
+    }
+
+    QWidget *createOverrideKeyWidget(PrefLayoutType *layout, Preferences *prefs)
+    {
+        auto *widget = new QWidget(layout->parentWidget());
+        auto *widgetLayout = new QHBoxLayout(widget);
+        widgetLayout->setContentsMargins(0, 0, 0, 0);
+
+        widget->setToolTip("Ghost Mode is deactivated whilst this key combination is held.");
+
+        widgetLayout->addWidget(new QLabel("Unghost keys:", widget));
+        widgetLayout->addStretch();
+
+        PrefWidgetMaker widgetMaker(widgetLayout, prefs);
+
+        for (auto k : {Preferences::OverrideKeyAlt, Preferences::OverrideKeyCtrl, Preferences::OverrideKeyShift})
+        {
+            widgetMaker.createWidget(k);
+        }
+
+        layout->addWidget(widget);
+
+        return widget;
     }
 
     void deleteUI(QWidget *widget)
@@ -535,6 +558,8 @@ void PreferencesWindow::buildUI()
         widgetMaker.createWidget(Preferences::AskSaveBeforeClosing);
         widgetMaker.createWidget(Preferences::AnimateToolbarCollapse);
         widgetMaker.createWidget(Preferences::GhostModeOpacity);
+        createOverrideKeyWidget(layout, m_prefs);
+
         layout->addStretch();
     }
 

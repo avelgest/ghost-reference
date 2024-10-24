@@ -42,6 +42,8 @@ private:
     bool m_allRefWindowsVisible = true;
     bool m_hasUnsavedChanges = false;
 
+    Qt::KeyboardModifiers m_overrideKeys;
+
     // Used by setReferenceCursor
     struct
     {
@@ -131,7 +133,7 @@ protected:
     void endGlobalModeOverride();
 
     bool inOverrideMode() const;
-    static bool isOverrideKeyHeld();
+    bool isOverrideKeyHeld();
 
     bool event(QEvent *event) override;
     void timerEvent(QTimerEvent *event) override;

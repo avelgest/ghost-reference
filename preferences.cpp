@@ -143,6 +143,9 @@ namespace
             {LocalFilesStoreMaxMB,
              {"localFilesStoreMaxMB", IntType, 128, "Link Files Larger Than (MB)",
               "Always link local files that are larger than this."}},
+            {OverrideKeyAlt, {"overrideKeyAlt", BoolType, true, "Alt", ""}},
+            {OverrideKeyCtrl, {"overrideKeyCtrl", BoolType, false, "Ctrl", ""}},
+            {OverrideKeyShift, {"overrideKeyShift", BoolType, false, "Shift", ""}},
             {UndoMaxSteps,
              {"undoMaxSteps",
               32,
@@ -263,7 +266,7 @@ T Preferences::get(Keys key) const
 
 QVariant Preferences::getVariant(Keys key) const
 {
-    const QVariant prop = p->m_properties[key];
+    QVariant prop = p->m_properties[key];
     if (!prop.isValid())
     {
         const PrefProp propData = prefProperties()[key];
@@ -343,6 +346,16 @@ void Preferences::resetHotkey(const QString &hotkeyName, bool globalHotkey)
     const HotkeyMap &defaults = globalHotkey ? defaultGlobalHotkeys() : defaultHotkeys();
     HotkeyMap &hotkeys = globalHotkey ? p->m_globalHotkeys : p->m_hotkeys;
     hotkeys[hotkeyName] = defaults[hotkeyName];
+}
+
+Qt::KeyboardModifiers Preferences::overrideKeys() const
+{
+    Qt::KeyboardModifiers modifiers;
+    if (getBool(OverrideKeyAlt)) modifiers |= Qt::AltModifier;
+    if (getBool(OverrideKeyCtrl)) modifiers |= Qt::ControlModifier;
+    if (getBool(OverrideKeyShift)) modifiers |= Qt::ShiftModifier;
+
+    return modifiers;
 }
 
 Preferences *Preferences::loadFromDisk(QObject *parent)
