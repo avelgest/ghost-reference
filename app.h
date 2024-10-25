@@ -12,6 +12,7 @@
 
 #include "widgets/back_window.h"
 
+class QMessageBox;
 class QNetworkAccessManager;
 
 class App : public QApplication
@@ -109,6 +110,9 @@ public:
 
     SystemTrayIcon *systemTrayIcon() const;
     void setSystemTrayIconVisible(bool value);
+
+    // Sets the window flags and parent of a QMessageBox so it is displayed above reference windows
+    void initMsgBox(QMessageBox &msgBox) const;
 
     void onStartUp();
 

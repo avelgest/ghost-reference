@@ -1,6 +1,10 @@
 #include "back_window_actions.h"
 
+#include <QtCore/QDir>
+#include <QtCore/QFileInfo>
 #include <QtGui/QClipboard>
+
+#include <QtWidgets/QMessageBox>
 #include <QtWidgets/QStyle>
 #include <QtWidgets/QSystemTrayIcon>
 
@@ -14,6 +18,7 @@
 
 #include "main_toolbar.h"
 #include "preferences_window.h"
+#include "reference_window.h"
 
 namespace
 {
@@ -27,6 +32,34 @@ namespace
         App::quit();
     }
 
+    ReferenceWindow *loadReference(const QString &filepath)
+    {
+        if (const ReferenceImageSP refImage = refLoad::fromFilepath(filepath); refImage)
+        {
+            ReferenceWindow *refWin = getApp()->newReferenceWindow();
+            refWin->addReference(refImage);
+            refWin->show();
+            return refWin;
+        }
+
+        QMessageBox msgBox(QMessageBox::Warning, "Unable to Load Reference",
+                           "Unable to load reference from " + filepath, QMessageBox::Ok);
+        getApp()->initMsgBox(msgBox);
+        msgBox.exec();
+
+        return nullptr;
+    }
+
+    QString getOpenDirectoryPath()
+    {
+        if (const QString &sessPath = getApp()->saveFilePath(); !sessPath.isEmpty())
+        {
+            const QFileInfo fileInfo(sessPath);
+            return fileInfo.dir().absolutePath();
+        }
+        return "";
+    }
+
     void toggleToolbarFnc()
     {
         if (QSystemTrayIcon::isSystemTrayAvailable())
@@ -37,6 +70,31 @@ namespace
                 toolbar->setVisible(!toolbar->isVisible());
                 app->setSystemTrayIconVisible(!toolbar->isVisible());
             }
+        }
+    }
+
+    void openAnyFnc()
+    {
+        const QString filepath = sessionSaving::showOpenDialog(getOpenDirectoryPath(), true, true);
+        if (!filepath.isEmpty())
+        {
+            if (sessionSaving::isSessionFile(filepath))
+            {
+                getApp()->loadSession(filepath);
+            }
+            else
+            {
+                loadReference(filepath);
+            }
+        }
+    }
+
+    void openReferenceFnc()
+    {
+        const QString filepath = sessionSaving::showOpenDialog(getOpenDirectoryPath(), false, true);
+        if (!filepath.isEmpty())
+        {
+            loadReference(filepath);
         }
     }
 
@@ -86,9 +144,22 @@ namespace
 
 QList<QAction *> BackWindowActions::allActions()
 {
-    return {&closeApplication(),    &colorPicker(),     &extractTool(),     &openSession(), &paste(),
-            &toggleAllRefsHidden(), &toggleGhostMode(), &toggleToolbar(),   &redo(),        &saveSession(),
-            &saveSessionAs(),       &showHelp(),        &showPreferences(), &undo()};
+    return {&closeApplication(),
+            &colorPicker(),
+            &extractTool(),
+            &openAny(),
+            &openReference(),
+            &openSession(),
+            &paste(),
+            &toggleAllRefsHidden(),
+            &toggleGhostMode(),
+            &toggleToolbar(),
+            &redo(),
+            &saveSession(),
+            &saveSessionAs(),
+            &showHelp(),
+            &showPreferences(),
+            &undo()};
 }
 
 BackWindowActions::BackWindowActions(BackWindow *backWindow)
@@ -148,10 +219,20 @@ BackWindowActions::BackWindowActions(BackWindow *backWindow)
     toggleToolbar().setShortcut(Qt::CTRL | Qt::Key_M);
     QObject::connect(&toggleToolbar(), &QAction::triggered, toggleToolbarFnc);
 
-    // Open
-    openSession().setIcon(style->standardIcon(QStyle::SP_DialogOpenButton));
-    openSession().setShortcut(QKeySequence::Open);
-    openSession().setText(appendShortcut("Open", openSession()));
+    // Open Any
+    openAny().setIcon(style->standardIcon(QStyle::SP_DialogOpenButton));
+    openAny().setText("Open");
+    openAny().setShortcut(QKeySequence::Open);
+    QObject::connect(&openAny(), &QAction::triggered, &openAnyFnc);
+
+    // Open Reference
+    openReference().setIcon(openAny().icon());
+    openReference().setText("Open Reference Image");
+    QObject::connect(&openReference(), &QAction::triggered, &openReferenceFnc);
+
+    // Open Session
+    openSession().setIcon(openAny().icon());
+    openSession().setText("Open Session");
     QObject::connect(&openSession(), &QAction::triggered, &openSessionFnc);
 
     // Save

@@ -122,11 +122,10 @@ namespace
     int showUnsavedChangesMsgBox(const App *app)
     {
         QMessageBox msgBox;
-        msgBox.setParent(app->backWindow());
+        app->initMsgBox(msgBox);
         msgBox.setIcon(QMessageBox::Question);
         msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
         msgBox.setDefaultButton(QMessageBox::Save);
-        msgBox.setWindowFlags(msgBoxWindowFlags);
         msgBox.setWindowTitle("Ghost Reference");
 
         if (app->saveFilePath().isEmpty())
@@ -386,7 +385,7 @@ bool App::saveSessionAs()
 
 void App::loadSession()
 {
-    const QString filepath = sessionSaving::showOpenDialog(m_saveFilePath);
+    const QString filepath = sessionSaving::showOpenDialog(m_saveFilePath, true, false);
     if (filepath.isEmpty())
     {
         return;
@@ -454,6 +453,13 @@ void App::setSystemTrayIconVisible(bool value)
     {
         m_systemTrayIcon->setVisible(value);
     }
+}
+
+// TODO Move to utils
+void App::initMsgBox(QMessageBox &msgBox) const
+{
+    msgBox.setWindowFlags(msgBoxWindowFlags);
+    msgBox.setParent(m_backWindow);
 }
 
 void App::onStartUp()

@@ -252,6 +252,14 @@ namespace
         qCritical() << "Could not add button menu. No QToolButton found.";
     }
 
+    QMenu *createOpenButtonMenu(MainToolbar *parent)
+    {
+        auto *menu = new QMenu(parent);
+        menu->addAction(&parent->backWindowActions()->openSession());
+        menu->addAction(&parent->backWindowActions()->openReference());
+        return menu;
+    }
+
     QMenu *createSaveButtonMenu(MainToolbar *parent)
     {
         auto *menu = new QMenu(parent);
@@ -352,7 +360,8 @@ MainToolbar::MainToolbar(QWidget *parent)
     addButtonMenu(this, createHideButtonMenu(this));
     addSeparator();
 
-    addAction(&windowActions->openSession());
+    addAction(&windowActions->openAny());
+    addButtonMenu(this, createOpenButtonMenu(this));
     addAction(&windowActions->saveSession());
     addButtonMenu(this, createSaveButtonMenu(this));
     addSeparator();
@@ -524,10 +533,6 @@ ReferenceWindow *MainToolbar::newReferenceWindow(const QList<ReferenceImageSP> &
         {
             qCritical() << "Null ReferenceImageSP given";
         }
-    }
-    if (!refWindow)
-    {
-        // TODO Show message box
     }
     return refWindow;
 }

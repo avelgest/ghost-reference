@@ -32,6 +32,24 @@ namespace
 
     const char *const sessionJsonName = "session.json";
 
+    const QString &allFilterStr()
+    {
+        static const QString filter = "All Files (*.*)";
+        return filter;
+    }
+
+    const QString &sessionFilterStr()
+    {
+        static const QString filter = "Ghost Reference Session (*.ghr)";
+        return filter;
+    }
+
+    const QString &imageFilterStr()
+    {
+        static const QString filter = "Images (*.bmp, *.png, *.jpg, *.jpeg, *.webp)";
+        return filter;
+    }
+
     bool deleteFile(QFile &file)
     {
         const QFileInfo fileInfo(file);
@@ -306,11 +324,27 @@ namespace sessionSaving
                                             "Ghost Reference Session (*.ghr)");
     }
 
-    QString showOpenDialog(const QString &directory)
+    QString showOpenDialog(const QString &directory, bool sessions, bool references)
     {
-        return QFileDialog::getOpenFileName(nullptr, "Open Ghost Reference Session",
-                                            directory.isEmpty() ? defaultSaveDirectory() : directory,
-                                            "Ghost Reference Session (*.ghr)");
+        QString filters;
+        QString dialogName = "Open";
+        if (sessions && references || (!sessions && !references))
+        {
+            filters = allFilterStr() % ";;" % sessionFilterStr() % ";;" % imageFilterStr();
+        }
+        else if (sessions)
+        {
+            filters = sessionFilterStr();
+            dialogName = "Open Ghost Reference Session";
+        }
+        else
+        {
+            filters = imageFilterStr() % ";;" % allFilterStr();
+            dialogName = "Open Reference";
+        }
+
+        return QFileDialog::getOpenFileName(nullptr, dialogName,
+                                            directory.isEmpty() ? defaultSaveDirectory() : directory, filters);
     }
 
     QString getSessionFilePath(const QDropEvent *dropEvent)

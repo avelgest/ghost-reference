@@ -15,7 +15,7 @@ namespace sessionSaving
     bool loadSession(const QString &filepath);
 
     QString showSaveAsDialog(const QString &directory = {});
-    QString showOpenDialog(const QString &directory = {});
+    QString showOpenDialog(const QString &directory = {}, bool sessions = true, bool references = true);
 
     QString getSessionFilePath(const QDropEvent *dropEvent);
     bool isSessionFile(const QDropEvent *dropEvent);
