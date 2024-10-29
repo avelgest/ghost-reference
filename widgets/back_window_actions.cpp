@@ -133,15 +133,6 @@ namespace
         app->setAllRefWindowsVisible(!app->allRefWindowsVisible());
     }
 
-    QString appendShortcut(const QString &text, const QAction &action)
-    {
-        if (action.shortcut().isEmpty())
-        {
-            return text;
-        }
-        return text + " (" + action.shortcut().toString() + ')';
-    }
-
 } // namespace
 
 QList<QAction *> BackWindowActions::allActions()
@@ -240,7 +231,7 @@ BackWindowActions::BackWindowActions(BackWindow *backWindow)
     // Save
     saveSession().setIcon(style->standardIcon(QStyle::SP_DialogSaveButton));
     saveSession().setShortcut(QKeySequence::Save);
-    saveSession().setText(appendShortcut("Save", saveSession()));
+    saveSession().setText("Save");
     QObject::connect(&saveSession(), &QAction::triggered, &saveSessionFnc);
 
     // SaveAs
@@ -281,6 +272,15 @@ BackWindowActions::BackWindowActions(BackWindow *backWindow)
     QObject::connect(&redo(), &QAction::triggered, []() { getApp()->undoStack()->redo(); });
 
     m_windowModeGroup.addAction(&toggleGhostMode());
+
+    for (auto *action : allActions())
+    {
+        if (!action->shortcut().isEmpty())
+        {
+            const QString currentTooltip = (action->toolTip().isEmpty() ? action->text() : action->toolTip()) + " (%0)";
+            action->setToolTip(currentTooltip.arg(action->shortcut().toString(QKeySequence::NativeText)));
+        }
+    }
 }
 
 BackWindow *BackWindowActions::backWindow() const
