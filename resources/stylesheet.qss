@@ -116,3 +116,25 @@ ColorPickerWindow > QLineEdit, ColorPickerWindow > QLabel {
     border-radius: 4px;
     padding: 1px;
 }
+
+HelpWindow QLabel {
+    font-size: 16px;
+}
+
+HelpWindow QGroupBox {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+HelpWindow #help-info-label {
+    font-size: 14px;
+}
+
+HelpWindow #help-title-label {
+    font-size: 26px;
+}
+
+HelpWindow #help-version-label {
+    font-size: 20px;
+}
+

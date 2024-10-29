@@ -1,5 +1,11 @@
 #pragma once
 
+#ifndef GHOST_REF_VERSION_MAJOR
+#define GHOST_REF_VERSION_MAJOR 0
+#define GHOST_REF_VERSION_MINOR 0
+#define GHOST_REF_VERSION_PATCH 0
+#endif // !GHOST_REF_VERSION_MAJOR
+
 class App;
 class GlobalHotkeys;
 class Preferences;

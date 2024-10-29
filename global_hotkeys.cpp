@@ -20,6 +20,12 @@ namespace
         return getApp()->backWindow()->backWindowActions();
     }
 
+    const QString &unknownStr()
+    {
+        static const QString str("Unknown");
+        return str;
+    }
+
 } // namespace
 
 const QString &GlobalHotkeys::builtinName(BuiltIn enumValue)
@@ -33,8 +39,7 @@ const QString &GlobalHotkeys::builtinName(BuiltIn enumValue)
     qCritical() << "No name found for built-in global hotkey" << enumValue;
     Q_ASSERT_X(false, "GlobalHotkeys::builtinName", "Not all Builtin global hotkeys have a name");
 
-    static const QString unknownStr("Unknown");
-    return unknownStr;
+    return unknownStr();
 }
 
 const QList<GlobalHotkeys::BuiltInDefault> &GlobalHotkeys::builtIns()
@@ -43,6 +48,23 @@ const QList<GlobalHotkeys::BuiltInDefault> &GlobalHotkeys::builtIns()
         {{HideAllWindows, "Hide all Windows", Qt::CTRL | Qt::ALT | Qt::Key_H},
          {ToggleGhostMode, "Toggle ghost mode", Qt::CTRL | Qt::ALT | Qt::Key_G}});
     return defaultsList;
+}
+
+QKeySequence GlobalHotkeys::getKey(BuiltIn builtIn)
+{
+    return getKey(builtinName(builtIn));
+}
+
+QKeySequence GlobalHotkeys::getKey(const QString &name)
+{
+    const Preferences *prefs = appPrefs();
+    const Preferences::HotkeyMap &hotkeys = prefs->globalHotkeys();
+
+    if (auto it = hotkeys.find(name); it != hotkeys.end())
+    {
+        return *it;
+    }
+    return prefs->defaultGlobalHotkeys()[name];
 }
 
 QHotkey *GlobalHotkeys::addHotkey(const QKeySequence &keySequence)

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(ghost-reference VERSION 0.1)
+project(ghost-reference 
+        VERSION 0.5.0.0
+        LANGUAGES CXX)
 
 option(BUILD_TESTS "Build tests [ON/OFF].")
 option(QT_ROOT_DIR "The directory that Qt is installed to (contains bin, include, lib etc).")
@@ -73,6 +75,12 @@ FetchContent_Declare(
 )
 
 set(CMAKE_AUTORCC ON)
+
+add_compile_definitions(
+    GHOST_REF_VERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}
+    GHOST_REF_VERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}
+    GHOST_REF_VERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}
+)
 
 qt_standard_project_setup()
 

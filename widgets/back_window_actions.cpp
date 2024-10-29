@@ -16,6 +16,7 @@
 #include "../tools/color_picker.h"
 #include "../tools/extract_tool.h"
 
+#include "help_window.h"
 #include "main_toolbar.h"
 #include "preferences_window.h"
 #include "reference_window.h"
@@ -110,7 +111,8 @@ namespace
 
     void showHelpFnc()
     {
-
+        auto *helpWindow = new HelpWindow(getApp()->backWindow());
+        helpWindow->show();
     }
 
     void showPreferencesFnc()

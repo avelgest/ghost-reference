@@ -30,6 +30,9 @@ public:
     static const QString &builtinName(BuiltIn enumValue);
     static const QList<BuiltInDefault> &builtIns();
 
+    static QKeySequence getKey(BuiltIn builtIn);
+    static QKeySequence getKey(const QString &name);
+
 private:
     bool m_enabled = false;
     std::vector<std::unique_ptr<QHotkey>> m_hotkeys;
