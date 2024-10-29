@@ -148,3 +148,23 @@ qt_generate_deploy_app_script(
     NO_UNSUPPORTED_PLATFORM_ERROR
 )
 install(SCRIPT ${deploy_script})
+
+# CPack
+set(CPACK_PACKAGE_NAME "Ghost Reference")
+set(CPACK_PACKAGE_VENDOR "Avelgest")
+set(CPACK_MONOLITHIC_INSTALL "TRUE")
+set(CPACK_PACKAGE_DESCRIPTION "Reference image overlay application with click-through mode.")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Reference image overlay")
+set(CPACK_PACKAGE_EXECUTABLES "GhostReference" "Ghost Reference")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/License.txt")
+
+set(CPACK_WIX_PRODUCT_ICON "${CMAKE_CURRENT_SOURCE_DIR}/resources/appicon.ico")
+set(CPACK_WIX_PROGRAM_MENU_FOLDER ".")
+set(CPACK_WIX_UPGRADE_GUID "EC7D995A-4EBD-4D6D-B66F-B739566CD1D4")
+set(CPACK_WIX_VERSION 4)
+
+# Needed when CPACK_MONOLITHIC_INSTALL is false. See https://gitlab.kitware.com/cmake/cmake/-/issues/20177
+# set(CPACK_COMPONENTS_ALL Unspecified)
+
+include(CPACK)
