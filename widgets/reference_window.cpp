@@ -154,24 +154,6 @@ namespace
         App::ghostRefInstance()->setUnsavedChanges();
     }
 
-    // Paste reference images from the clipboard into refWindow
-    void pasteRefsFromClipboard(ReferenceWindow *refWindow)
-    {
-        const QList<ReferenceImageSP> newRefImages = refLoad::fromClipboard();
-
-        if (newRefImages.isEmpty())
-        {
-            qWarning() << "Unable to load any reference images from the clipboard";
-            return;
-        }
-
-        for (const auto &refImage : newRefImages)
-        {
-            refWindow->addReference(refImage, true);
-        }
-        refWindow->setActiveImage(newRefImages.last());
-    }
-
     void addUndoStep(ReferenceWindow *refWindow, bool refItems = false)
     {
         UndoStack *undoStack = App::ghostRefInstance()->undoStack();
@@ -182,7 +164,7 @@ namespace
     {
         QAction *action = nullptr;
 
-        action = refWindow->addAction("Hide", QKeySequence("Alt+H"));
+        action = refWindow->addAction("Hide", Qt::Key_H);
         QObject::connect(action, &QAction::triggered, refWindow, [=]() { refWindow->hide(); });
 
         action = refWindow->addAction("Close", QKeySequence::Delete);
@@ -193,9 +175,6 @@ namespace
 
         action = refWindow->addAction("Copy", QKeySequence::Copy);
         QObject::connect(action, &QAction::triggered, refWindow, &ReferenceWindow::copyActiveToClipboard);
-
-        action = refWindow->addAction("Paste", QKeySequence::Paste);
-        QObject::connect(action, &QAction::triggered, refWindow, [=]() { pasteRefsFromClipboard(refWindow); });
 
         action = refWindow->addAction("Duplicate", Qt::CTRL | Qt::Key_D);
         QObject::connect(action, &QAction::triggered, refWindow, [=]() { refWindow->duplicateActive(true); });
@@ -810,7 +789,7 @@ void ReferenceWindow::contextMenuEvent(QContextMenuEvent *event)
         // Show a context menu
         QMenu menu(this);
         QAction *paste = menu.addAction("Paste");
-        QObject::connect(paste, &QAction::triggered, [this]() { pasteRefsFromClipboard(this); });
+        QObject::connect(paste, &QAction::triggered, [this]() { refLoad::pasteRefsFromClipboard(this); });
         paste->setEnabled(refLoad::isSupportedClipboard());
 
         menu.exec(event->globalPos());

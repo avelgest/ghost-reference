@@ -17,6 +17,8 @@
 #include "reference_collection.h"
 #include "reference_image.h"
 
+#include "widgets/reference_window.h"
+
 #include "utils/network_download.h"
 #include "utils/result.h"
 
@@ -202,6 +204,30 @@ bool refLoad::isSupportedClipboard()
     const QMimeData *mimeData = clipboard->mimeData();
 
     return mimeData ? isSupported(mimeData) : false;
+}
+
+bool refLoad::pasteRefsFromClipboard(ReferenceWindow *into)
+{
+    RefImageList loaded = refLoad::fromClipboard();
+    erase_if(loaded, [](const auto &x) { return x.isNull(); });
+    if (loaded.isEmpty())
+    {
+        return false;
+    }
+
+    ReferenceWindow *refWindow = into ? into : ReferenceWindow::activeWindow();
+    if (!refWindow)
+    {
+        refWindow = App::ghostRefInstance()->newReferenceWindow();
+    }
+
+    for (auto &refImage : loaded)
+    {
+        if (refImage) refWindow->addReference(refImage);
+    }
+    refWindow->setActiveImage(loaded.last());
+    refWindow->show();
+    return true;
 }
 
 RefImageLoader::RefImageLoader(const QUrl &url)

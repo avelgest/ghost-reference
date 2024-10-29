@@ -43,6 +43,12 @@ namespace refLoad
 
     bool isSupportedClipboard();
 
+    // Pastes any references from the clipboard into ReferenceWindow into. If into is null then
+    // a new ReferenceWindow is automatically created and showed. No changes are made if the
+    // clipboard does not contain any valid references.
+    // Returns true if any references were successfully pasted.
+    bool pasteRefsFromClipboard(ReferenceWindow *into);
+
 }; // namespace refLoad
 
 class RefLoader

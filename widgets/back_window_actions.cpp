@@ -250,10 +250,12 @@ BackWindowActions::BackWindowActions(BackWindow *backWindow)
     // Paste
     paste().setEnabled(refLoad::isSupportedClipboard());
     paste().setText("Paste");
+    paste().setShortcut(QKeySequence::Paste);
+    paste().setShortcutContext(Qt::ShortcutContext::ApplicationShortcut);
     QObject::connect(clipboard, &QClipboard::dataChanged,
                      [this]() { paste().setEnabled(refLoad::isSupportedClipboard()); });
     QObject::connect(&paste(), &QAction::triggered,
-                     [this]() { MainToolbar::newReferenceWindow(refLoad::fromClipboard()); });
+                     []() { refLoad::pasteRefsFromClipboard(ReferenceWindow::activeWindow()); });
 
     // Show Help
     showHelp().setIcon(QIcon::fromTheme(QIcon::ThemeIcon::HelpFaq));
