@@ -373,7 +373,7 @@ namespace
 
         widget->setToolTip("Ghost Mode is deactivated whilst this key combination is held.");
 
-        widgetLayout->addWidget(new QLabel("Unghost keys:", widget));
+        widgetLayout->addWidget(new QLabel("Un-ghost keys:", widget));
         widgetLayout->addStretch();
 
         PrefWidgetMaker widgetMaker(widgetLayout, prefs);

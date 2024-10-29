@@ -271,6 +271,9 @@ const QList<QString> &HelpWindow::tips()
     m_tips.push_back("Right clicking on a reference opens up the <b>settings panel</b> where various properties "
                      "(opacity, saturation, etc.) of the active reference can be altered.");
 
+    m_tips.push_back("Hide a reference by selecting it and pressing H. Hidden references can be restored by using the "
+                     "menu of the <img src=:/visible.png width=24> icon on the toolbar.");
+
     m_tips.push_back("Dragging or paste an image onto an existing reference to open that image in a new tab. "
                      "Tabs can be detached using the <img src=:/detach_tab_btn width=20> button. Drag a detached "
                      "reference over another reference to merge them.");

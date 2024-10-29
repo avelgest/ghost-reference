@@ -165,7 +165,7 @@ namespace
         QAction *action = nullptr;
 
         action = refWindow->addAction("Hide", Qt::Key_H);
-        QObject::connect(action, &QAction::triggered, refWindow, [=]() { refWindow->hide(); });
+        QObject::connect(action, &QAction::triggered, refWindow, [=]() { refWindow->setGhostRefHidden(true); });
 
         action = refWindow->addAction("Close", QKeySequence::Delete);
         QObject::connect(action, &QAction::triggered, refWindow, [=]() {
@@ -414,6 +414,16 @@ bool ReferenceWindow::copyActiveToClipboard() const
     return false;
 }
 
+void ReferenceWindow::setGhostRefHidden(bool value)
+{
+    if (m_ghostRefHidden != value)
+    {
+        m_ghostRefHidden = value;
+        emit ghostRefHiddenChanged(value);
+    }
+    setVisible(!value);
+}
+
 void ReferenceWindow::fromJson(const QJsonObject &json)
 {
     // Prevent reference images from being deleted after clear
@@ -427,6 +437,7 @@ void ReferenceWindow::fromJson(const QJsonObject &json)
     }
 
     setOpacity(json["opacity"].toDouble(1.0));
+    setGhostRefHidden(json["hidden"].toBool(false));
 
     ReferenceCollection &refCollection = App::ghostRefInstance()->referenceItems();
     for (auto jsonVal : json["tabs"].toArray())
@@ -464,7 +475,8 @@ QJsonObject ReferenceWindow::toJson() const
     return {{"pos", QJsonArray({pos().x(), pos().y()})},
             {"tabs", tabs},
             {"activeTab", m_tabBar->currentIndex()},
-            {"opacity", m_opacity}};
+            {"opacity", opacity()},
+            {"hidden", ghostRefHidden()}};
 }
 
 void ReferenceWindow::setGhostState(bool value)

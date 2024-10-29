@@ -425,7 +425,10 @@ void App::setAllRefWindowsVisible(bool value)
 {
     for (const auto &refWindow : m_refWindows)
     {
-        refWindow->setVisible(value);
+        if (!refWindow->ghostRefHidden())
+        {
+            refWindow->setVisible(value);
+        }
     }
     if (m_allRefWindowsVisible != value)
     {

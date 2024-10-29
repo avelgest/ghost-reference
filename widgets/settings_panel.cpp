@@ -267,9 +267,7 @@ namespace
             }
             const QRect oldCrop = refImage->crop();
 
-            bool ok_x = false;
-            bool ok_y = false;
-            const QRect newCrop(xInput->text().toInt(&ok_x), yInput->text().toInt(&ok_y), widthInput->text().toInt(),
+            const QRect newCrop(xInput->text().toInt(), yInput->text().toInt(), widthInput->text().toInt(),
                                 heightInput->text().toInt());
             if (newCrop != oldCrop && !newCrop.isEmpty())
             {
@@ -376,7 +374,7 @@ namespace
             hBox->addWidget(flipButton);
         }
 
-        layout->addRow("Flip", hBox);
+        layout->addRow("Flip:", hBox);
     }
 
     QToolBar *createToolBar(SettingsPanel *settingsPanel)
@@ -391,12 +389,14 @@ namespace
 
         QAction *action = nullptr;
 
+        // Hide Window
         action = toolBar->addAction(QIcon(":/visible.png"), "Hide Window");
-        QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::toggleRefWindowVisible);
-        QObject::connect(settingsPanel, &SettingsPanel::refWindowVisibilityChanged, action, [action](bool visible) {
-            action->setIcon(visible ? QIcon(":/visible.png") : QIcon(":/hidden.png"));
+        QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::toggleRefWindowHidden);
+        QObject::connect(settingsPanel, &SettingsPanel::refWindowHiddenChanged, action, [action](bool hidden) {
+            action->setIcon(hidden ? QIcon(":/hidden.png") : QIcon(":/visible.png"));
         });
 
+        // Reload
         action = toolBar->addAction(toolBar->style()->standardIcon(QStyle::SP_BrowserReload), "Reload");
         action->setToolTip("Reload - Reload the reference from disk.");
         QObject::connect(action, &QAction::triggered, settingsPanel,
@@ -404,9 +404,11 @@ namespace
         QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, action,
                          [=](const ReferenceImageSP &image) { action->setEnabled(image && image->isLocalFile()); });
 
+        // Copy to Clipboard
         action = toolBar->addAction(QIcon::fromTheme(QIcon::ThemeIcon::EditCopy), "Copy to Clipboard");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::copyImageToClipboard);
 
+        // Duplicate
         action = toolBar->addAction(QIcon(":/duplicate.png"), "Duplicate");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::duplicateActiveRef);
 
@@ -414,6 +416,7 @@ namespace
 
         toolBar->addAction(&windowActions->extractTool());
 
+        // Delete Reference
         action = toolBar->addAction(toolBar->style()->standardIcon(QStyle::SP_DialogDiscardButton), "Delete Reference");
         QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::removeRefItemFromWindow);
 
@@ -498,9 +501,9 @@ void SettingsPanel::setRefWindow(ReferenceWindow *refWindow)
         setReferenceImage(m_refWindow->activeImage());
         QObject::connect(refWindow, &ReferenceWindow::activeImageChanged, this, &SettingsPanel::setReferenceImage);
         QObject::connect(refWindow, &ReferenceWindow::destroyed, this, [this]() { setRefWindow(nullptr); });
-        QObject::connect(refWindow, &ReferenceWindow::visibilityChanged, this,
-                         [this](bool visible) { emit refWindowVisibilityChanged(visible); });
-        emit refWindowVisibilityChanged(!m_refWindow->isHidden());
+        QObject::connect(refWindow, &ReferenceWindow::ghostRefHiddenChanged, this,
+                         [this](bool hidden) { emit refWindowHiddenChanged(hidden); });
+        emit refWindowHiddenChanged(m_refWindow->ghostRefHidden());
     }
     else
     {
@@ -566,10 +569,10 @@ void SettingsPanel::removeRefItemFromWindow()
     }
 }
 
-void SettingsPanel::toggleRefWindowVisible() const
+void SettingsPanel::toggleRefWindowHidden() const
 {
     if (!m_refWindow) return;
-    m_refWindow->setVisible(m_refWindow->isHidden());
+    m_refWindow->setGhostRefHidden(!m_refWindow->ghostRefHidden());
 }
 
 void SettingsPanel::initNoRefWidget()

@@ -43,7 +43,7 @@ signals:
     void refImageChanged(const ReferenceImageSP &image);
 
     // Emitted when refWindow emits ReferenceWindow::visibiltyChanged
-    void refWindowVisibilityChanged(bool visibility);
+    void refWindowHiddenChanged(bool visibility);
 
 public slots:
     void copyImageToClipboard() const;
@@ -53,7 +53,7 @@ public slots:
     void flipImageVertically() const;
 
     void removeRefItemFromWindow();
-    void toggleRefWindowVisible() const;
+    void toggleRefWindowHidden() const;
 
 private:
     void initNoRefWidget();

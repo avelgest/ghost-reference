@@ -27,6 +27,7 @@ private:
     bool m_ghostState = false;
     TabFit m_tabFit = TabFit::FitToWidth;
     qreal m_opacity = 1.0;
+    bool m_ghostRefHidden = false;
 
     ReferenceImageSP m_activeImage;
     QList<ReferenceImageSP> m_refImages;
@@ -64,7 +65,10 @@ public:
     // image data. The copied image may have reduced quality/resolution. Returns true on success.
     bool copyActiveToClipboard() const;
 
-    void setVisible(bool visible) override;
+    // Whether this ReferenceWindow should be hidden. This works at a higher level than
+    // QWidget::setVisible and is saved in session files.
+    bool ghostRefHidden() const;
+    void setGhostRefHidden(bool value);
 
     PictureWidget *pictureWidget() const;
     QWidget *overlay() const;
@@ -133,10 +137,10 @@ public slots:
 
 signals:
     void activeImageChanged(const ReferenceImageSP &newImage);
+    void ghostRefHiddenChanged(bool newValue);
     void ghostStateChanged(bool newValue);
     void referenceAdded(const ReferenceImageSP &refItem);
     void referenceRemoved(const ReferenceImageSP &refItem);
-    void visibilityChanged(bool visibility);
     void windowModeChanged(WindowMode newMode);
 
     // Another window has requested to merge with this window
@@ -158,6 +162,11 @@ inline void ReferenceWindow::setIdentifier(RefWindowId id)
 inline void ReferenceWindow::setCrop(const QRect &crop)
 {
     setCrop(crop.toRectF());
+}
+
+inline bool ReferenceWindow::ghostRefHidden() const
+{
+    return m_ghostRefHidden;
 }
 
 inline PictureWidget *ReferenceWindow::pictureWidget() const
@@ -187,14 +196,4 @@ inline qreal ReferenceWindow::opacity() const
 inline const QList<ReferenceImageSP> &ReferenceWindow::referenceImages() const
 {
     return m_refImages;
-}
-
-inline void ReferenceWindow::setVisible(bool visible)
-{
-    const bool oldHidden = isHidden();
-    QWidget::setVisible(visible);
-    if (oldHidden != isHidden())
-    {
-        emit visibilityChanged(visible);
-    }
 }

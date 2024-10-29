@@ -277,12 +277,12 @@ namespace
 
             for (const auto &refWindow : app->referenceWindows())
             {
-                if (refWindow && !refWindow->isVisible())
+                if (refWindow && refWindow->ghostRefHidden())
                 {
                     const QString name = refWindow->activeImage() ? refWindow->activeImage()->name() : "No Image";
                     QAction *action = menu->addAction(name);
                     QObject::connect(action, &QAction::triggered, refWindow,
-                                     [refWindow]() { refWindow->setVisible(true); });
+                                     [refWindow]() { refWindow->setGhostRefHidden(false); });
                 }
             }
         });

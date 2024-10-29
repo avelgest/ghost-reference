@@ -105,7 +105,7 @@ namespace
             refWindow->setIdentifier(m_identifier);
         }
         refWindow->fromJson(m_json);
-        refWindow->show();
+        refWindow->setVisible(!refWindow->ghostRefHidden());
 
         return true;
     }
