@@ -75,6 +75,9 @@ public:
     bool undo();
     bool redo();
 
+    // Delete all undo/redo steps
+    void clear();
+
 signals:
     void undone();
     void redone();

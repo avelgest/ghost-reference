@@ -97,6 +97,10 @@ public:
     void loadSession();
     void loadSession(const QString &path);
 
+    // Start a new session closing all reference windows and clearing the undo stack.
+    // Asks the user about unsaved changes unless force is true.
+    void newSession(bool force = false);
+
     bool hasUnsavedChanges() const;
     void setUnsavedChanges(bool value = true);
 

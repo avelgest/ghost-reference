@@ -31,6 +31,9 @@ public:
 
     QList<ReferenceImageSP> references() const;
 
+    // Removes all reference images
+    void clear();
+
 protected:
     // Create a unique name starting with basename. If ignore is given then this reference will be
     // ignored when checking uniqueness.

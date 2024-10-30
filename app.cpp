@@ -414,6 +414,25 @@ void App::loadSession(const QString &filepath)
     }
 }
 
+void App::newSession(bool force)
+{
+    // Ask user about unsaved changes
+    if (!force && !askUnsavedChangesOk(this))
+    {
+        return;
+    }
+
+    setGlobalMode(TransformMode);
+    m_globalModeOverride = {};
+
+    closeAllReferenceWindows();
+    m_referenceItems->clear();
+    m_undoStack->clear();
+    m_saveFilePath.clear();
+    setUnsavedChanges(false);
+    refreshWindowName();
+}
+
 void App::setUnsavedChanges(bool value)
 {
     if (value != m_hasUnsavedChanges)

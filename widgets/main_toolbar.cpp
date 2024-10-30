@@ -363,6 +363,8 @@ MainToolbar::MainToolbar(QWidget *parent)
     addButtonMenu(this, createHideButtonMenu(this));
     addSeparator();
 
+    addAction(&windowActions->newSession());
+
     addAction(&windowActions->openAny());
     addButtonMenu(this, createOpenButtonMenu(this));
     addAction(&windowActions->saveSession());
@@ -451,6 +453,7 @@ void MainToolbar::contextMenuEvent(QContextMenuEvent *event)
     QMenu menu;
     menu.addAction(&backWindowActions()->paste());
     menu.addAction(&toggleExpanded);
+    menu.addAction(&backWindowActions()->toggleToolbar());
     menu.exec(event->globalPos());
 }
 

@@ -224,6 +224,8 @@ namespace
             return false;
         }
 
+        App::ghostRefInstance()->newSession(true);
+
         loadToolbarPos(jsonDoc);
 
         // Need to keep the shared pointers to prevent the ReferenceImages from being destroyed

@@ -132,6 +132,11 @@ QList<ReferenceImageSP> ReferenceCollection::references() const
     return outList;
 }
 
+void ReferenceCollection::clear()
+{
+    m_refMap->clear();
+}
+
 QString ReferenceCollection::uniqueReferenceName(const QString &basename, const ReferenceImageSP &ignore)
 {
     const ReferenceMap &refMap = *m_refMap;

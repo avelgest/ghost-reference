@@ -138,22 +138,10 @@ namespace
 
 QList<QAction *> BackWindowActions::allActions()
 {
-    return {&closeApplication(),
-            &colorPicker(),
-            &extractTool(),
-            &openAny(),
-            &openReference(),
-            &openSession(),
-            &paste(),
-            &toggleAllRefsHidden(),
-            &toggleGhostMode(),
-            &toggleToolbar(),
-            &redo(),
-            &saveSession(),
-            &saveSessionAs(),
-            &showHelp(),
-            &showPreferences(),
-            &undo()};
+    return {&closeApplication(), &colorPicker(), &extractTool(), &newSession(),          &openAny(),
+            &openReference(),    &openSession(), &paste(),       &toggleAllRefsHidden(), &toggleGhostMode(),
+            &toggleToolbar(),    &redo(),        &saveSession(), &saveSessionAs(),       &showHelp(),
+            &showPreferences(),  &undo()};
 }
 
 BackWindowActions::BackWindowActions(BackWindow *backWindow)
@@ -212,6 +200,11 @@ BackWindowActions::BackWindowActions(BackWindow *backWindow)
     toggleToolbar().setText("Minimize Toolbar to System Tray");
     toggleToolbar().setShortcut(Qt::CTRL | Qt::Key_M);
     QObject::connect(&toggleToolbar(), &QAction::triggered, toggleToolbarFnc);
+
+    // New Session
+    newSession().setIcon(style->standardIcon(QStyle::SP_FileIcon));
+    newSession().setText("New Session");
+    QObject::connect(&newSession(), &QAction::triggered, []() { getApp()->newSession(); });
 
     // Open Any
     openAny().setIcon(style->standardIcon(QStyle::SP_DialogOpenButton));

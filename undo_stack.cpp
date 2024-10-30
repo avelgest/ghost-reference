@@ -334,6 +334,12 @@ bool UndoStack::redo()
     return true;
 }
 
+void UndoStack::clear()
+{
+    m_redoStack.clear();
+    m_undoStack.clear();
+}
+
 void UndoStack::UndoStep::addEntry(UndoEntryUP &&entry)
 {
     m_entries.push_back(std::move(entry));

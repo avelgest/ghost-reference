@@ -25,6 +25,7 @@ class BackWindowActions : public QObject
     ACTION_DECL(closeApplication);
     ACTION_DECL(colorPicker);
     ACTION_DECL(extractTool);
+    ACTION_DECL(newSession);
     ACTION_DECL(openAny);
     ACTION_DECL(openReference);
     ACTION_DECL(openSession);
