@@ -27,6 +27,7 @@
 #include "../tools/extract_tool.h"
 #include "../undo_stack.h"
 
+#include "back_window.h"
 #include "back_window_actions.h"
 #include "reference_window.h"
 

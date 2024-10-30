@@ -19,9 +19,9 @@
 namespace
 {
 
-    ReferenceCollection &refCollection()
+    ReferenceCollection &getRefCollection()
     {
-        return App::ghostRefInstance()->referenceItems();
+        return *App::ghostRefInstance()->referenceItems();
     }
 
     QSize smallestSize(const QSize &a, const QSize &b)
@@ -100,7 +100,7 @@ public:
 
     ReferenceImageSP refImageSP() const 
     {
-        return m_refImage ? App::ghostRefInstance()->referenceItems().getReferenceImage(m_refImage->name()) : nullptr;
+        return m_refImage ? getRefCollection().getReferenceImage(m_refImage->name()) : nullptr;
     }
 
     void requestRedraw()
@@ -138,7 +138,7 @@ ReferenceImage::~ReferenceImage() = default;
 
 ReferenceImageSP ReferenceImage::getSharedPtr() const
 {
-    ReferenceCollection &refCollection = App::ghostRefInstance()->referenceItems();
+    ReferenceCollection &refCollection = getRefCollection();
 
     ReferenceImageSP refImageSP = refCollection.getReferenceImage(name());
     if (refImageSP != this)
@@ -151,7 +151,7 @@ ReferenceImageSP ReferenceImage::getSharedPtr() const
 
 ReferenceImageSP ReferenceImage::duplicate(bool linked) const
 {
-    ReferenceCollection &refCollection = App::ghostRefInstance()->referenceItems();
+    ReferenceCollection &refCollection = getRefCollection();
     ReferenceImageSP dup = refCollection.newReferenceImage();
 
     RefImageLoaderUP loader = std::make_unique<RefImageLoader>(m_baseImage);
@@ -177,7 +177,7 @@ void ReferenceImage::fromJson(const QJsonObject &json, RefImageLoaderUP &&loader
     }
     else if (!linkedCopyOfName.isEmpty())
     {
-        setLinkedCopyOf(App::ghostRefInstance()->referenceItems().getReferenceImage(linkedCopyOfName));
+        setLinkedCopyOf(getRefCollection().getReferenceImage(linkedCopyOfName));
     }
     else if (!m_loader && !filepath().isEmpty())
     {
@@ -515,7 +515,7 @@ void ReferenceImage::redrawImage()
 
 void ReferenceImage::setName(const QString &newName)
 {
-    App::ghostRefInstance()->referenceItems().renameReference(*this, newName);
+    getRefCollection().renameReference(*this, newName);
     emit nameChanged(name());
 }
 

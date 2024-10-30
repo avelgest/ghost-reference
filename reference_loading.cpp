@@ -65,7 +65,7 @@ namespace
 
     ReferenceCollection &getRefCollection()
     {
-        return App::ghostRefInstance()->referenceItems();
+        return *App::ghostRefInstance()->referenceItems();
     }
 
     QString stripExt(const QString &filepath)

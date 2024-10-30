@@ -7,10 +7,7 @@
 #include <QtGui/QCursor>
 #include <QtWidgets/QApplication>
 
-#include "reference_collection.h"
 #include "types.h"
-
-#include "widgets/back_window.h"
 
 class QMessageBox;
 class QNetworkAccessManager;
@@ -30,7 +27,7 @@ private:
     SystemTrayIcon *m_systemTrayIcon = nullptr;
 
     RefWindowList m_refWindows;
-    ReferenceCollection m_referenceItems;
+    std::unique_ptr<ReferenceCollection> m_referenceItems;
 
     WindowMode m_globalMode;
     std::optional<WindowMode> m_globalModeOverride;
@@ -80,8 +77,8 @@ public:
     UndoStack *undoStack() const;
 
     const RefWindowList &referenceWindows() const;
-    const ReferenceCollection &referenceItems() const;
-    ReferenceCollection &referenceItems();
+    const ReferenceCollection *referenceItems() const;
+    ReferenceCollection *referenceItems();
 
     ReferenceWindow *newReferenceWindow();
     ReferenceWindow *getReferenceWindow(RefWindowId identifier) const;
@@ -174,9 +171,15 @@ inline UndoStack *App::undoStack() const
 
 inline const App::RefWindowList &App::referenceWindows() const { return m_refWindows; }
 
-inline const ReferenceCollection &App::referenceItems() const { return m_referenceItems; }
+inline const ReferenceCollection *App::referenceItems() const
+{
+    return m_referenceItems.get();
+}
 
-inline ReferenceCollection &App::referenceItems() { return m_referenceItems; }
+inline ReferenceCollection *App::referenceItems()
+{
+    return m_referenceItems.get();
+}
 
 inline const QString &App::saveFilePath() const
 {

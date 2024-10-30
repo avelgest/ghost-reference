@@ -152,7 +152,7 @@ namespace
                 m_windowIds.push_back(refWin->identifier());
             }
         }
-        for (const auto &refItem : app->referenceItems().references())
+        for (const auto &refItem : app->referenceItems()->references())
         {
             m_referenceNames[refItem] = refItem->name();
         }
@@ -174,7 +174,7 @@ namespace
         // Rename all reference items to their names when this entry was created
         for (const auto &[refItem, name] : m_referenceNames)
         {
-            app->referenceItems().renameReference(*refItem, name, true);
+            app->referenceItems()->renameReference(*refItem, name, true);
         }
 
         return true;
@@ -226,7 +226,7 @@ void UndoStack::pushGlobalUndo()
     UndoStep undoStep;
 
     undoStep.addEntry(std::make_unique<GlobalStateEntry>());
-    for (const ReferenceImageSP &refItem : app->referenceItems().references())
+    for (const ReferenceImageSP &refItem : app->referenceItems()->references())
     {
         undoStep.addEntry(std::make_unique<ReferenceEntry>(refItem));
     }

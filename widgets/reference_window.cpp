@@ -439,11 +439,11 @@ void ReferenceWindow::fromJson(const QJsonObject &json)
     setOpacity(json["opacity"].toDouble(1.0));
     setGhostRefHidden(json["hidden"].toBool(false));
 
-    ReferenceCollection &refCollection = App::ghostRefInstance()->referenceItems();
+    ReferenceCollection *refCollection = App::ghostRefInstance()->referenceItems();
     for (auto jsonVal : json["tabs"].toArray())
     {
         const QString refName = jsonVal.toString();
-        const ReferenceImageSP refImage = refCollection.getReferenceImage(refName);
+        const ReferenceImageSP refImage = refCollection->getReferenceImage(refName);
         if (refImage)
         {
             addReference(refImage, false);

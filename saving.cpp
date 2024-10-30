@@ -22,6 +22,7 @@
 
 #include "app.h"
 #include "preferences.h"
+#include "reference_collection.h"
 #include "reference_image.h"
 #include "utils/zip_file.h"
 #include "widgets/main_toolbar.h"
@@ -140,7 +141,7 @@ namespace
         }
 
         App *app = App::ghostRefInstance();
-        newItemsOut.append(std::move(app->referenceItems().loadJson(references, imageDataMap)));
+        newItemsOut.append(std::move(app->referenceItems()->loadJson(references, imageDataMap)));
         return true;
     }
 
@@ -251,7 +252,7 @@ namespace sessionSaving
         }
         json["windows"] = jsonWindows;
 
-        json["references"] = app->referenceItems().toJson();
+        json["references"] = app->referenceItems()->toJson();
 
         const QPoint toolbarPos = app->mainToolbar()->pos();
         json["toolbarPos"] = QJsonArray({toolbarPos.x(), toolbarPos.y()});

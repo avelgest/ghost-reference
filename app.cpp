@@ -19,6 +19,7 @@
 
 #include "global_hotkeys.h"
 #include "preferences.h"
+#include "reference_collection.h"
 #include "reference_image.h"
 #include "reference_loading.h"
 #include "saving.h"
@@ -552,7 +553,8 @@ void App::refreshWindowName()
 
 App::App(int &argc, char **argv, int flags, const Preferences *prefs)
     : QApplication(argc, argv, flags),
-      m_globalMode(defaultWindowMode)
+      m_globalMode(defaultWindowMode),
+      m_referenceItems(std::make_unique<ReferenceCollection>())
 {
     setApplicationName("Ghost Reference");
     setApplicationDisplayName("Ghost Reference");
