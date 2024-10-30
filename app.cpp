@@ -164,8 +164,9 @@ namespace
     int showSaveErrorMsgBox(const App *app)
     {
         QMessageBox msgBox(QMessageBox::Warning, "Error Saving Session",
-                           "Unable to save session to " + app->saveFilePath(), QMessageBox::NoButton, app->backWindow(),
-                           msgBoxWindowFlags);
+                           "Unable to save session to " + app->saveFilePath(), QMessageBox::NoButton);
+        app->initMsgBox(msgBox);
+
         return msgBox.exec();
     }
 
@@ -461,8 +462,8 @@ void App::setSystemTrayIconVisible(bool value)
 // TODO Move to utils
 void App::initMsgBox(QMessageBox &msgBox) const
 {
-    msgBox.setWindowFlags(msgBoxWindowFlags);
     msgBox.setParent(m_backWindow);
+    msgBox.setWindowFlags(msgBoxWindowFlags);
 }
 
 void App::onStartUp()
