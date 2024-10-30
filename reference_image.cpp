@@ -152,7 +152,7 @@ ReferenceImageSP ReferenceImage::getSharedPtr() const
 ReferenceImageSP ReferenceImage::duplicate(bool linked) const
 {
     ReferenceCollection &refCollection = App::ghostRefInstance()->referenceItems();
-    ReferenceImageSP dup = refCollection.newReferenceImage(name());
+    ReferenceImageSP dup = refCollection.newReferenceImage();
 
     RefImageLoaderUP loader = std::make_unique<RefImageLoader>(m_baseImage);
     dup->fromJson(toJson(), std::move(loader));

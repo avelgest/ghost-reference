@@ -3,6 +3,7 @@
 #include <QtCore/QDebug>
 #include <QtCore/QJsonObject>
 #include <QtCore/QMap>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QString>
 
 #include "reference_image.h"
@@ -51,7 +52,7 @@ void ReferenceCollection::renameReference(ReferenceImage &refItem, const QString
         return;
     }
 
-    QString uniqueName = uniqueReferenceName(newName);
+    QString uniqueName = uniqueReferenceName(newName.trimmed(), refItemSP);
     if (uniqueName.isEmpty())
     {
         return;
@@ -131,7 +132,7 @@ QList<ReferenceImageSP> ReferenceCollection::references() const
     return outList;
 }
 
-QString ReferenceCollection::uniqueReferenceName(const QString &basename)
+QString ReferenceCollection::uniqueReferenceName(const QString &basename, const ReferenceImageSP &ignore)
 {
     const ReferenceMap &refMap = *m_refMap;
     auto found = refMap.find(basename);
@@ -140,13 +141,31 @@ QString ReferenceCollection::uniqueReferenceName(const QString &basename)
         return basename;
     }
 
-    const QString fmtStr = basename + "(%1)";
+    // Already a reference with this name so add a number in brackets to basename
+    int suffixNum = 1;
+    QString fmtStr;
 
-    for (int x = 1; x < INT_MAX; x++)
+    // Check for an existing numeric suffix;
+    static const QRegularExpression re(R"(.*\((\d+)\))");
+    if (const QRegularExpressionMatch match = re.match(basename); match.hasMatch())
     {
-        const QString newName = fmtStr.arg(x);
+        suffixNum = match.capturedTexts().last().toInt();
+        qDebug() << match.capturedTexts().last() << suffixNum;
+        suffixNum = std::clamp(suffixNum, 1, INT_MAX / 2) + 1;
+        fmtStr = QString(basename).replace(match.capturedStart(1), match.capturedLength(1), "%1");
+    }
+    else
+    {
+        suffixNum = 1;
+        fmtStr = basename + " (%1)";
+    }
 
-        if (auto found = refMap.find(newName); found == refMap.end() || found.value().isNull())
+    for (; suffixNum < INT_MAX; suffixNum++)
+    {
+        const QString newName = fmtStr.arg(suffixNum);
+
+        if (auto found = refMap.find(newName);
+            found == refMap.end() || found.value().isNull() || found.value() == ignore)
         {
             return newName;
         }

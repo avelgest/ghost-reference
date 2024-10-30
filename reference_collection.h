@@ -32,5 +32,7 @@ public:
     QList<ReferenceImageSP> references() const;
 
 protected:
-    QString uniqueReferenceName(const QString &basename);
+    // Create a unique name starting with basename. If ignore is given then this reference will be
+    // ignored when checking uniqueness.
+    QString uniqueReferenceName(const QString &basename, const ReferenceImageSP &ignore = nullptr);
 };
