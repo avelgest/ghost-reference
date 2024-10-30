@@ -26,6 +26,7 @@
 #include "../reference_image.h"
 #include "../reference_loading.h"
 #include "../saving.h"
+#include "../undo_stack.h"
 
 #include "back_window.h"
 #include "back_window_actions.h"
@@ -281,8 +282,10 @@ namespace
                 {
                     const QString name = refWindow->activeImage() ? refWindow->activeImage()->name() : "No Image";
                     QAction *action = menu->addAction(name);
-                    QObject::connect(action, &QAction::triggered, refWindow,
-                                     [refWindow]() { refWindow->setGhostRefHidden(false); });
+                    QObject::connect(action, &QAction::triggered, refWindow, [refWindow]() {
+                        UndoStack::get()->pushRefWindow(refWindow, false);
+                        refWindow->setGhostRefHidden(false);
+                    });
                 }
             }
         });

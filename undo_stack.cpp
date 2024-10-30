@@ -169,6 +169,8 @@ namespace
                 refWin->close();
             }
         }
+        // FIXME When redoing a ReferenceWindow duplication the window is not recreated
+
         // Rename all reference items to their names when this entry was created
         for (const auto &[refItem, name] : m_referenceNames)
         {

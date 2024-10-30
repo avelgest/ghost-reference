@@ -154,22 +154,19 @@ namespace
         App::ghostRefInstance()->setUnsavedChanges();
     }
 
-    void addUndoStep(ReferenceWindow *refWindow, bool refItems = false)
-    {
-        UndoStack *undoStack = App::ghostRefInstance()->undoStack();
-        undoStack->pushRefWindow(refWindow, refItems);
-    }
-
     void initActions(ReferenceWindow *refWindow)
     {
         QAction *action = nullptr;
 
         action = refWindow->addAction("Hide", Qt::Key_H);
-        QObject::connect(action, &QAction::triggered, refWindow, [=]() { refWindow->setGhostRefHidden(true); });
+        QObject::connect(action, &QAction::triggered, refWindow, [=]() {
+            UndoStack::get()->pushRefWindow(refWindow, false);
+            refWindow->setGhostRefHidden(true);
+        });
 
         action = refWindow->addAction("Close", QKeySequence::Delete);
         QObject::connect(action, &QAction::triggered, refWindow, [=]() {
-            addUndoStep(refWindow, true);
+            UndoStack::get()->pushRefWindow(refWindow, true);
             refWindow->close();
         });
 
@@ -177,7 +174,10 @@ namespace
         QObject::connect(action, &QAction::triggered, refWindow, &ReferenceWindow::copyActiveToClipboard);
 
         action = refWindow->addAction("Duplicate", Qt::CTRL | Qt::Key_D);
-        QObject::connect(action, &QAction::triggered, refWindow, [=]() { refWindow->duplicateActive(true); });
+        QObject::connect(action, &QAction::triggered, refWindow, [=]() {
+            UndoStack::get()->pushGlobalUndo();
+            refWindow->duplicateActive(true);
+        });
 
         for (QAction *action : refWindow->actions())
         {

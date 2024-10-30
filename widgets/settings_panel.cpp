@@ -377,52 +377,6 @@ namespace
         layout->addRow("Flip:", hBox);
     }
 
-    QToolBar *createToolBar(SettingsPanel *settingsPanel)
-    {
-        Q_ASSERT(settingsPanel != nullptr);
-
-        Q_ASSERT(App::ghostRefInstance()->backWindow());
-        BackWindowActions *windowActions = App::ghostRefInstance()->backWindow()->backWindowActions();
-
-        auto *toolBar = new QToolBar(settingsPanel);
-        toolBar->setToolButtonStyle(Qt::ToolButtonIconOnly);
-
-        QAction *action = nullptr;
-
-        // Hide Window
-        action = toolBar->addAction(QIcon(":/visible.png"), "Hide Window");
-        QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::toggleRefWindowHidden);
-        QObject::connect(settingsPanel, &SettingsPanel::refWindowHiddenChanged, action, [action](bool hidden) {
-            action->setIcon(hidden ? QIcon(":/hidden.png") : QIcon(":/visible.png"));
-        });
-
-        // Reload
-        action = toolBar->addAction(toolBar->style()->standardIcon(QStyle::SP_BrowserReload), "Reload");
-        action->setToolTip("Reload - Reload the reference from disk.");
-        QObject::connect(action, &QAction::triggered, settingsPanel,
-                         [=]() { settingsPanel->referenceImage()->reload(); });
-        QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, action,
-                         [=](const ReferenceImageSP &image) { action->setEnabled(image && image->isLocalFile()); });
-
-        // Copy to Clipboard
-        action = toolBar->addAction(QIcon::fromTheme(QIcon::ThemeIcon::EditCopy), "Copy to Clipboard");
-        QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::copyImageToClipboard);
-
-        // Duplicate
-        action = toolBar->addAction(QIcon(":/duplicate.png"), "Duplicate");
-        QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::duplicateActiveRef);
-
-        toolBar->addAction(&windowActions->colorPicker());
-
-        toolBar->addAction(&windowActions->extractTool());
-
-        // Delete Reference
-        action = toolBar->addAction(toolBar->style()->standardIcon(QStyle::SP_DialogDiscardButton), "Delete Reference");
-        QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::removeRefItemFromWindow);
-
-        return toolBar;
-    }
-
     template <typename E> E variantToEnum(QVariant &variant)
     {
         return variant.isValid() ? static_cast<E>(variant.toInt()) : E();
@@ -571,8 +525,11 @@ void SettingsPanel::removeRefItemFromWindow()
 
 void SettingsPanel::toggleRefWindowHidden() const
 {
-    if (!m_refWindow) return;
-    m_refWindow->setGhostRefHidden(!m_refWindow->ghostRefHidden());
+    if (m_refWindow)
+    {
+        UndoStack::get()->pushRefWindow(m_refWindow, false);
+        m_refWindow->setGhostRefHidden(!m_refWindow->ghostRefHidden());
+    }
 }
 
 void SettingsPanel::initNoRefWidget()
@@ -656,6 +613,49 @@ void SettingsPanel::initSettingsArea()
     createLinkSettings(this, layout);
 }
 
+void SettingsPanel::initToolbar()
+{
+    Q_ASSERT(App::ghostRefInstance()->backWindow());
+    BackWindowActions *windowActions = App::ghostRefInstance()->backWindow()->backWindowActions();
+
+    m_toolBar = new QToolBar(this);
+    m_toolBar->setToolButtonStyle(Qt::ToolButtonIconOnly);
+
+    SettingsPanel *settingsPanel = this;
+
+    QAction *action = nullptr;
+
+    // Hide Window
+    action = m_toolBar->addAction(QIcon(":/visible.png"), "Hide Window");
+    QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::toggleRefWindowHidden);
+    QObject::connect(settingsPanel, &SettingsPanel::refWindowHiddenChanged, action, [action](bool hidden) {
+        action->setIcon(hidden ? QIcon(":/hidden.png") : QIcon(":/visible.png"));
+    });
+
+    // Reload
+    action = m_toolBar->addAction(m_toolBar->style()->standardIcon(QStyle::SP_BrowserReload), "Reload");
+    action->setToolTip("Reload - Reload the reference from disk.");
+    QObject::connect(action, &QAction::triggered, settingsPanel, [=]() { settingsPanel->referenceImage()->reload(); });
+    QObject::connect(settingsPanel, &SettingsPanel::refImageChanged, action,
+                     [=](const ReferenceImageSP &image) { action->setEnabled(image && image->isLocalFile()); });
+
+    // Copy to Clipboard
+    action = m_toolBar->addAction(QIcon::fromTheme(QIcon::ThemeIcon::EditCopy), "Copy to Clipboard");
+    QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::copyImageToClipboard);
+
+    // Duplicate
+    action = m_toolBar->addAction(QIcon(":/duplicate.png"), "Duplicate");
+    QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::duplicateActiveRef);
+
+    m_toolBar->addAction(&windowActions->colorPicker());
+
+    m_toolBar->addAction(&windowActions->extractTool());
+
+    // Delete Reference
+    action = m_toolBar->addAction(m_toolBar->style()->standardIcon(QStyle::SP_DialogDiscardButton), "Delete Reference");
+    QObject::connect(action, &QAction::triggered, settingsPanel, &SettingsPanel::removeRefItemFromWindow);
+}
+
 void SettingsPanel::buildUI()
 {
     Q_ASSERT(!m_titleBar && !m_toolBar);
@@ -667,7 +667,8 @@ void SettingsPanel::buildUI()
     m_titleBar = new TitleBar(this);
     gridLayout->addWidget(m_titleBar, 0, 0, Qt::AlignTop);
 
-    m_toolBar = createToolBar(this);
+    initToolbar();
+    Q_ASSERT(m_toolBar != nullptr);
     gridLayout->addWidget(m_toolBar, 1, 0, Qt::AlignTop);
 
     initSettingsArea();

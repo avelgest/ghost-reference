@@ -38,6 +38,9 @@ public:
 
     QSize sizeHint() const override;
 
+    void flipImageHorizontally() const;
+    void flipImageVertically() const;
+
 signals:
     // Emitted whenever referenceImage is set (even if set to the same value).
     void refImageChanged(const ReferenceImageSP &image);
@@ -45,19 +48,16 @@ signals:
     // Emitted when refWindow emits ReferenceWindow::visibiltyChanged
     void refWindowHiddenChanged(bool visibility);
 
-public slots:
+private:
     void copyImageToClipboard() const;
     void duplicateActiveRef() const;
-
-    void flipImageHorizontally() const;
-    void flipImageVertically() const;
 
     void removeRefItemFromWindow();
     void toggleRefWindowHidden() const;
 
-private:
     void initNoRefWidget();
     void initSettingsArea();
+    void initToolbar();
     void buildUI();
     void refreshUI();
 
