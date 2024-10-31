@@ -11,6 +11,7 @@
 
 namespace
 {
+    const char *logFileName = "ghost_reference_log.txt";
 
     void messageHandler(QtMsgType type, const QMessageLogContext &ctx, const QString &msg)
     {
@@ -63,7 +64,22 @@ Logger *Logger::activeLogger()
 QString Logger::logFilePath()
 {
     const QDir configDir(Preferences::configDir());
-    return configDir.absoluteFilePath("log.txt");
+    return configDir.absoluteFilePath(logFileName);
+}
+
+void Logger::removeOldLogFiles()
+{
+    QDir configDir(Preferences::configDir());
+    configDir.setFilter(QDir::Filter::Files);
+    configDir.setNameFilters({QString(logFileName) + ".*"});
+
+    for (const auto &filename : configDir.entryList())
+    {
+        if (filename.startsWith(logFileName))
+        {
+            configDir.remove(filename);
+        }
+    }
 }
 
 bool Logger::usesLogFile()

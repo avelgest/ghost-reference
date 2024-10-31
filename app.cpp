@@ -584,6 +584,8 @@ App::App(int &argc, char **argv, int flags, const Preferences *prefs)
     // instead of as member initailizers.
     setPreferences(prefs ? prefs->duplicate(this) : Preferences::loadFromDisk(this));
 
+    m_logger->removeOldLogFiles();
+
     m_backWindow = new BackWindow();
     m_globalHotkeys = new GlobalHotkeys(this);
     m_mainToolbar = new MainToolbar(m_backWindow);

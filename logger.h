@@ -24,6 +24,9 @@ public:
     static Logger *activeLogger();
     static QString logFilePath();
 
+    // Deletes any temporary log files left by other session.
+    static void removeOldLogFiles();
+
     bool usesLogFile();
     void setUseLogFile(bool value);
 
