@@ -100,6 +100,8 @@ HelpWindow::HelpWindow(QWidget *parent)
 
     const QMargins boxMargins(8, 0, 8, 8);
 
+    const int hotkeySpacing = 3;
+
     setAttribute(Qt::WA_DeleteOnClose);
     setMinimumSize(minSize);
     setWindowTitle("Help");
@@ -191,6 +193,7 @@ HelpWindow::HelpWindow(QWidget *parent)
         groupLayout->setContentsMargins(boxMargins);
         groupLayout->setFormAlignment(Qt::AlignHCenter | Qt::AlignTop);
         groupLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+        groupLayout->setSpacing(hotkeySpacing);
 
         auto *infoLabel = new QLabel("These can be used even when another application is active.", groupBox);
         infoLabel->setWordWrap(true);
@@ -208,14 +211,18 @@ HelpWindow::HelpWindow(QWidget *parent)
     {
         BackWindowActions *windowActions = getBackWindowActions();
         const int marginTop = 5;
+        const int spacing = 3;
 
         auto *groupBox = new QGroupBox("Hotkeys", this);
+
         auto *groupLayout = new QFormLayout(groupBox);
         groupLayout->setContentsMargins(boxMargins.left(), marginTop, boxMargins.right(), boxMargins.bottom());
         groupLayout->setFormAlignment(Qt::AlignHCenter | Qt::AlignTop);
         groupLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+        groupLayout->setSpacing(hotkeySpacing);
 
         groupLayout->addRow("Color Picker", hotkeyWidget(windowActions->colorPicker(), groupBox));
+        groupLayout->addRow("Delete Selected", hotkeyWidget(QKeySequence::Delete, groupBox));
         groupLayout->addRow("Extract to New Window", hotkeyWidget(windowActions->extractTool(), groupBox));
         groupLayout->addRow("Hide Selected", hotkeyWidget(QKeySequence(Qt::Key_H), groupBox));
         groupLayout->addRow("Save Session", hotkeyWidget(windowActions->saveSession(), groupBox));
