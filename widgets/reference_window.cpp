@@ -254,6 +254,7 @@ ReferenceWindow::ReferenceWindow(QWidget *parent)
     initActions(this);
 
     onGlobalModeChanged(windowMode());
+    adjustSize();
 }
 
 ReferenceWindow::~ReferenceWindow()
@@ -801,8 +802,11 @@ void ReferenceWindow::contextMenuEvent(QContextMenuEvent *event)
         // Show a context menu
         QMenu menu(this);
         QAction *paste = menu.addAction("Paste");
-        QObject::connect(paste, &QAction::triggered, [this]() { refLoad::pasteRefsFromClipboard(this); });
+        QObject::connect(paste, &QAction::triggered, this, [this]() { refLoad::pasteRefsFromClipboard(this); });
         paste->setEnabled(refLoad::isSupportedClipboard());
+
+        QAction *closeWindow(menu.addAction("Close Window"));
+        QObject::connect(closeWindow, &QAction::triggered, this, [this]() { close(); });
 
         menu.exec(event->globalPos());
     }
