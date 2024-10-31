@@ -87,6 +87,7 @@ qt_standard_project_setup()
 qt_add_library(GhostReferenceLib STATIC
                 app.cpp
                 global_hotkeys.cpp
+                logger.cpp
                 preferences.cpp
                 reference_collection.cpp
                 reference_image.cpp

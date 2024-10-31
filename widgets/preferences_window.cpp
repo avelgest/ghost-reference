@@ -559,6 +559,7 @@ void PreferencesWindow::buildUI()
         widgetMaker.createWidget(Preferences::AnimateToolbarCollapse);
         widgetMaker.createWidget(Preferences::GhostModeOpacity);
         createOverrideKeyWidget(layout, m_prefs);
+        widgetMaker.createWidget(Preferences::LoggingEnabled);
 
         layout->addStretch();
     }

@@ -8,6 +8,7 @@
 
 class App;
 class GlobalHotkeys;
+class Logger;
 class Preferences;
 class ReferenceCollection;
 class ReferenceImage;

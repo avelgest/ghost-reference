@@ -26,8 +26,7 @@ namespace
 
     QDir getConfigDir()
     {
-        const QString configDirPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-        return {configDirPath};
+        return {Preferences::configDir()};
     }
 
     const auto BoolType = QMetaType::Bool;
@@ -143,6 +142,9 @@ namespace
             {LocalFilesStoreMaxMB,
              {"localFilesStoreMaxMB", IntType, 128, "Link Files Larger Than (MB)",
               "Always link local files that are larger than this."}},
+            {LoggingEnabled,
+             {"loggingEnabled", BoolType, true, "Enable Logging",
+              "Write a log file to disk to assist with debugging."}},
             {OverrideKeyAlt, {"overrideKeyAlt", BoolType, true, "Alt", ""}},
             {OverrideKeyCtrl, {"overrideKeyCtrl", BoolType, false, "Ctrl", ""}},
             {OverrideKeyShift, {"overrideKeyShift", BoolType, false, "Shift", ""}},
@@ -453,6 +455,11 @@ void Preferences::saveToDisk() const
     const QJsonDocument doc = toJsonDocument();
     configFile.write(doc.toJson());
     qInfo() << "Preferences written to" << configFile.fileName();
+}
+
+QString Preferences::configDir()
+{
+    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 }
 
 bool Preferences::checkAllEqual(const Preferences *other) const

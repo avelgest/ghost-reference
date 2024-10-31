@@ -44,6 +44,7 @@ public:
         GlobalHotkeysEnabled,
         LocalFilesLink,
         LocalFilesStoreMaxMB,
+        LoggingEnabled,
         OverrideKeyAlt,
         OverrideKeyCtrl,
         OverrideKeyShift,
@@ -60,6 +61,8 @@ public:
     static Preferences *loadFromJson(const QJsonDocument &json, QObject *parent);
     QJsonDocument toJsonDocument() const;
     void saveToDisk() const;
+
+    static QString configDir();
 
     bool checkAllEqual(const Preferences *other) const;
 

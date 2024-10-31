@@ -33,6 +33,7 @@ private:
     std::optional<WindowMode> m_globalModeOverride;
 
     int m_timer = 0;
+    Logger *m_logger;
     GlobalHotkeys *m_globalHotkeys = nullptr;
     QNetworkAccessManager *m_networkManager = nullptr;
     UndoStack *m_undoStack;
